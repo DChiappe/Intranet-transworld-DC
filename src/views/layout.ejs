@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= titulo || "Intranet" %></title>
+
+    <!-- CSS global -->
+    <link rel="stylesheet" href="/css/intranet.css">
+</head>
+
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-container">
+      <img src="/img/PNG-LOGO-TW-2.png" alt="Transworld" class="logo-tw">
+    </div>
+
+    <nav class="main-nav">
+      <!-- Inicio -->
+      <a href="/">Inicio</a>
+
+      <!-- Procesos y Documentos -->
+      <div class="nav-item">
+        <a href="/procesos">Procesos y Documentos</a>
+        <div class="dropdown-menu">
+          <a href="/procesos/procedimientos">Procedimientos</a>
+          <a href="/procesos/protocolos">Protocolos</a>
+          <a href="/procesos/reglamento">Reglamento interno</a>
+          <a href="/procesos/achs">ACHS y procedimientos por accidentes</a>
+        </div>
+      </div>
+
+      <!-- Personas y Cultura -->
+      <div class="nav-item">
+        <a href="/personas">Personas y Cultura</a>
+        <div class="dropdown-menu">
+          <a href="/personas/organigrama">Organigrama</a>
+          <!-- Agrega más subpestañas aquí cuando existan -->
+        </div>
+      </div>
+
+      <!-- Sistemas y Herramientas -->
+      <div class="nav-item">
+        <a href="/sistemas">Sistemas y Herramientas</a>
+        <div class="dropdown-menu">
+          <a href="https://transworld.mirexmas.com/" target="_blank" rel="noopener noreferrer">Rex+</a>
+          <a href="/sistemas/tickets">Ticketera</a>
+        </div>
+      </div>
+
+      <!-- Marketing -->
+      <div class="nav-item">
+        <a href="/marketing">Marketing y Eventos</a>
+        <div class="dropdown-menu">
+          <a href="/marketing/eventos">Galería de eventos</a>
+        </div>
+      </div>
+
+      <!-- Usuario conectado -->
+      <% if (typeof usuario !== 'undefined' && usuario) { %>
+        <div class="nav-user">
+          <span><strong><%= usuario.username %></strong></span>
+          <a href="/logout">Cerrar sesión</a>
+        </div>
+      <% } %>
+    </nav>
+  </div>
+</header>
+
+
+<!-- CONTENIDO DINÁMICO -->
+<main>
+    <%- body %>
+</main>
+
+
+</body>
+</html>
+

@@ -1,0 +1,16 @@
+<h2>Nuevo evento</h2>
+
+<% if (typeof error !== 'undefined' && error) { %>
+  <p class="mensaje-error"><%= error %></p>
+<% } %>
+
+<form action="/marketing/eventos/nuevo" method="POST" class="form-evento">
+  <label for="nombre">Nombre del evento</label>
+  <input type="text" id="nombre" name="nombre" required placeholder="Ej: Aniversario 2025">
+
+  <button type="submit">Crear evento</button>
+</form>
+
+<a class="boton-opcion" href="/marketing/eventos" style="margin-top:20px; display:inline-block;">
+  Volver a eventos
+</a>

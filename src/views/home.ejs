@@ -1,0 +1,22 @@
+<h2>Bienvenida/o a la intranet</h2>
+
+<div class="tarjetas-home">
+  <div class="tarjeta">
+    <h3>USD del día</h3>
+    <p><strong><%= usdHoy %></strong> (valor de ejemplo)</p>
+  </div>
+
+  <div class="tarjeta">
+    <h3>Cumpleaños de hoy</h3>
+
+    <% if (!cumpleaniosHoy || cumpleaniosHoy.length === 0) { %>
+      <p>No hay cumpleaños registrados para hoy.</p>
+    <% } else { %>
+      <ul>
+        <% cumpleaniosHoy.forEach((p) => { %>
+          <li><%= p.nombre %> - Área: <%= p.area %></li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+</div>

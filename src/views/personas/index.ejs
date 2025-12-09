@@ -1,0 +1,41 @@
+<h2>Personas y Cultura</h2>
+<p>Conoce la estructura organizacional, la cultura de la empresa y los cumpleaños del equipo.</p>
+
+<!-- Botón del organigrama -->
+<div class="grid-opciones" style="margin-bottom: 30px;">
+  <a class="boton-opcion" href="/personas/organigrama">
+    Organigrama
+    <span>Visualiza la estructura interna del equipo.</span>
+  </a>
+</div>
+
+<!-- Cumpleaños ordenados -->
+<h3>Cumpleaños del equipo</h3>
+
+<% if (!personas || personas.length === 0) { %>
+  <p>No hay cumpleaños registrados.</p>
+<% } else { %>
+  <table class="tabla-simple">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Área</th>
+        <th>Cumpleaños</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% personas.forEach(p => { %>
+        <tr>
+          <td><%= p.nombre %></td>
+          <td><%= p.area %></td>
+          <td>
+            <%= new Date(p.fecha_nacimiento).toLocaleDateString('es-CL', {
+              day: '2-digit',
+              month: '2-digit'
+            }) %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+<% } %>

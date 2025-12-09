@@ -1,0 +1,19 @@
+<div class="login-page">
+  <div class="card-login">
+    <h2>Acceso a la intranet</h2>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <p class="mensaje-error"><%= error %></p>
+    <% } %>
+
+    <form action="/login" method="POST" class="form-login">
+      <label for="username">Usuario</label>
+      <input type="text" id="username" name="username" required>
+
+      <label for="password">Contraseña</label>
+      <input type="password" id="password" name="password" required>
+
+      <button type="submit">Ingresar</button>
+    </form>
+  </div>
+</div>

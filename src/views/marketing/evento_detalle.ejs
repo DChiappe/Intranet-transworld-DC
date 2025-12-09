@@ -1,0 +1,70 @@
+<h2>Evento: <%= slug %></h2>
+
+<h3>Subir fotos</h3>
+<form action="/marketing/eventos/<%= slug %>/fotos" method="POST" enctype="multipart/form-data" class="form-upload-fotos">
+  <input type="file" name="fotos" multiple accept="image/*" required>
+  <button type="submit">Subir fotos</button>
+</form>
+
+<h3 style="margin-top: 24px;">Galería</h3>
+
+<% if (!imagenes || imagenes.length === 0) { %>
+  <p>No hay imágenes cargadas para este evento.</p>
+<% } else { %>
+  <div class="galeria-evento">
+    <% imagenes.forEach(function(img) { %>
+      <div class="galeria-item">
+        <img
+          src="/img/eventos/<%= slug %>/<%= img %>"
+          alt="<%= slug %>"
+          class="galeria-thumb"
+          data-full="/img/eventos/<%= slug %>/<%= img %>"
+        >
+        <form action="/marketing/eventos/<%= slug %>/fotos/<%= img %>/eliminar" method="POST" onsubmit="return confirm('¿Eliminar esta foto?');">
+          <button type="submit" class="btn-borrar-foto">Eliminar foto</button>
+        </form>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
+
+<a class="boton-opcion" href="/marketing/eventos" style="margin-top:20px; display:inline-block;">
+  Volver a eventos
+</a>
+
+<!-- Modal para ver la imagen en grande -->
+<div id="modalImagen" class="modal-imagen">
+  <div class="modal-imagen-contenido">
+    <span class="modal-cerrar">&times;</span>
+    <img id="modalImagenGrande" src="" alt="Imagen evento">
+  </div>
+</div>
+
+<script>
+  (function () {
+    const modal = document.getElementById('modalImagen');
+    const modalImg = document.getElementById('modalImagenGrande');
+    const cerrar = document.querySelector('.modal-cerrar');
+    const thumbs = document.querySelectorAll('.galeria-thumb');
+
+    thumbs.forEach(function (thumb) {
+      thumb.addEventListener('click', function () {
+        const full = this.getAttribute('data-full');
+        modalImg.src = full;
+        modal.style.display = 'flex';
+      });
+    });
+
+    cerrar.addEventListener('click', function () {
+      modal.style.display = 'none';
+      modalImg.src = '';
+    });
+
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        modalImg.src = '';
+      }
+    });
+  })();
+</script>

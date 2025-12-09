@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title><%= titulo %></title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+
+<body class="intranet-body">
+
+  <div class="contenedor pagina-ticket-detalle">
+    <h2 class="page-title">Ticket #<%= ticket.id %></h2>
+
+    <dl class="ticket-detalle">
+      <dt>Título</dt>
+      <dd><%= ticket.titulo %></dd>
+
+      <dt>Descripción</dt>
+      <dd>
+        <pre class="ticket-descripcion"><%= ticket.descripcion %></pre>
+      </dd>
+
+      <dt>Solicitante</dt>
+      <dd><%= ticket.solicitante_nombre || '-' %> &lt;<%= ticket.solicitante_email %>&gt;</dd>
+
+      <dt>Área (categoría)</dt>
+      <dd><%= ticket.categoria || '-' %></dd>
+
+      <dt>Importancia (prioridad)</dt>
+      <dd>
+        <% 
+          let clasePrioridad = 'badge-verde';
+          if (ticket.prioridad === 'Alta') clasePrioridad = 'badge-roja';
+          else if (ticket.prioridad === 'Media') clasePrioridad = 'badge-amarilla';
+        %>
+        <span class="badge <%= clasePrioridad %>">
+          <%= ticket.prioridad || 'Media' %>
+        </span>
+      </dd>
+
+      <dt>Estado</dt>
+      <dd>
+        <% 
+          let claseEstado = ticket.estado === 'Cerrado'
+            ? 'badge-estado-cerrado'
+            : 'badge-estado-abierto';
+        %>
+        <span class="badge <%= claseEstado %>">
+          <%= ticket.estado || 'Abierto' %>
+        </span>
+      </dd>
+
+      <dt>Fecha de creación</dt>
+      <dd class="small-text">
+        <% if (ticket.fecha_creacion && ticket.fecha_creacion.toLocaleString) { %>
+          <%= ticket.fecha_creacion.toLocaleString('es-CL') %>
+        <% } else { %>
+          <%= ticket.fecha_creacion %>
+        <% } %>
+      </dd>
+
+      <dt>Última actualización</dt>
+      <dd class="small-text">
+        <% if (ticket.fecha_actualizacion && ticket.fecha_actualizacion.toLocaleString) { %>
+          <%= ticket.fecha_actualizacion.toLocaleString('es-CL') %>
+        <% } else { %>
+          <%= ticket.fecha_actualizacion %>
+        <% } %>
+      </dd>
+    </dl>
+
+    <!-- Panel para actualizar área / importancia / estado -->
+    <div class="panel panel-actualizar-ticket">
+      <h3 class="panel-title">Actualizar área / importancia / estado</h3>
+      <form action="/tickets/<%= ticket.id %>/actualizar" method="POST" class="form-actualizar-ticket">
+        <label for="categoria">Área (categoría)</label>
+        <select id="categoria" name="categoria">
+          <option value="Sistemas" <%= ticket.categoria === 'Sistemas' ? 'selected' : '' %>>Sistemas</option>
+          <option value="Personas" <%= ticket.categoria === 'Personas' ? 'selected' : '' %>>Personas</option>
+          <option value="Procesos" <%= ticket.categoria === 'Procesos' ? 'selected' : '' %>>Procesos</option>
+          <option value="Marketing" <%= ticket.categoria === 'Marketing' ? 'selected' : '' %>>Marketing</option>
+          <option value="Otro" <%= ticket.categoria === 'Otro' ? 'selected' : '' %>>Otro</option>
+        </select>
+
+        <label for="prioridad">Importancia (semáforo)</label>
+        <select id="prioridad" name="prioridad">
+          <option value="Alta" <%= ticket.prioridad === 'Alta' ? 'selected' : '' %>>🔴 Alta</option>
+          <option value="Media" <%= ticket.prioridad === 'Media' ? 'selected' : '' %>>🟡 Media</option>
+          <option value="Baja" <%= ticket.prioridad === 'Baja' ? 'selected' : '' %>>🟢 Baja</option>
+        </select>
+
+        <label for="estado">Estado</label>
+        <select id="estado" name="estado">
+          <option value="Abierto" <%= ticket.estado === 'Abierto' ? 'selected' : '' %>>🔴 Abierto</option>
+          <option value="Cerrado" <%= ticket.estado === 'Cerrado' ? 'selected' : '' %>>🟢 Cerrado</option>
+        </select>
+
+        <button type="submit" class="btn btn-primario">Guardar cambios</button>
+      </form>
+    </div>
+
+    <!-- Historial de respuestas -->
+    <div class="panel panel-historial">
+      <h3 class="panel-title">Historial de respuestas</h3>
+      <% if (respuestas && respuestas.length > 0) { %>
+        <% respuestas.forEach(r => { %>
+          <div class="respuesta-item">
+            <div class="respuesta-header">
+              <strong class="respuesta-remitente"><%= r.remitente %></strong>
+              <span class="small-text respuesta-fecha">
+                <% if (r.fecha && r.fecha.toLocaleString) { %>
+                  - <%= r.fecha.toLocaleString('es-CL') %>
+                <% } else { %>
+                  - <%= r.fecha %>
+                <% } %>
+              </span>
+            </div>
+            <pre class="respuesta-mensaje"><%= r.mensaje %></pre>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p class="small-text">No hay respuestas registradas aún.</p>
+      <% } %>
+    </div>
+
+    <!-- Responder al usuario -->
+    <div class="panel panel-responder">
+      <h3 class="panel-title">Responder al usuario</h3>
+      <form action="/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
+        <label for="asunto_respuesta">Asunto</label>
+        <input
+          type="text"
+          id="asunto_respuesta"
+          name="asunto_respuesta"
+          placeholder="Opcional: si lo dejas vacío se genera uno por defecto"
+        />
+
+        <label for="mensaje_respuesta">Mensaje</label>
+        <textarea
+          id="mensaje_respuesta"
+          name="mensaje_respuesta"
+          rows="6"
+          required
+        ></textarea>
+
+        <button type="submit" class="btn btn-primario">Enviar respuesta</button>
+      </form>
+    </div>
+
+    <a class="link-volver" href="/sistemas/tickets">← Volver al listado de tickets</a>
+  </div>
+</body>
+</html>

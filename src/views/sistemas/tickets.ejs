@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title><%= titulo %></title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+
+<body class="intranet-body">
+
+  <div class="contenedor pagina-tickets">
+    <h2 class="page-title">Ticketera</h2>
+    <p class="page-description small-text">
+      Listado de tickets recibidos por soporte. Haz clic en el título para ver el detalle y responder.
+    </p>
+
+    <% if (!tickets || tickets.length === 0) { %>
+      <p class="no-data">No hay tickets registrados.</p>
+    <% } else { %>
+      <table class="tabla tabla-tickets">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Título</th>
+            <th>Área</th>
+            <th>Importancia</th>
+            <th>Estado</th>
+            <th>Solicitante</th>
+            <th>Correo</th>
+            <th>Creado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% tickets.forEach(t => { %>
+            <tr>
+              <td><%= t.id %></td>
+              <td>
+                <a class="link-ticket" href="/sistemas/tickets/<%= t.id %>">
+                  <%= t.titulo %>
+                </a>
+              </td>
+              <td><%= t.categoria || '-' %></td>
+              <td>
+                <% 
+                  let clasePrioridad = 'badge-verde';
+                  if (t.prioridad === 'Alta') clasePrioridad = 'badge-roja';
+                  else if (t.prioridad === 'Media') clasePrioridad = 'badge-amarilla';
+                %>
+                <span class="badge <%= clasePrioridad %>">
+                  <%= t.prioridad || 'Media' %>
+                </span>
+              </td>
+              <td>
+                <% 
+                  let claseEstado = t.estado === 'Cerrado'
+                    ? 'badge-estado-cerrado'
+                    : 'badge-estado-abierto';
+                %>
+                <span class="badge <%= claseEstado %>">
+                  <%= t.estado || 'Abierto' %>
+                </span>
+              </td>
+              <td><%= t.solicitante_nombre || '-' %></td>
+              <td class="small-text"><%= t.solicitante_email %></td>
+              <td class="small-text">
+                <% if (t.fecha_creacion && t.fecha_creacion.toLocaleString) { %>
+                  <%= t.fecha_creacion.toLocaleString('es-CL') %>
+                <% } else { %>
+                  <%= t.fecha_creacion %>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</body>
+</html>

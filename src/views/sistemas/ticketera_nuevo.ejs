@@ -1,0 +1,77 @@
+<% const fd = (typeof formData !== 'undefined' && formData) ? formData : {}; %>
+
+<h2>Nuevo ticket</h2>
+
+<% if (typeof error !== 'undefined' && error) { %>
+  <p class="mensaje-error"><%= error %></p>
+<% } %>
+
+<form action="/sistemas/ticketera" method="POST" class="form-ticket">
+  <label for="titulo">Título</label>
+  <input
+    type="text"
+    id="titulo"
+    name="titulo"
+    required
+    value="<%= fd.titulo || '' %>"
+  />
+
+  <label for="descripcion">Descripción</label>
+  <textarea
+    id="descripcion"
+    name="descripcion"
+    required
+  ><%= fd.descripcion || '' %></textarea>
+
+  <label for="categoria">Categoría</label>
+  <select id="categoria" name="categoria" required>
+    <option value="" <%= !fd.categoria ? 'selected' : '' %>>
+      Selecciona una categoría
+    </option>
+    <option value="TI" <%= fd.categoria === 'TI' ? 'selected' : '' %>>
+      TI
+    </option>
+    <option value="RRHH" <%= fd.categoria === 'RRHH' ? 'selected' : '' %>>
+      RRHH
+    </option>
+    <option value="Operaciones" <%= fd.categoria === 'Operaciones' ? 'selected' : '' %>>
+      Operaciones
+    </option>
+  </select>
+
+  <label for="prioridad">Prioridad</label>
+  <select id="prioridad" name="prioridad" required>
+    <option value="" <%= !fd.prioridad ? 'selected' : '' %>>
+      Selecciona una prioridad
+    </option>
+    <option value="Baja" <%= fd.prioridad === 'Baja' ? 'selected' : '' %>>
+      Baja
+    </option>
+    <option value="Media" <%= fd.prioridad === 'Media' ? 'selected' : '' %>>
+      Media
+    </option>
+    <option value="Alta" <%= fd.prioridad === 'Alta' ? 'selected' : '' %>>
+      Alta
+    </option>
+  </select>
+
+  <label for="solicitante_nombre">Tu nombre</label>
+  <input
+    type="text"
+    id="solicitante_nombre"
+    name="solicitante_nombre"
+    required
+    value="<%= fd.solicitante_nombre || '' %>"
+  />
+
+  <label for="solicitante_email">Tu correo</label>
+  <input
+    type="email"
+    id="solicitante_email"
+    name="solicitante_email"
+    required
+    value="<%= fd.solicitante_email || '' %>"
+  />
+
+  <button type="submit">Enviar ticket</button>
+</form>
