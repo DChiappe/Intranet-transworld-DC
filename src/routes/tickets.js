@@ -55,15 +55,7 @@ router.post('/:id/responder', async (req, res) => {
         ? asunto_respuesta
         : `Respuesta a tu ticket #${id}: ${titulo}`;
 
-    // 3) Enviar correo (nodemailer soporta Promises si no pasas callback)
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || 'Mesa de Soporte <dchiappe@transworld.cl>',
-      to: solicitante_email,
-      subject,
-      text: mensaje_respuesta
-    });
-
-    // 4) Guardar respuesta en BD
+    // 3) Guardar respuesta en BD (primero aseguramos esto)
     const sqlRespuesta = `
       INSERT INTO ticket_respuestas (ticket_id, mensaje, remitente)
       VALUES (?, ?, 'soporte')
@@ -71,7 +63,22 @@ router.post('/:id/responder', async (req, res) => {
 
     await db.query(sqlRespuesta, [id, mensaje_respuesta]);
 
-    // 5) Volver al detalle del ticket
+    // 4) Enviar correo SIN bloquear la respuesta HTTP
+    transporter
+      .sendMail({
+        from: process.env.SMTP_FROM || 'Mesa de Soporte <dchiappe@transworld.cl>',
+        to: solicitante_email,
+        subject,
+        text: mensaje_respuesta
+      })
+      .then(info => {
+        console.log('Correo de respuesta enviado:', info.messageId || info);
+      })
+      .catch(err => {
+        console.error('Error enviando correo de respuesta:', err);
+      });
+
+    // 5) Volver al detalle del ticket (el usuario no espera al correo)
     res.redirect(`/sistemas/tickets/${id}`);
   } catch (err) {
     console.error('Error en flujo de respuesta de ticket:', err);
