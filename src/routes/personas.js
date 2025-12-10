@@ -3,24 +3,25 @@ const router = express.Router();
 const db = require('../db');   
 
 // GET /personas  → página principal + cumpleaños
-router.get('/', (req, res) => {
+router.get('/', async (req, res, next) => {
   const sql = `
     SELECT nombre, area, fecha_nacimiento
     FROM cumpleanios
     ORDER BY MONTH(fecha_nacimiento), DAY(fecha_nacimiento)
   `;
 
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error('Error consultando personas:', err);
-      return res.status(500).send('Error consultando personas');
-    }
+  try {
+    const [results] = await db.query(sql);
 
     res.render('personas/index', {
       titulo: 'Personas y Cultura',
       personas: results
     });
-  });
+  } catch (err) {
+    console.error('Error consultando personas:', err);
+    // puedes usar next(err) si tienes middleware de error global
+    res.status(500).send('Error consultando personas');
+  }
 });
 
 // GET /personas/organigrama
