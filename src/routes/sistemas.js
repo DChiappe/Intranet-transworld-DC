@@ -55,7 +55,6 @@ router.get('/tickets/:id', async (req, res) => {
   const sqlTicket = `
     SELECT 
       id,
-      titulo,
       descripcion,
       categoria,
       prioridad,
