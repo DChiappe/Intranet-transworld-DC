@@ -60,6 +60,7 @@ async function main() {
         INSERT INTO tickets (
           titulo,
           descripcion,
+          
           categoria,
           prioridad,
           estado,

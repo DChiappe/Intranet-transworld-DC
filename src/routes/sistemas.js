@@ -22,6 +22,7 @@ router.get('/tickets', async (req, res) => {
     SELECT 
       id,
       titulo,
+  
       categoria,
       prioridad,
       estado,
