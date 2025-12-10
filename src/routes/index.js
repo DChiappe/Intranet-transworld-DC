@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const usdHoy = 950.5; // por ahora fijo, luego lo puedes automatizar
 
   const hoy = new Date();
@@ -15,18 +15,18 @@ router.get('/', (req, res) => {
     WHERE MONTH(fecha_nacimiento) = ? AND DAY(fecha_nacimiento) = ?
   `;
 
-  db.query(sql, [mes, dia], (err, results) => {
-    if (err) {
-      console.error('Error consultando cumpleaños:', err);
-      return res.status(500).send('Error consultando cumpleaños');
-    }
+  try {
+    const [results] = await db.query(sql, [mes, dia]);
 
     res.render('home', {
       titulo: 'Inicio',
       usdHoy,
       cumpleaniosHoy: results   // results es un array de filas
     });
-  });
+  } catch (err) {
+    console.error('Error consultando cumpleaños:', err);
+    res.status(500).send('Error consultando cumpleaños');
+  }
 });
 
 module.exports = router;

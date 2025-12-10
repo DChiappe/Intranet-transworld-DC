@@ -17,7 +17,7 @@ router.get('/', (req, res) => {
 //  Listado de tickets (tipo Freshdesk)
 //  GET /sistemas/tickets
 // ======================================================================
-router.get('/tickets', (req, res) => {
+router.get('/tickets', async (req, res) => {
   const sql = `
     SELECT 
       id,
@@ -32,24 +32,24 @@ router.get('/tickets', (req, res) => {
     ORDER BY fecha_creacion DESC
   `;
 
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error('Error consultando tickets:', err);
-      return res.status(500).send('Error consultando tickets');
-    }
+  try {
+    const [results] = await db.query(sql);
 
     res.render('sistemas/tickets', {
       titulo: 'Ticketera',
       tickets: results
     });
-  });
+  } catch (err) {
+    console.error('Error consultando tickets:', err);
+    res.status(500).send('Error consultando tickets');
+  }
 });
 
 // ======================================================================
 //  Detalle de un ticket + historial de respuestas
 //  GET /sistemas/tickets/:id
 // ======================================================================
-router.get('/tickets/:id', (req, res) => {
+router.get('/tickets/:id', async (req, res) => {
   const { id } = req.params;
 
   const sqlTicket = `
@@ -79,14 +79,10 @@ router.get('/tickets/:id', (req, res) => {
     ORDER BY fecha ASC
   `;
 
-  db.query(sqlTicket, [id], (errTicket, ticketResults) => {
-    if (errTicket) {
-      console.error('Error obteniendo ticket:', errTicket);
-      return res.status(500).send('Error obteniendo ticket');
-    }
+  try {
+    const [ticketResults] = await db.query(sqlTicket, [id]);
 
     if (ticketResults.length === 0) {
-      // Si tienes una vista 404, la usamos. Si no, puedes hacer send().
       return res.status(404).render('404', {
         titulo: 'Ticket no encontrado'
       });
@@ -94,19 +90,17 @@ router.get('/tickets/:id', (req, res) => {
 
     const ticket = ticketResults[0];
 
-    db.query(sqlRespuestas, [id], (errResp, respuestasResults) => {
-      if (errResp) {
-        console.error('Error obteniendo respuestas del ticket:', errResp);
-        return res.status(500).send('Error obteniendo respuestas del ticket');
-      }
+    const [respuestasResults] = await db.query(sqlRespuestas, [id]);
 
-      res.render('sistemas/tickets_detalle', {
-        titulo: `Ticket #${id}`,
-        ticket,
-        respuestas: respuestasResults
-      });
+    res.render('sistemas/tickets_detalle', {
+      titulo: `Ticket #${id}`,
+      ticket,
+      respuestas: respuestasResults
     });
-  });
+  } catch (err) {
+    console.error('Error obteniendo ticket o respuestas:', err);
+    res.status(500).send('Error obteniendo información del ticket');
+  }
 });
 
 module.exports = router;
