@@ -5,7 +5,7 @@
 
 const { ImapFlow } = require('imapflow');
 const { simpleParser } = require('mailparser');
-const db = require('./db'); // ajusta la ruta si tu db.js está en otra carpeta
+const db = require('../db'); // ajusta la ruta si tu db.js está en otra carpeta
 
 async function main() {
   const client = new ImapFlow({
