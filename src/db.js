@@ -1,12 +1,11 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 
-// Pool de conexiones (recomendado)
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'intranet_user',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'intranet',
-  port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
+  host: process.env.MYSQLHOST,
+  port: Number(process.env.MYSQLPORT) || 3306,
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQLDATABASE,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
