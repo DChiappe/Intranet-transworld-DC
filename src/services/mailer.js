@@ -1,14 +1,15 @@
 // src/services/mailer.js
 const nodemailer = require('nodemailer');
+const mg = require('nodemailer-mailgun-transport');
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.office365.com',
-  port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
-  secure: false, 
+
+const mailgunOptions = {
   auth: {
-    user: process.env.SMTP_USER || 'dchiappe@transworld.cl',
-    pass: process.env.SMTP_PASS || 'X@533442674582uh'
+    api_key: process.env.MAILGUN_API_KEY,
+    domain: process.env.MAILGUN_DOMAIN
   }
-});
+}
+
+const transporter = nodemailer.createTransport(mg(mailgunOptions));
 
 module.exports = transporter;

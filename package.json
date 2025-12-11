@@ -8,7 +8,8 @@
     "imapflow": "^1.1.1",
     "mailparser": "^3.9.0",
     "multer": "^2.0.2",
-    "mysql2": "^3.15.3"
+    "mysql2": "^3.15.3",
+    "nodemailer-mailgun-transport": "^2.1.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
