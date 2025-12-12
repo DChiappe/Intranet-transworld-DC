@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { getUsdHoy } = require('../services/usdService');
+
 
 router.get('/', async (req, res) => {
   const { valor: usdHoy } = await getUsdHoy()
