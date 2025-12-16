@@ -3,6 +3,8 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const requireRole = require('../middlewares/requireRole');
+
 
 const router = express.Router();
 
@@ -75,7 +77,7 @@ router.get('/eventos', (req, res) => {
 });
 
 // GET /marketing/eventos/nuevo → formulario para crear carpeta de evento
-router.get('/eventos/nuevo', (req, res) => {
+router.get('/eventos/nuevo', requireRole('admin', 'marketing'),(req, res) => {
   res.render('marketing/eventos_nuevo', {
     titulo: 'Nuevo evento',
     error: null
@@ -83,7 +85,7 @@ router.get('/eventos/nuevo', (req, res) => {
 });
 
 // POST /marketing/eventos/nuevo → creación de carpeta de evento
-router.post('/eventos/nuevo', (req, res) => {
+router.post('/eventos/nuevo', requireRole('admin', 'marketing'),(req, res) => {
   let { nombre } = req.body;
 
   if (!nombre || !nombre.trim()) {
@@ -123,7 +125,7 @@ router.post('/eventos/nuevo', (req, res) => {
 });
 
 // POST /marketing/eventos/:slug/eliminar → borrar carpeta del evento (y sus fotos)
-router.post('/eventos/:slug/eliminar', (req, res) => {
+router.post('/eventos/:slug/eliminar', requireRole('admin', 'marketing'),(req, res) => {
   const { slug } = req.params;
   const dirEvento = path.join(eventosBasePath, slug);
 
@@ -159,7 +161,7 @@ router.get('/eventos/:slug', (req, res) => {
 });
 
 // POST /marketing/eventos/:slug/fotos → subir una o varias fotos al evento
-router.post('/eventos/:slug/fotos', upload.array('fotos', 20), (req, res) => {
+router.post('/eventos/:slug/fotos', requireRole('admin', 'marketing'),upload.array('fotos', 20), (req, res) => {
   const { slug } = req.params;
   const dirEvento = path.join(eventosBasePath, slug);
 
@@ -172,7 +174,7 @@ router.post('/eventos/:slug/fotos', upload.array('fotos', 20), (req, res) => {
 });
 
 // POST /marketing/eventos/:slug/fotos/:filename/eliminar → borrar una foto
-router.post('/eventos/:slug/fotos/:filename/eliminar', (req, res) => {
+router.post('/eventos/:slug/fotos/:filename/eliminar', requireRole('admin', 'marketing'), (req, res) => {
   const { slug, filename } = req.params;
   const filePath = path.join(eventosBasePath, slug, filename);
 

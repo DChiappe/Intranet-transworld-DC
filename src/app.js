@@ -24,6 +24,8 @@ const sistemasRoutes = require('./routes/sistemas');
 const marketingRoutes = require('./routes/marketing');
 const authRoutes = require('./routes/auth');
 const rolesRoutes = require('./routes/roles');
+const docsRoutes = require('./routes/docs');
+
 
 // ❗ Importante: rutas POST /tickets/:id/...
 // Estas están en: /src/routes/tickets.js
@@ -135,6 +137,8 @@ app.use('/personas', requireAuth, personasRoutes);
 app.use('/sistemas', requireAuth, sistemasRoutes);
 app.use('/marketing', requireAuth, marketingRoutes);
 app.use('/roles', requireAuth, rolesRoutes);
+app.use('/docs', requireAuth, docsRoutes);
+
 
 // RUTAS DE TICKETS (responder / actualizar)
 // Están separadas porque no forman parte visual de /sistemas

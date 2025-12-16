@@ -3,9 +3,11 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const transporter = require('../services/mailer');
+const requireRole = require('../middlewares/requireRole');
+
 
 // POST /tickets/:id/actualizar
-router.post('/:id/actualizar', async (req, res) => {
+router.post('/:id/actualizar', requireRole('admin'),async (req, res) => {
   const { id } = req.params;
   const { categoria, prioridad, estado } = req.body;
 
@@ -25,7 +27,7 @@ router.post('/:id/actualizar', async (req, res) => {
 });
 
 // POST /tickets/:id/responder
-router.post('/:id/responder', async (req, res) => {
+router.post('/:id/responder', requireRole('admin'),async (req, res) => {
   const { id } = req.params;
   const { asunto_respuesta, mensaje_respuesta } = req.body;
 
