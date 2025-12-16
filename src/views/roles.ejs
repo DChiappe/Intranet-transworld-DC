@@ -1,0 +1,53 @@
+<div class="contenedor">
+  <h1>Asignación de Roles</h1>
+
+  <% if (ok) { %>
+    <p class="mensaje-exito"><%= ok %></p>
+  <% } %>
+
+  <% if (error) { %>
+    <p class="mensaje-error"><%= error %></p>
+  <% } %>
+
+  <table class="tabla-simple">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Confirmado</th>
+        <th>Rol</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% users.forEach(u => { %>
+        <tr>
+          <td><%= u.id %></td>
+          <td><%= u.first_name %> <%= u.last_name %></td>
+          <td><%= u.email %></td>
+          <td><%= u.email_confirmed ? 'Sí' : 'No' %></td>
+          <td>
+            <form action="/roles/<%= u.id %>" method="POST" style="display:flex; gap:8px; align-items:center;">
+              <select name="role">
+                <option value="" <%= !u.role ? 'selected' : '' %>>Sin asignar</option>
+                <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>Admin</option>
+                <option value="marketing" <%= u.role === 'marketing' ? 'selected' : '' %>>Marketing</option>
+                <option value="rrhh" <%= u.role === 'rrhh' ? 'selected' : '' %>>RRHH</option>
+                <option value="teresa" <%= u.role === 'teresa' ? 'selected' : '' %>>Teresa</option>
+                <option value="control_y_seguridad" <%= u.role === 'control_y_seguridad' ? 'selected' : '' %>>Control y seguridad</option>
+              </select>
+          </td>
+          <td>
+              <button type="submit">Guardar</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <p style="margin-top:12px; font-size:0.95rem;">
+    Nota: aquí solo se asigna el valor del rol. Los permisos por sección se implementan en el siguiente paso.
+  </p>
+</div>

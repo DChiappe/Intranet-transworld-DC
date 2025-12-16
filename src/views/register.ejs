@@ -1,0 +1,32 @@
+<div class="login-page">
+  <div class="card-login">
+    <h2>Registro de usuario</h2>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <p class="mensaje-error"><%= error %></p>
+    <% } %>
+
+    <form action="/register" method="POST" class="form-login">
+      <label for="first_name">Nombre</label>
+      <input type="text" id="first_name" name="first_name" required>
+
+      <label for="last_name">Apellido</label>
+      <input type="text" id="last_name" name="last_name" required>
+
+      <label for="email">Email</label>
+      <input type="text" id="email" name="email" required>
+
+      <label for="password">Contraseña (mín. 6 caracteres)</label>
+      <input type="password" id="password" name="password" required>
+
+      <label for="password2">Repetir contraseña</label>
+      <input type="password" id="password2" name="password2" required>
+
+      <button type="submit">Registrarme</button>
+    </form>
+
+    <div class="login-links">
+      <a href="/login">Volver a login</a>
+    </div>
+  </div>
+</div>

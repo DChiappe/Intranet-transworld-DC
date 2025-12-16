@@ -57,6 +57,10 @@
           <a href="/marketing/eventos">Galería de eventos</a>
         </div>
       </div>
+      <!-- Roles (solo admin) -->
+      <% if (typeof usuario !== 'undefined' && usuario && usuario.role === 'admin') { %>
+        <a href="/roles">Roles</a>
+      <% } %>
 
       <!-- Usuario conectado -->
       <% if (typeof usuario !== 'undefined' && usuario) { %>
@@ -65,6 +69,7 @@
           <a href="/logout">Cerrar sesión</a>
         </div>
       <% } %>
+      
     </nav>
   </div>
 </header>

@@ -1,0 +1,17 @@
+<div class="login-page">
+  <div class="card-login">
+    <h2>Confirmación de correo</h2>
+
+    <% if (ok) { %>
+      <p class="mensaje-exito"><%= message %></p>
+      <div class="login-links">
+        <a href="/login">Ir a login</a>
+      </div>
+    <% } else { %>
+      <p class="mensaje-error"><%= message %></p>
+      <div class="login-links">
+        <a href="/register">Volver a registro</a>
+      </div>
+    <% } %>
+  </div>
+</div>

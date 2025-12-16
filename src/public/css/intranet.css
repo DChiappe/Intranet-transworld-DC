@@ -276,9 +276,41 @@ table.tabla-simple tr:nth-child(even) td {
   max-width: 600px;
 }
 
+.mensaje-info {
+  color: #0b4f6c;
+  background: #e7f3ff;
+  border: 1px solid #b6d7ff;
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.mensaje-exito {
+  color: #0b5d1e;
+  background: #eaf8ee;
+  border: 1px solid #bfe7c8;
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
 /* =======================
    Login
    ======================= */
+.login-links {
+  margin-top: 14px;
+  text-align: center;
+}
+.login-links a {
+  color: #003a70;
+  text-decoration: none;
+  font-weight: 600;
+}
+.login-links a:hover {
+  text-decoration: underline;
+}
+
 
 .login-page {
   display: flex;
