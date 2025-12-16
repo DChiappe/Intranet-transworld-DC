@@ -1,13 +1,70 @@
 <h2>Protocolos</h2>
 <p>
-  En esta sección se agrupan los protocolos formales para la actuación en
-  situaciones específicas y casos especiales.
+  Lineamientos formales para situaciones específicas y criterios de actuación.
 </p>
 
-<div class="grid-opciones">
+<!-- Requiere (backend):
+  - archivos: string[]
+  - POST /procesos/protocolos/subir
+  - POST /procesos/protocolos/:archivo/eliminar
+  - GET  /docs/protocolos/:archivo
+-->
+
+<% const canWrite = (typeof can !== 'undefined' && can.protocolos_write); %>
+
+<% if (canWrite) { %>
+  <div class="panel">
+    <h3 class="panel-title">Subir nuevo protocolo</h3>
+
+    <form action="/procesos/protocolos/subir" method="POST" enctype="multipart/form-data">
+      <input type="file" name="archivo" required>
+      <button type="submit" class="btn btn-primario">Subir archivo</button>
+    </form>
+  </div>
+<% } %>
+
+<div class="panel" style="margin-top: 18px;">
+  <h3 class="panel-title">Archivos disponibles</h3>
+
+  <% if (!archivos || archivos.length === 0) { %>
+    <p>No hay archivos cargados en esta sección.</p>
+  <% } else { %>
+    <ul class="lista-archivos">
+      <% archivos.forEach(function(a) { %>
+        <li style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
+          <span><%= a %></span>
+
+          <div style="display:flex; gap:8px; align-items:center;">
+            <a class="btn" href="/docs/protocolos/<%= encodeURIComponent(a) %>" target="_blank" rel="noopener">
+              Descargar
+            </a>
+
+            <% if (canWrite) { %>
+              <form
+                action="/procesos/protocolos/<%= encodeURIComponent(a) %>/eliminar"
+                method="POST"
+                onsubmit="return confirm('¿Eliminar este archivo?');"
+                style="margin:0;"
+              >
+                <button type="submit" class="btn btn-peligro">Eliminar</button>
+              </form>
+            <% } %>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+
+  <% if (!canWrite) { %>
+    <p class="small-text" style="margin-top:10px;">
+      Tienes acceso de solo lectura en esta sección.
+    </p>
+  <% } %>
+</div>
+
+<div class="grid-opciones" style="margin-top: 18px;">
   <a class="boton-opcion" href="/procesos">
     Volver a Procesos y Documentos
     <span>Regresar al menú principal de documentos.</span>
   </a>
 </div>
-

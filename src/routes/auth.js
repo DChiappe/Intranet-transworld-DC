@@ -82,6 +82,16 @@ router.post('/login', async (req, res) => {
       });
     } */
 
+    // Requisito: si no tiene rol asignado, NO puede iniciar sesión
+    if (!u.role || String(u.role).trim() === '') {
+      return res.status(403).render('login', {
+        titulo: 'Iniciar sesión',
+        error: 'Tu cuenta está registrada, pero aún no tiene un rol asignado. Contacta al administrador para habilitar el acceso.',
+        info: null
+      });
+    }
+
+
     const computed = pbkdf2Hash(password, u.password_salt);
 
     if (!safeEqualHex(computed, u.password_hash)) {

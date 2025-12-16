@@ -1,9 +1,53 @@
 <h2>Organigrama</h2>
 <p>A continuación se presenta el organigrama actualizado de Transworld.</p>
 
+<!-- Requiere (backend opcional):
+  - organigramaUrl: URL del archivo actual (si no viene, usa la imagen por defecto)
+  - POST /personas/organigrama/subir (multipart, name="organigrama")
+  - POST /personas/organigrama/eliminar
+-->
+
+<% const canWrite = (typeof can !== 'undefined' && can.organigrama_write); %>
+<% const url = (typeof organigramaUrl !== 'undefined' && organigramaUrl) ? organigramaUrl : "/img/Organigrama%20TW.png"; %>
+
+<div class="panel" style="margin-bottom: 16px;">
+  <h3 class="panel-title">Archivo actual</h3>
+
+  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <a class="btn btn-primario" href="<%= url %>" target="_blank" rel="noopener">Descargar / Ver</a>
+
+    <% if (canWrite) { %>
+      <form action="/personas/organigrama/eliminar" method="POST"
+            onsubmit="return confirm('¿Eliminar el organigrama actual?');" style="margin:0;">
+        <button type="submit" class="btn btn-peligro">Eliminar</button>
+      </form>
+    <% } %>
+  </div>
+
+  <% if (!canWrite) { %>
+    <p class="small-text" style="margin-top:10px;">
+      Tienes acceso de solo lectura en esta sección.
+    </p>
+  <% } %>
+</div>
+
+<% if (canWrite) { %>
+  <div class="panel" style="margin-bottom: 16px;">
+    <h3 class="panel-title">Subir / Reemplazar organigrama</h3>
+
+    <form action="/personas/organigrama/subir" method="POST" enctype="multipart/form-data">
+      <input type="file" name="organigrama" accept="image/*,application/pdf" required>
+      <button type="submit" class="btn btn-primario">Subir</button>
+    </form>
+    <p class="small-text" style="margin-top:8px;">
+      Puedes subir imagen (PNG/JPG) o PDF. El nuevo archivo reemplazará al anterior.
+    </p>
+  </div>
+<% } %>
+
 <div class="organigrama-contenedor">
   <img
-    src="/img/Organigrama%20TW.png"
+    src="<%= url %>"
     alt="Organigrama Transworld"
     class="organigrama-img"
   >

@@ -70,34 +70,44 @@
     </dl>
 
     <!-- Panel para actualizar área / importancia / estado -->
-    <div class="panel panel-actualizar-ticket">
-      <h3 class="panel-title">Actualizar área / importancia / estado</h3>
-      <form action="/tickets/<%= ticket.id %>/actualizar" method="POST" class="form-actualizar-ticket">
-        <label for="categoria">Área (categoría)</label>
-        <select id="categoria" name="categoria">
-          <option value="Sistemas" <%= ticket.categoria === 'Sistemas' ? 'selected' : '' %>>Sistemas</option>
-          <option value="Personas" <%= ticket.categoria === 'Personas' ? 'selected' : '' %>>Personas</option>
-          <option value="Procesos" <%= ticket.categoria === 'Procesos' ? 'selected' : '' %>>Procesos</option>
-          <option value="Marketing" <%= ticket.categoria === 'Marketing' ? 'selected' : '' %>>Marketing</option>
-          <option value="Otro" <%= ticket.categoria === 'Otro' ? 'selected' : '' %>>Otro</option>
-        </select>
+    <% const canReply = (typeof can !== 'undefined' && can.tickets_reply); %>
 
-        <label for="prioridad">Importancia (semáforo)</label>
-        <select id="prioridad" name="prioridad">
-          <option value="Alta" <%= ticket.prioridad === 'Alta' ? 'selected' : '' %>>🔴 Alta</option>
-          <option value="Media" <%= ticket.prioridad === 'Media' ? 'selected' : '' %>>🟡 Media</option>
-          <option value="Baja" <%= ticket.prioridad === 'Baja' ? 'selected' : '' %>>🟢 Baja</option>
-        </select>
+    <% if (canReply) { %>
+      <div class="panel panel-actualizar-ticket">
+        <h3 class="panel-title">Actualizar área / importancia / estado</h3>
+        <form action="/tickets/<%= ticket.id %>/actualizar" method="POST" class="form-actualizar-ticket">
+          <label for="categoria">Área (categoría)</label>
+          <select id="categoria" name="categoria">
+            <option value="Sistemas" <%= ticket.categoria === 'Sistemas' ? 'selected' : '' %>>Sistemas</option>
+            <option value="Personas" <%= ticket.categoria === 'Personas' ? 'selected' : '' %>>Personas</option>
+            <option value="Procesos" <%= ticket.categoria === 'Procesos' ? 'selected' : '' %>>Procesos</option>
+            <option value="Marketing" <%= ticket.categoria === 'Marketing' ? 'selected' : '' %>>Marketing</option>
+            <option value="Otros" <%= ticket.categoria === 'Otros' ? 'selected' : '' %>>Otros</option>
+          </select>
 
-        <label for="estado">Estado</label>
-        <select id="estado" name="estado">
-          <option value="Abierto" <%= ticket.estado === 'Abierto' ? 'selected' : '' %>>🔴 Abierto</option>
-          <option value="Cerrado" <%= ticket.estado === 'Cerrado' ? 'selected' : '' %>>🟢 Cerrado</option>
-        </select>
+          <label for="prioridad">Importancia</label>
+          <select id="prioridad" name="prioridad">
+            <option value="Alta" <%= ticket.prioridad === 'Alta' ? 'selected' : '' %>>🔴 Alta</option>
+            <option value="Media" <%= ticket.prioridad === 'Media' ? 'selected' : '' %>>🟡 Media</option>
+            <option value="Baja" <%= ticket.prioridad === 'Baja' ? 'selected' : '' %>>🟢 Baja</option>
+          </select>
 
-        <button type="submit" class="btn btn-primario">Guardar cambios</button>
-      </form>
-    </div>
+          <label for="estado">Estado</label>
+          <select id="estado" name="estado">
+            <option value="Abierto" <%= ticket.estado === 'Abierto' ? 'selected' : '' %>>🔴 Abierto</option>
+            <option value="Cerrado" <%= ticket.estado === 'Cerrado' ? 'selected' : '' %>>🟢 Cerrado</option>
+          </select>
+
+          <button type="submit" class="btn btn-primario">Guardar cambios</button>
+        </form>
+      </div>
+    <% } else { %>
+      <div class="panel panel-actualizar-ticket">
+        <h3 class="panel-title">Gestión del ticket</h3>
+        <p class="small-text">Este ticket es de solo lectura para tu perfil.</p>
+      </div>
+    <% } %>
+
 
     <!-- Historial de respuestas -->
     <div class="panel panel-historial">

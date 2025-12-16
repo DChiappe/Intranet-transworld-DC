@@ -77,6 +77,32 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use((req, res, next) => {
+  res.locals.usuario = req.session?.user || null;
+
+  const role = res.locals.usuario?.role || null;
+  const hasRole = (...roles) => role && roles.includes(role);
+
+  // Capacidades (solo UI por ahora)
+  res.locals.can = {
+    // Procesos
+    procedimientos_write: hasRole('admin', 'control_y_seguridad', 'teresa'),
+    protocolos_write: hasRole('admin', 'control_y_seguridad'),
+    achs_write: hasRole('admin', 'teresa'),
+    reglamento_write: hasRole('admin', 'teresa'),
+
+    // Personas
+    organigrama_write: hasRole('admin', 'rrhh'),
+
+    // Marketing
+    eventos_write: hasRole('admin', 'marketing'),
+
+    // Sistemas
+    tickets_reply: hasRole('admin'),
+  };
+
+  next();
+});
 
 // ================================
 // Archivos estáticos
