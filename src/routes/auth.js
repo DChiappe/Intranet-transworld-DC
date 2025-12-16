@@ -74,13 +74,13 @@ router.post('/login', async (req, res) => {
 
     const u = rows[0];
 
-    if (!u.email_confirmed) {
+    /*if (!u.email_confirmed) {
       return res.status(401).render('login', {
         titulo: 'Iniciar sesión',
         error: 'Debes confirmar tu correo antes de ingresar.',
         info: null
       });
-    }
+    } */
 
     const computed = pbkdf2Hash(password, u.password_salt);
 
