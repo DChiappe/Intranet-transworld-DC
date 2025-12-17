@@ -4,7 +4,10 @@ const router = express.Router();
 
 const pool = require('../db');
 const transporter = require('../services/mailer');
-
+router.use((req, res, next) => {
+  res.locals.layout = 'layout_auth';
+  next();
+});
 function getBaseUrl(req) {
   return process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`;
 }
