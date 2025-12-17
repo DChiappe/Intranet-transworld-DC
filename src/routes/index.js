@@ -3,30 +3,39 @@ const router = express.Router();
 const db = require('../db');
 const { getUsdHoy } = require('../services/usdService');
 
-
 router.get('/', async (req, res) => {
-  const { valor: usdHoy } = await getUsdHoy()
+  const { valor: usdHoy } = await getUsdHoy();
 
   const hoy = new Date();
   const mes = hoy.getMonth() + 1; // 1-12
-  const dia = hoy.getDate();      // 1-31
+  const diaHoy = hoy.getDate();
 
-  const sql = `
-    SELECT nombre, area, fecha_nacimiento
+  // Nombre del mes en español (Chile)
+  const mesNombreRaw = new Intl.DateTimeFormat('es-CL', { month: 'long' }).format(hoy);
+  const mesNombre = mesNombreRaw.charAt(0).toUpperCase() + mesNombreRaw.slice(1);
+
+  const sqlMes = `
+    SELECT 
+      nombre, 
+      area, 
+      DAY(fecha_nacimiento) AS dia
     FROM cumpleanios
-    WHERE MONTH(fecha_nacimiento) = ? AND DAY(fecha_nacimiento) = ?
+    WHERE MONTH(fecha_nacimiento) = ?
+    ORDER BY dia ASC, nombre ASC
   `;
 
   try {
-    const [results] = await db.query(sql, [mes, dia]);
+    const [resultsMes] = await db.query(sqlMes, [mes]);
 
     res.render('home', {
       titulo: 'Inicio',
       usdHoy,
-      cumpleaniosHoy: results   // results es un array de filas
+      mesNombre,
+      diaHoy,
+      cumpleaniosMes: resultsMes
     });
   } catch (err) {
-    console.error('Error consultando cumpleaños:', err);
+    console.error('Error consultando cumpleaños del mes:', err);
     res.status(500).send('Error consultando cumpleaños');
   }
 });

@@ -1,22 +1,43 @@
-<h2>Bienvenida/o a la intranet</h2>
+const express = require('express');
+const router = express.Router();
+const db = require('../db');
+const { getUsdHoy } = require('../services/usdService');
 
-<div class="tarjetas-home">
-  <div class="tarjeta">
-    <h3>USD del día</h3>
-    <p><strong><%= usdHoy %></strong></p>
-  </div>
+router.get('/', async (req, res) => {
+  const { valor: usdHoy } = await getUsdHoy();
 
-  <div class="tarjeta">
-    <h3>Cumpleaños de hoy</h3>
+  const hoy = new Date();
+  const mes = hoy.getMonth() + 1; // 1-12
+  const diaHoy = hoy.getDate();
 
-    <% if (!cumpleaniosHoy || cumpleaniosHoy.length === 0) { %>
-      <p>No hay cumpleaños registrados para hoy.</p>
-    <% } else { %>
-      <ul>
-        <% cumpleaniosHoy.forEach((p) => { %>
-          <li><%= p.nombre %> - Área: <%= p.area %></li>
-        <% }) %>
-      </ul>
-    <% } %>
-  </div>
-</div>
+  // Nombre del mes en español (Chile)
+  const mesNombreRaw = new Intl.DateTimeFormat('es-CL', { month: 'long' }).format(hoy);
+  const mesNombre = mesNombreRaw.charAt(0).toUpperCase() + mesNombreRaw.slice(1);
+
+  const sqlMes = `
+    SELECT 
+      nombre, 
+      area, 
+      DAY(fecha_nacimiento) AS dia
+    FROM cumpleanios
+    WHERE MONTH(fecha_nacimiento) = ?
+    ORDER BY dia ASC, nombre ASC
+  `;
+
+  try {
+    const [resultsMes] = await db.query(sqlMes, [mes]);
+
+    res.render('home', {
+      titulo: 'Inicio',
+      usdHoy,
+      mesNombre,
+      diaHoy,
+      cumpleaniosMes: resultsMes
+    });
+  } catch (err) {
+    console.error('Error consultando cumpleaños del mes:', err);
+    res.status(500).send('Error consultando cumpleaños');
+  }
+});
+
+module.exports = router;
