@@ -1,23 +1,33 @@
 <%
-  // Los nombres en BD vienen en MAYÚSCULAS: los convertimos a "Title Case"
+  // Función para invertir "APELLIDO NOMBRE" a "Nombre Apellido"
   function titleCase(s) {
-    return String(s || '')
-      .toLowerCase()
-      .split(' ')
-      .filter(Boolean)
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
+    if (!s) return '';
+    // Limpiamos y separamos por espacios
+    const palabras = String(s).toLowerCase().trim().split(/\s+/);
+    
+    if (palabras.length >= 2) {
+      // Tomamos el primero como apellido y el resto como nombre(s)
+      const apellido = palabras[0];
+      const nombres = palabras.slice(1);
+      
+      // Formateamos: Nombre(s) Apellido
+      const nombreFormateado = nombres.map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
+      const apellidoFormateado = apellido.charAt(0).toUpperCase() + apellido.slice(1);
+      
+      return `${nombreFormateado} ${apellidoFormateado}`;
+    }
+    
+    // Si solo hay una palabra, solo capitalizamos
+    return palabras.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   }
 
-  // Para mostrar día/mes como en tu imagen (ej: 5/12)
-  const mesNum = new Date().getMonth() + 1; // 1-12
+  const mesNum = new Date().getMonth() + 1; 
 %>
 
 <h2>Bienvenida/o a la intranet</h2>
 
 <div class="home-layout">
 
-  <!-- IZQUIERDA: imagen clickeable -->
   <div class="home-left">
     <a href="/sistemas/tickets" class="home-ti-link" title="Ir a Tickets">
       <div class="home-ti-card">
@@ -30,7 +40,6 @@
     </a>
   </div>
 
-  <!-- DERECHA: USD + Cumpleañeros del mes -->
   <div class="home-right">
 
     <div class="tarjeta">

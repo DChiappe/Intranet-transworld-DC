@@ -941,3 +941,57 @@ table.tabla tr:hover td {
   margin: 6px 0;
 }
 
+/* Asegura que el contenedor de tarjetas tenga espacio */
+.cumple-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Más espacio entre tarjetas */
+  margin-top: 15px;
+}
+
+.cumple-card {
+  display: flex;
+  align-items: center; /* Centrado vertical del contenido */
+  background: #ffffff;
+  border: 2px solid #2aa8d6; 
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.cumple-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Columna de la fecha */
+.cumple-fecha {
+  min-width: 85px;
+  background: #e1f5fe;
+  color: #0277bd;
+  padding: 20px 10px;
+  font-weight: bold;
+  text-align: center;
+  border-right: 2px solid #2aa8d6;
+}
+
+/* Columna de la información */
+.cumple-info {
+  flex-grow: 1;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.cumple-nombre {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #333;
+}
+
+.cumple-area {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 4px;
+}
