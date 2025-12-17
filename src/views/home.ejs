@@ -1,5 +1,4 @@
 <%
-  // 1. Tu función titleCase para reordenar nombres
   function titleCase(s) {
     if (!s) return '';
     const palabras = String(s).toLowerCase().trim().split(/\s+/);
@@ -20,28 +19,45 @@
   }
 
   const mesNum = new Date().getMonth() + 1;
-
-  // 2. Lógica de reordenamiento: Pendientes primero, Pasados al final
-  // Creamos una copia del array para no afectar el original y lo ordenamos
   const cumpleaniosOrdenados = [...cumpleaniosMes].sort((a, b) => {
     const aPasado = a.dia < diaHoy;
     const bPasado = b.dia < diaHoy;
-
-    // Si uno pasó y el otro no, el que NO ha pasado va primero
-    if (aPasado !== bPasado) {
-      return aPasado ? 1 : -1;
-    }
-    // Si ambos están en el mismo grupo (ambos pasaron o ambos pendientes), 
-    // mantenemos el orden por día
+    if (aPasado !== bPasado) return aPasado ? 1 : -1;
     return a.dia - b.dia;
   });
 %>
+
+<style>
+  .tarjeta-usd {
+    background: linear-gradient(135deg, #f1f8e9 0%, #ffffff 100%);
+    border-left: 5px solid #4caf50;
+    padding: 1.2rem;
+  }
+  .usd-valor {
+    color: #2e7d32;
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 5px 0;
+  }
+  .usd-label {
+    font-size: 0.8rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: bold;
+  }
+  .chart-box {
+    width: 100%;
+    height: 80px;
+    margin-top: 10px;
+  }
+</style>
 
 <h2>Bienvenida/o a la intranet</h2>
 
 <div class="home-layout">
   <div class="home-left">
-    <a href="/sistemas/tickets" class="home-ti-link" title="Ir a Tickets">
+    <a href="/sistemas/tickets" class="home-ti-link">
       <div class="home-ti-card">
         <img src="/img/Img%20Servicios%20TI.png" alt="Servicios TI" class="home-ti-img" />
       </div>
@@ -49,29 +65,28 @@
   </div>
 
   <div class="home-right">
-    <div class="tarjeta">
-      <h3>USD del día</h3>
-      <p class="home-usd"><strong><%= usdHoy %></strong></p>
+    <div class="tarjeta tarjeta-usd">
+      <div class="usd-label">Dólar Observado</div>
+      <p class="usd-valor">$<%= usdHoy %></p>
+      <div class="chart-box">
+        <canvas id="usdChart"></canvas>
+      </div>
     </div>
 
     <div class="tarjeta">
       <h3>Cumpleaños de <%= mesNombre %></h3>
-
       <% if (!cumpleaniosOrdenados || cumpleaniosOrdenados.length === 0) { %>
-        <p>No hay cumpleaños registrados para este mes.</p>
+        <p>No hay cumpleaños registrados.</p>
       <% } else { %>
         <div class="cumple-cards">
           <% cumpleaniosOrdenados.forEach((p) => { 
-            // Definir clase de estado para el color del fondo
             let estadoClase = (p.dia < diaHoy) ? 'cumple-pasado' : (p.dia === diaHoy ? 'cumple-hoy' : 'cumple-futuro');
           %>
             <div class="cumple-card <%= estadoClase %>">
-              <div class="cumple-fecha">
-                <span class="cumple-dia"><%= p.dia %>/<%= mesNum %></span>
-              </div>
+              <div class="cumple-fecha"><span><%= p.dia %>/<%= mesNum %></span></div>
               <div class="cumple-info">
                 <div class="cumple-nombre"><%= titleCase(p.nombre) %></div>
-                <div class="cumple-area">Área: <%= titleCase(p.area) %></div>
+                <div class="cumple-area"><%= titleCase(p.area) %></div>
               </div>
             </div>
           <% }) %>
@@ -80,3 +95,35 @@
     </div>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const rawData = '<%- JSON.stringify(usdHistorico) %>';
+  const datosHistoricos = JSON.parse(rawData);
+
+  const ctx = document.getElementById('usdChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: datosHistoricos.map(d => new Date(d.fecha).getDate()),
+      datasets: [{
+        data: datosHistoricos.map(d => d.valor),
+        borderColor: '#4caf50',
+        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+        borderWidth: 2,
+        fill: true,
+        pointRadius: 2,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { display: false },
+        y: { display: false }
+      }
+    }
+  });
+</script>
