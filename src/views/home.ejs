@@ -1,47 +1,46 @@
 <%
-  // Función para invertir "APELLIDO NOMBRE" a "Nombre Apellido"
+  // Función para convertir "APELLIDO1 APELLIDO2 NOMBRE" a "Nombre Apellido1 Apellido2"
   function titleCase(s) {
     if (!s) return '';
-    // Limpiamos y separamos por espacios
     const palabras = String(s).toLowerCase().trim().split(/\s+/);
     
-    if (palabras.length >= 2) {
-      // Tomamos el primero como apellido y el resto como nombre(s)
-      const apellido = palabras[0];
-      const nombres = palabras.slice(1);
+    // Si tiene 3 o más palabras (Apellido1 Apellido2 Nombre ...)
+    if (palabras.length >= 3) {
+      const apellido1 = palabras[0];
+      const apellido2 = palabras[1];
+      const nombres = palabras.slice(2); // Todo lo que queda es el nombre
       
-      // Formateamos: Nombre(s) Apellido
       const nombreFormateado = nombres.map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
-      const apellidoFormateado = apellido.charAt(0).toUpperCase() + apellido.slice(1);
+      const ap1Formateado = apellido1.charAt(0).toUpperCase() + apellido1.slice(1);
+      const ap2Formateado = apellido2.charAt(0).toUpperCase() + apellido2.slice(1);
       
-      return `${nombreFormateado} ${apellidoFormateado}`;
+      return `${nombreFormateado} ${ap1Formateado} ${ap2Formateado}`;
+    } 
+    // Si solo tiene 2 palabras (Apellido1 Nombre)
+    else if (palabras.length === 2) {
+      const apellido = palabras[0];
+      const nombre = palabras[1];
+      return `${nombre.charAt(0).toUpperCase() + nombre.slice(1)} ${apellido.charAt(0).toUpperCase() + apellido.slice(1)}`;
     }
     
-    // Si solo hay una palabra, solo capitalizamos
     return palabras.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   }
 
-  const mesNum = new Date().getMonth() + 1; 
+  const mesNum = new Date().getMonth() + 1; [cite: 11]
 %>
 
 <h2>Bienvenida/o a la intranet</h2>
 
 <div class="home-layout">
-
   <div class="home-left">
     <a href="/sistemas/tickets" class="home-ti-link" title="Ir a Tickets">
       <div class="home-ti-card">
-        <img
-          src="/img/Img%20Servicios%20TI.png"
-          alt="Servicios TI"
-          class="home-ti-img"
-        />
+        <img src="/img/Img%20Servicios%20TI.png" alt="Servicios TI" class="home-ti-img" />
       </div>
     </a>
   </div>
 
-  <div class="home-right">
-
+  <div class="home-right"> [cite: 13]
     <div class="tarjeta">
       <h3>USD del día</h3>
       <p class="home-usd"><strong><%= usdHoy %></strong></p>
@@ -53,24 +52,20 @@
       <% if (!cumpleaniosMes || cumpleaniosMes.length === 0) { %>
         <p>No hay cumpleaños registrados para este mes.</p>
       <% } else { %>
-
         <div class="cumple-cards">
           <% cumpleaniosMes.forEach((p) => { %>
-            <div class="cumple-card <%= (p.dia === diaHoy) ? 'cumple-hoy' : '' %>">
+            <div class="cumple-card <%= (p.dia === diaHoy) ? 'cumple-hoy' : '' %>"> [cite: 14, 15]
               <div class="cumple-fecha">
                 <span class="cumple-dia"><%= p.dia %>/<%= mesNum %></span>
               </div>
-
               <div class="cumple-info">
                 <div class="cumple-nombre"><%= titleCase(p.nombre) %></div>
-                <div class="cumple-area">Área: <%= titleCase(p.area) %></div>
+                <div class="cumple-area">Área: <%= titleCase(p.area) %></div> [cite: 16]
               </div>
             </div>
           <% }) %>
         </div>
-
       <% } %>
     </div>
-
   </div>
 </div>

@@ -951,37 +951,42 @@ table.tabla tr:hover td {
 
 .cumple-card {
   display: flex;
-  align-items: center; /* Centrado vertical del contenido */
+  /* stretch permite que los hijos (fecha e info) ocupen todo el alto disponible */
+  align-items: stretch; 
   background: #ffffff;
   border: 2px solid #2aa8d6; 
   border-radius: 12px;
-  overflow: hidden;
+  /* Importante para que las esquinas de la franja celeste respeten el radio de la tarjeta */
+  overflow: hidden; 
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   transition: transform 0.2s ease;
+  /* Aseguramos que no haya padding que separe el contenido del borde */
+  padding: 0; 
+  min-height: 80px; /* Ajusta según el alto que desees */
 }
 
-.cumple-card:hover {
-  transform: translateY(-2px);
-}
-
-/* Columna de la fecha */
 .cumple-fecha {
   min-width: 85px;
-  background: #e1f5fe;
+  background: #e1f5fe; /* Celeste de fondo */
   color: #0277bd;
-  padding: 20px 10px;
+  /* Centrado del texto de la fecha */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: bold;
-  text-align: center;
   border-right: 2px solid #2aa8d6;
+  /* Quitamos paddings laterales excesivos para que el borde se pegue */
+  padding: 0 10px; 
 }
 
-/* Columna de la información */
 .cumple-info {
   flex-grow: 1;
   padding: 15px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  /* Alineación a la izquierda para el nombre y área */
+  text-align: left; 
 }
 
 .cumple-nombre {
