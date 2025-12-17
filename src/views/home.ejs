@@ -1,43 +1,47 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../db');
-const { getUsdHoy } = require('../services/usdService');
+<h2>Bienvenida/o a la intranet</h2>
 
-router.get('/', async (req, res) => {
-  const { valor: usdHoy } = await getUsdHoy();
+<div class="home-layout">
 
-  const hoy = new Date();
-  const mes = hoy.getMonth() + 1; // 1-12
-  const diaHoy = hoy.getDate();
+  <!-- IZQUIERDA: imagen clickeable -->
+  <div class="home-left">
+    <a href="/sistemas/tickets" class="home-ti-link" title="Ir a Tickets">
+      <div class="home-ti-card">
+        <img
+          src="/img/Img%20Servicios%20TI.png"
+          alt="Servicios TI"
+          class="home-ti-img"
+        />
+      </div>
+    </a>
+  </div>
 
-  // Nombre del mes en español (Chile)
-  const mesNombreRaw = new Intl.DateTimeFormat('es-CL', { month: 'long' }).format(hoy);
-  const mesNombre = mesNombreRaw.charAt(0).toUpperCase() + mesNombreRaw.slice(1);
+  <!-- DERECHA: USD + Cumpleañeros del mes -->
+  <div class="home-right">
 
-  const sqlMes = `
-    SELECT 
-      nombre, 
-      area, 
-      DAY(fecha_nacimiento) AS dia
-    FROM cumpleanios
-    WHERE MONTH(fecha_nacimiento) = ?
-    ORDER BY dia ASC, nombre ASC
-  `;
+    <div class="tarjeta">
+      <h3>USD del día</h3>
+      <p class="home-usd"><strong><%= usdHoy %></strong></p>
+    </div>
 
-  try {
-    const [resultsMes] = await db.query(sqlMes, [mes]);
+    <div class="tarjeta">
+      <h3>Cumpleaños de <%= mesNombre %></h3>
 
-    res.render('home', {
-      titulo: 'Inicio',
-      usdHoy,
-      mesNombre,
-      diaHoy,
-      cumpleaniosMes: resultsMes
-    });
-  } catch (err) {
-    console.error('Error consultando cumpleaños del mes:', err);
-    res.status(500).send('Error consultando cumpleaños');
-  }
-});
+      <% if (!cumpleaniosMes || cumpleaniosMes.length === 0) { %>
+        <p>No hay cumpleaños registrados para este mes.</p>
+      <% } else { %>
+        <ul class="cumple-list">
+          <% cumpleaniosMes.forEach((p) => { %>
+            <li>
+              <% if (p.dia === diaHoy) { %>
+                <strong><%= p.dia %> - <%= p.nombre %></strong> — Área: <%= p.area %>
+              <% } else { %>
+                <%= p.dia %> - <%= p.nombre %> — Área: <%= p.area %>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </div>
 
-module.exports = router;
+  </div>
+</div>
