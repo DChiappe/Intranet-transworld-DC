@@ -3,11 +3,7 @@ const crypto = require('crypto');
 const router = express.Router();
 
 const pool = require('../db');
-const transporter = require('../services/mailer');
-router.use((req, res, next) => {
-  res.locals.layout = 'layout_auth';
-  next();
-});
+
 function getBaseUrl(req) {
   return process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`;
 }
@@ -41,6 +37,7 @@ router.get('/login', (req, res) => {
   res.render('login', {
     titulo: 'Iniciar sesión',
     error: null,
+    layout: 'layout_auth',
     info
   });
 });
@@ -71,7 +68,8 @@ router.post('/login', async (req, res) => {
       return res.status(401).render('login', {
         titulo: 'Iniciar sesión',
         error: 'Usuario o contraseña incorrectos',
-        info: null
+        info: null,
+        layout: 'layout_auth',
       });
     }
 
@@ -90,7 +88,8 @@ router.post('/login', async (req, res) => {
       return res.status(403).render('login', {
         titulo: 'Iniciar sesión',
         error: 'Tu cuenta está registrada, pero aún no tiene un rol asignado. Contacta al administrador para habilitar el acceso.',
-        info: null
+        info: null,
+        layout: 'layout_auth',
       });
     }
 
@@ -101,7 +100,8 @@ router.post('/login', async (req, res) => {
       return res.status(401).render('login', {
         titulo: 'Iniciar sesión',
         error: 'Usuario o contraseña incorrectos',
-        info: null
+        info: null,
+        layout: 'layout_auth',
       });
     }
 
@@ -109,7 +109,8 @@ router.post('/login', async (req, res) => {
       id: u.id,
       username: `${u.first_name} ${u.last_name}`.trim(),
       email: u.email,
-      role: u.role || null
+      role: u.role || null,
+      layout: 'layout_auth',
     };
 
     return res.redirect('/');
@@ -118,7 +119,8 @@ router.post('/login', async (req, res) => {
     return res.status(500).render('login', {
       titulo: 'Iniciar sesión',
       error: 'Error interno. Intenta nuevamente.',
-      info: null
+      info: null,
+      layout: 'layout_auth',
     });
   }
 });
@@ -129,7 +131,8 @@ router.get('/register', (req, res) => {
 
   res.render('register', {
     titulo: 'Registro',
-    error: null
+    error: null,
+    layout: 'layout_auth',
   });
 });
 
@@ -145,21 +148,24 @@ router.post('/register', async (req, res) => {
     if (!firstName || !lastName || !email || !password || !password2) {
       return res.status(400).render('register', {
         titulo: 'Registro',
-        error: 'Todos los campos son obligatorios.'
+        error: 'Todos los campos son obligatorios.',
+        layout: 'layout_auth'
       });
     }
 
     if (password.length < 6) {
       return res.status(400).render('register', {
         titulo: 'Registro',
-        error: 'La contraseña debe tener al menos 6 caracteres.'
+        error: 'La contraseña debe tener al menos 6 caracteres.',
+        layout: 'layout_auth',
       });
     }
 
     if (password !== password2) {
       return res.status(400).render('register', {
         titulo: 'Registro',
-        error: 'Las contraseñas no coinciden.'
+        error: 'Las contraseñas no coinciden.',
+        layout: 'layout_auth',
       });
     }
 
@@ -214,7 +220,8 @@ router.post('/register', async (req, res) => {
     console.error('Register error:', err);
     return res.status(500).render('register', {
       titulo: 'Registro',
-      error: 'Error interno al registrar. Intenta nuevamente.'
+      error: 'Error interno al registrar. Intenta nuevamente.',
+      layout: 'layout_auth',
     });
   }
 });
@@ -227,7 +234,8 @@ router.get('/confirm', async (req, res) => {
       return res.status(400).render('confirm', {
         titulo: 'Confirmación',
         ok: false,
-        message: 'Token inválido.'
+        message: 'Token inválido.',
+        layout: 'layout_auth',
       });
     }
 
@@ -240,7 +248,8 @@ router.get('/confirm', async (req, res) => {
       return res.status(400).render('confirm', {
         titulo: 'Confirmación',
         ok: false,
-        message: 'Token inválido o expirado.'
+        message: 'Token inválido o expirado.',
+        layout: 'layout_auth',
       });
     }
 
@@ -249,7 +258,8 @@ router.get('/confirm', async (req, res) => {
       return res.render('confirm', {
         titulo: 'Confirmación',
         ok: true,
-        message: 'Tu correo ya estaba confirmado. Ya puedes iniciar sesión.'
+        message: 'Tu correo ya estaba confirmado. Ya puedes iniciar sesión.',
+        layout: 'layout_auth',
       });
     }
 
@@ -258,7 +268,8 @@ router.get('/confirm', async (req, res) => {
       return res.status(400).render('confirm', {
         titulo: 'Confirmación',
         ok: false,
-        message: 'Este enlace expiró. Regístrate nuevamente para recibir otro.'
+        message: 'Este enlace expiró. Regístrate nuevamente para recibir otro.',
+        layout: 'layout_auth',
       });
     }
 
@@ -270,14 +281,16 @@ router.get('/confirm', async (req, res) => {
     return res.render('confirm', {
       titulo: 'Confirmación',
       ok: true,
-      message: 'Correo confirmado correctamente. Ya puedes iniciar sesión.'
+      message: 'Correo confirmado correctamente. Ya puedes iniciar sesión.',
+      layout: 'layout_auth',
     });
   } catch (err) {
     console.error('Confirm error:', err);
     return res.status(500).render('confirm', {
       titulo: 'Confirmación',
       ok: false,
-      message: 'Error interno al confirmar. Intenta nuevamente.'
+      message: 'Error interno al confirmar. Intenta nuevamente.',
+      layout: 'layout_auth',
     });
   }
 });
