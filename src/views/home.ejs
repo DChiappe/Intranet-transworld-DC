@@ -1,32 +1,40 @@
 <%
-  // Función para convertir "APELLIDO1 APELLIDO2 NOMBRE" a "Nombre Apellido1 Apellido2"
+  // 1. Tu función titleCase para reordenar nombres
   function titleCase(s) {
     if (!s) return '';
     const palabras = String(s).toLowerCase().trim().split(/\s+/);
-    
-    // Si tiene 3 o más palabras (Apellido1 Apellido2 Nombre)
     if (palabras.length >= 3) {
       const apellido1 = palabras[0];
       const apellido2 = palabras[1];
       const nombres = palabras.slice(2); 
-      
       const nombreFormateado = nombres.map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
       const ap1Formateado = apellido1.charAt(0).toUpperCase() + apellido1.slice(1);
       const ap2Formateado = apellido2.charAt(0).toUpperCase() + apellido2.slice(1);
-      
       return `${nombreFormateado} ${ap1Formateado} ${ap2Formateado}`;
-    } 
-    // Si tiene 2 palabras (Apellido1 Nombre)
-    else if (palabras.length === 2) {
+    } else if (palabras.length === 2) {
       const apellido = palabras[0];
       const nombre = palabras[1];
       return `${nombre.charAt(0).toUpperCase() + nombre.slice(1)} ${apellido.charAt(0).toUpperCase() + apellido.slice(1)}`;
     }
-    
     return palabras.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   }
 
   const mesNum = new Date().getMonth() + 1;
+
+  // 2. Lógica de reordenamiento: Pendientes primero, Pasados al final
+  // Creamos una copia del array para no afectar el original y lo ordenamos
+  const cumpleaniosOrdenados = [...cumpleaniosMes].sort((a, b) => {
+    const aPasado = a.dia < diaHoy;
+    const bPasado = b.dia < diaHoy;
+
+    // Si uno pasó y el otro no, el que NO ha pasado va primero
+    if (aPasado !== bPasado) {
+      return aPasado ? 1 : -1;
+    }
+    // Si ambos están en el mismo grupo (ambos pasaron o ambos pendientes), 
+    // mantenemos el orden por día
+    return a.dia - b.dia;
+  });
 %>
 
 <h2>Bienvenida/o a la intranet</h2>
@@ -49,28 +57,21 @@
     <div class="tarjeta">
       <h3>Cumpleaños de <%= mesNombre %></h3>
 
-      <% if (!cumpleaniosMes || cumpleaniosMes.length === 0) { %>
+      <% if (!cumpleaniosOrdenados || cumpleaniosOrdenados.length === 0) { %>
         <p>No hay cumpleaños registrados para este mes.</p>
       <% } else { %>
         <div class="cumple-cards">
-  <% cumpleaniosMes.forEach((p) => { 
-    // Determinamos la clase según la fecha
-    let estadoClase = '';
-    if (p.dia < diaHoy) {
-      estadoClase = 'cumple-pasado'; // Verde
-    } else if (p.dia === diaHoy) {
-      estadoClase = 'cumple-hoy';    // Resaltado especial
-    } else {
-      estadoClase = 'cumple-futuro'; // Azul (actual)
-    }
-  %>
-          <div class="cumple-card <%= estadoClase %>">
-            <div class="cumple-fecha">
-              <span class="cumple-dia"><%= p.dia %>/<%= mesNum %></span>
+          <% cumpleaniosOrdenados.forEach((p) => { 
+            // Definir clase de estado para el color del fondo
+            let estadoClase = (p.dia < diaHoy) ? 'cumple-pasado' : (p.dia === diaHoy ? 'cumple-hoy' : 'cumple-futuro');
+          %>
+            <div class="cumple-card <%= estadoClase %>">
+              <div class="cumple-fecha">
+                <span class="cumple-dia"><%= p.dia %>/<%= mesNum %></span>
               </div>
-                <div class="cumple-info">
-                  <div class="cumple-nombre"><%= titleCase(p.nombre) %></div>
-                  <div class="cumple-area">Área: <%= titleCase(p.area) %></div>
+              <div class="cumple-info">
+                <div class="cumple-nombre"><%= titleCase(p.nombre) %></div>
+                <div class="cumple-area">Área: <%= titleCase(p.area) %></div>
               </div>
             </div>
           <% }) %>
