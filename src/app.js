@@ -25,7 +25,6 @@ const marketingRoutes = require('./routes/marketing');
 const authRoutes = require('./routes/auth');
 const rolesRoutes = require('./routes/roles');
 const docsRoutes = require('./routes/docs');
-const expressLayouts = require('express-ejs-layouts');
 
 // ❗ Importante: rutas POST /tickets/:id/...
 // Estas están en: /src/routes/tickets.js
