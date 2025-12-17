@@ -949,6 +949,18 @@ table.tabla tr:hover td {
   margin-top: 15px;
 }
 
+/* Color por defecto y futuro (Azul) */
+.cumple-card.cumple-futuro .cumple-fecha {
+  background: #e1f5fe; /* Celeste actual */
+  color: #0277bd;
+}
+
+/* Color para fechas que ya pasaron (Verde) */
+.cumple-card.cumple-pasado .cumple-fecha {
+  background: #e8f5e9; /* Fondo verde suave */
+  color: #2e7d32;      /* Texto verde oscuro */
+}
+
 .cumple-card {
   display: flex;
   /* stretch permite que los hijos (fecha e info) ocupen todo el alto disponible */
@@ -963,6 +975,15 @@ table.tabla tr:hover td {
   /* Aseguramos que no haya padding que separe el contenido del borde */
   padding: 0; 
   min-height: 80px; /* Ajusta según el alto que desees */
+}
+
+.cumple-card.cumple-hoy {
+  box-shadow: 0 0 10px rgba(42, 168, 214, 0.5);
+  border-width: 3px;
+}
+.cumple-card.cumple-hoy .cumple-fecha {
+  background: #2aa8d6;
+  color: white;
 }
 
 .cumple-fecha {

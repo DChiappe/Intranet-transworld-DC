@@ -53,14 +53,24 @@
         <p>No hay cumpleaños registrados para este mes.</p>
       <% } else { %>
         <div class="cumple-cards">
-          <% cumpleaniosMes.forEach((p) => { %>
-            <div class="cumple-card <%= (p.dia === diaHoy) ? 'cumple-hoy' : '' %>">
-              <div class="cumple-fecha">
-                <span class="cumple-dia"><%= p.dia %>/<%= mesNum %></span>
+  <% cumpleaniosMes.forEach((p) => { 
+    // Determinamos la clase según la fecha
+    let estadoClase = '';
+    if (p.dia < diaHoy) {
+      estadoClase = 'cumple-pasado'; // Verde
+    } else if (p.dia === diaHoy) {
+      estadoClase = 'cumple-hoy';    // Resaltado especial
+    } else {
+      estadoClase = 'cumple-futuro'; // Azul (actual)
+    }
+  %>
+          <div class="cumple-card <%= estadoClase %>">
+            <div class="cumple-fecha">
+              <span class="cumple-dia"><%= p.dia %>/<%= mesNum %></span>
               </div>
-              <div class="cumple-info">
-                <div class="cumple-nombre"><%= titleCase(p.nombre) %></div>
-                <div class="cumple-area">Área: <%= titleCase(p.area) %></div>
+                <div class="cumple-info">
+                  <div class="cumple-nombre"><%= titleCase(p.nombre) %></div>
+                  <div class="cumple-area">Área: <%= titleCase(p.area) %></div>
               </div>
             </div>
           <% }) %>
