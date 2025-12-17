@@ -1,3 +1,18 @@
+<%
+  // Los nombres en BD vienen en MAYÚSCULAS: los convertimos a "Title Case"
+  function titleCase(s) {
+    return String(s || '')
+      .toLowerCase()
+      .split(' ')
+      .filter(Boolean)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  }
+
+  // Para mostrar día/mes como en tu imagen (ej: 5/12)
+  const mesNum = new Date().getMonth() + 1; // 1-12
+%>
+
 <h2>Bienvenida/o a la intranet</h2>
 
 <div class="home-layout">
@@ -29,17 +44,22 @@
       <% if (!cumpleaniosMes || cumpleaniosMes.length === 0) { %>
         <p>No hay cumpleaños registrados para este mes.</p>
       <% } else { %>
-        <ul class="cumple-list">
+
+        <div class="cumple-cards">
           <% cumpleaniosMes.forEach((p) => { %>
-            <li>
-              <% if (p.dia === diaHoy) { %>
-                <strong><%= p.dia %> - <%= p.nombre %></strong> — Área: <%= p.area %>
-              <% } else { %>
-                <%= p.dia %> - <%= p.nombre %> — Área: <%= p.area %>
-              <% } %>
-            </li>
+            <div class="cumple-card <%= (p.dia === diaHoy) ? 'cumple-hoy' : '' %>">
+              <div class="cumple-fecha">
+                <span class="cumple-dia"><%= p.dia %>/<%= mesNum %></span>
+              </div>
+
+              <div class="cumple-info">
+                <div class="cumple-nombre"><%= titleCase(p.nombre) %></div>
+                <div class="cumple-area">Área: <%= titleCase(p.area) %></div>
+              </div>
+            </div>
           <% }) %>
-        </ul>
+        </div>
+
       <% } %>
     </div>
 
