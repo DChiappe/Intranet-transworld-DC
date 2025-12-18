@@ -1,46 +1,59 @@
 <div class="contenedor">
-  <a href="/sistemas/tickets" class="link-volver">← Volver al listado</a>
-  
-  <h2 class="page-title">Crear Nuevo Ticket de Soporte</h2>
-  <p class="page-description">Describe tu requerimiento para que el equipo de sistemas pueda ayudarte.</p>
+  <div style="margin-bottom: 20px;">
+    <a href="/sistemas/tickets" class="link-volver">← Volver a la Ticketera</a>
+  </div>
 
-  <div class="tarjeta">
+  <h2 class="page-title">Abrir Nuevo Ticket de Soporte</h2>
+  <p class="page-description">Describe tu problema o requerimiento técnico a continuación.</p>
+
+  <div class="tarjeta" style="max-width: 700px; margin-top: 20px;">
     <form action="/tickets/crear" method="POST" class="form-ticket">
       
-      <div class="small-text" style="margin-bottom: 15px; background: #f0f4fb; padding: 10px; border-radius: 6px;">
-        <strong>Solicitante:</strong> <%= usuario.username %> (<%= usuario.email %>)
+      <div style="background: #f0f4fb; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #dde3ec;">
+        <p style="margin: 0; font-size: 0.9rem; color: #555;">
+          <strong>Solicitante:</strong> <%= usuario.username %> 
+          <span style="margin-left: 10px; color: #003a70;">(<%= usuario.email %>)</span>
+        </p>
       </div>
 
-      <label for="titulo">Título del requerimiento</label>
-      <input type="text" id="titulo" name="titulo" placeholder="Ej: Problema con la impresora o acceso a carpeta" required>
+      <div style="margin-bottom: 15px;">
+        <label for="titulo">Resumen del problema (Título)</label>
+        <input type="text" id="titulo" name="titulo" placeholder="Ej: No puedo acceder a la carpeta compartida de Ventas" required>
+      </div>
 
-      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+      <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 15px;">
         <div style="flex: 1; min-width: 200px;">
           <label for="categoria">Categoría</label>
           <select id="categoria" name="categoria">
             <option value="Soporte Técnico">Soporte Técnico</option>
-            <option value="Software">Software / ERP</option>
-            <option value="Infraestructura">Infraestructura / Redes</option>
-            <option value="Cuentas">Cuentas y Accesos</option>
+            <option value="Software / ERP">Software / ERP</option>
+            <option value="Infraestructura / Red">Infraestructura / Red</option>
+            <option value="Cuentas y Accesos">Cuentas y Accesos</option>
+            <option value="Hardware">Hardware (Impresoras, PC, etc.)</option>
             <option value="Otro" selected>Otro</option>
           </select>
         </div>
 
         <div style="flex: 1; min-width: 200px;">
-          <label for="prioridad">Prioridad</label>
+          <label for="prioridad">Prioridad sugerida</label>
           <select id="prioridad" name="prioridad">
-            <option value="Baja">Baja</option>
-            <option value="Media" selected>Media</option>
-            <option value="Alta">Alta</option>
-            <option value="Urgente">Urgente</option>
+            <option value="Baja">Baja (No impide trabajar)</option>
+            <option value="Media" selected>Media (Dificulta el trabajo)</option>
+            <option value="Alta">Alta (Urgente / Operación detenida)</option>
           </select>
         </div>
       </div>
 
-      <label for="descripcion">Descripción detallada</label>
-      <textarea id="descripcion" name="descripcion" placeholder="Describe el problema con el mayor detalle posible..." required></textarea>
+      <div style="margin-bottom: 15px;">
+        <label for="descripcion">Descripción detallada</label>
+        <textarea id="descripcion" name="descripcion" placeholder="Explica detalladamente qué sucede..." required style="min-height: 150px;"></textarea>
+      </div>
 
-      <button type="submit" class="btn btn-primario">Enviar Ticket</button>
+      <div style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 20px;">
+        <button type="submit" class="btn btn-primario" style="padding: 12px 30px; font-weight: bold;">
+          Enviar Requerimiento
+        </button>
+      </div>
     </form>
   </div>
 </div>
