@@ -40,7 +40,7 @@ header {
 }
 
 .logo-tw {
-  height: 52px;          /* Ajusta si quieres más grande/chico */
+  height: 52px;
   object-fit: contain;
   display: block;
 }
@@ -195,31 +195,8 @@ table.tabla-simple tr:nth-child(even) td {
 }
 
 /* =======================
-   Responsive básico
+   Componentes Comunes
    ======================= */
-
-@media (max-width: 768px) {
-  header {
-    padding: 8px 16px 0;
-  }
-
-  nav.main-nav {
-    margin-left: 0;
-    gap: 16px;
-  }
-
-  .nav-user {
-    width: 100%;
-    margin-left: 0;
-    padding: 4px 0 10px;
-  }
-}
-
-.tarjetas-home {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
 
 .tarjeta {
   border: 1px solid #ccc;
@@ -228,6 +205,40 @@ table.tabla-simple tr:nth-child(even) td {
   min-width: 250px;
   background: #fff;
 }
+
+.mensaje-error {
+  color: #b00020;
+  background: #fdecea;
+  border: 1px solid #f5c2c7;
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.mensaje-info {
+  color: #0b4f6c;
+  background: #e7f3ff;
+  border: 1px solid #b6d7ff;
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.mensaje-exito {
+  color: #0b5d1e;
+  background: #eaf8ee;
+  border: 1px solid #bfe7c8;
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+/* =======================
+   Formularios y Tickets
+   ======================= */
 
 .form-ticket {
   max-width: 600px;
@@ -267,56 +278,15 @@ table.tabla-simple tr:nth-child(even) td {
   opacity: 0.9;
 }
 
-.mensaje-error {
-  color: #b00020;
-  background: #fdecea;
-  border: 1px solid #f5c2c7;
-  padding: 8px 10px;
-  border-radius: 4px;
-  max-width: 600px;
-}
-
-.mensaje-info {
-  color: #0b4f6c;
-  background: #e7f3ff;
-  border: 1px solid #b6d7ff;
-  padding: 8px 10px;
-  border-radius: 4px;
-  margin-bottom: 12px;
-  font-size: 0.95rem;
-}
-
-.mensaje-exito {
-  color: #0b5d1e;
-  background: #eaf8ee;
-  border: 1px solid #bfe7c8;
-  padding: 8px 10px;
-  border-radius: 4px;
-  margin-bottom: 12px;
-  font-size: 0.95rem;
-}
 /* =======================
    Login
    ======================= */
-.login-links {
-  margin-top: 14px;
-  text-align: center;
-}
-.login-links a {
-  color: #003a70;
-  text-decoration: none;
-  font-weight: 600;
-}
-.login-links a:hover {
-  text-decoration: underline;
-}
-
 
 .login-page {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 100px); /* resto del header */
+  min-height: calc(100vh - 100px);
 }
 
 .card-login {
@@ -354,13 +324,6 @@ table.tabla-simple tr:nth-child(even) td {
   border: 1px solid #c4ccdd;
 }
 
-.form-login input[type="text"]:focus,
-.form-login input[type="password"]:focus {
-  outline: none;
-  border-color: #003a70;
-  box-shadow: 0 0 0 2px rgba(0, 58, 112, 0.15);
-}
-
 .form-login button {
   margin-top: 18px;
   width: 100%;
@@ -374,517 +337,8 @@ table.tabla-simple tr:nth-child(even) td {
   cursor: pointer;
 }
 
-.form-login button:hover {
-  background: #004b94;
-}
-
-.mensaje-error {
-  color: #b00020;
-  background: #fdecea;
-  border: 1px solid #f5c2c7;
-  padding: 8px 10px;
-  border-radius: 4px;
-  margin-bottom: 12px;
-  font-size: 0.95rem;
-}
-
-.organigrama-contenedor {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-  overflow-x: auto;
-  padding-bottom: 10px;
-}
-
-.organigrama-img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  border: 1px solid #dde3ec;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-}
-
 /* =======================
-   Marketing - Eventos
-   ======================= */
-
-.grid-eventos {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
-  margin-top: 20px;
-}
-
-.card-evento {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  text-decoration: none;
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 14px 16px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  border: 1px solid #e0e6f0;
-  color: inherit;
-}
-
-.icono-carpeta {
-  width: 48px;
-  height: 40px;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.carpeta-tapa {
-  position: absolute;
-  top: 0;
-  left: 6px;
-  width: 36px;
-  height: 12px;
-  background: #ffcc66;
-  border-radius: 4px 4px 0 0;
-}
-
-.carpeta-cuerpo {
-  position: absolute;
-  top: 8px;
-  left: 0;
-  width: 48px;
-  height: 28px;
-  background: #ffb74d;
-  border-radius: 4px;
-}
-
-.card-evento-texto h3 {
-  margin: 0 0 4px 0;
-  font-size: 1.05rem;
-  color: #003a70;
-}
-
-.card-evento-texto p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #444;
-}
-
-.acciones-evento {
-  margin-top: 8px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.acciones-evento a {
-  font-size: 0.9rem;
-  text-decoration: underline;
-}
-
-.btn-borrar-evento {
-  background: #b00020;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-/* Formulario nuevo evento */
-
-.form-evento {
-  max-width: 400px;
-}
-
-.form-evento label {
-  display: block;
-  margin-top: 10px;
-  font-weight: 600;
-}
-
-.form-evento input[type="text"] {
-  width: 100%;
-  padding: 8px;
-  margin-top: 4px;
-  box-sizing: border-box;
-}
-
-.form-evento button {
-  margin-top: 14px;
-  padding: 8px 12px;
-  background: #003a70;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.form-evento button:hover {
-  background: #004b94;
-}
-
-/* Galería: miniaturas en fila con scroll horizontal */
-
-.galeria-evento {
-  display: flex;
-  gap: 12px;
-  margin-top: 18px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-}
-
-.galeria-evento::-webkit-scrollbar {
-  height: 6px;
-}
-
-.galeria-evento::-webkit-scrollbar-track {
-  background: #e5e9f0;
-}
-
-.galeria-evento::-webkit-scrollbar-thumb {
-  background: #b0b7c7;
-  border-radius: 3px;
-}
-
-.galeria-item {
-  flex: 0 0 auto;           /* que no se encoja, se mantenga en fila */
-  width: 220px;             /* ancho fijo de cada miniatura */
-  background: #ffffff;
-  border-radius: 8px;
-  padding: 6px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  text-align: center;
-}
-
-.galeria-thumb {
-  width: 100%;
-  height: 140px;            /* alto del marco de miniatura */
-  object-fit: contain;      /* ❗ muestra la foto completa sin recortar */
-  background: #f5f7fa;      /* fondo neutro para fotos panorámicas */
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.btn-borrar-foto {
-  margin-top: 6px;
-  padding: 4px 8px;
-  font-size: 0.8rem;
-  border: none;
-  border-radius: 4px;
-  background: #b00020;
-  color: #fff;
-  cursor: pointer;
-  width: auto;              /* que NO ocupe todo el ancho */
-  display: inline-block;
-}
-
-
-/* Modal de imagen */
-
-.modal-imagen {
-  display: none;
-  position: fixed;
-  z-index: 2000;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-}
-
-.modal-imagen-contenido {
-  position: relative;
-  max-width: 90%;
-  max-height: 90%;
-}
-
-.modal-imagen-contenido img {
-  max-width: 100%;
-  max-height: 100%;
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-}
-
-.modal-cerrar {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  font-size: 24px;
-  color: #ffffff;
-  cursor: pointer;
-  background: rgba(0,0,0,0.6);
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* =========================================================
-   Ticketera (listado y detalle)
-   ========================================================= */
-
-/* Estructura general */
-
-.intranet-body {
-  background: #f5f7fa;
-  color: #222;
-}
-
-.contenedor {
-  padding: 20px 24px;
-}
-
-.pagina-tickets .page-title,
-.pagina-ticket-detalle .page-title {
-  margin: 16px 0 8px;
-  font-size: 1.4rem;
-  color: #003a70;
-}
-
-.page-description {
-  margin-top: 0;
-  margin-bottom: 12px;
-}
-
-.small-text {
-  font-size: 0.85rem;
-  color: #555;
-}
-
-.no-data {
-  margin-top: 16px;
-}
-
-.link-volver {
-  display: inline-block;
-  margin-top: 15px;
-  font-size: 0.9rem;
-  color: #003a70;
-  text-decoration: none;
-}
-
-.link-volver:hover {
-  text-decoration: underline;
-}
-
-/* Usuario / logout en el header cuando se usa .user-info */
-
-.user-info {
-  margin-left: 20px;
-  font-size: 0.9rem;
-}
-
-.logout-link {
-  margin-left: 10px;
-}
-
-/* Tablas de tickets */
-
-table.tabla {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 16px;
-  background: #fff;
-}
-
-table.tabla th,
-table.tabla td {
-  padding: 8px 10px;
-  border-bottom: 1px solid #dde3ec;
-  text-align: left;
-  font-size: 0.9rem;
-}
-
-table.tabla th {
-  background: #f0f4fb;
-  font-weight: 600;
-}
-
-table.tabla tr:nth-child(even) td {
-  background: #f9fbff;
-}
-
-table.tabla tr:hover td {
-  background: #eef3ff;
-}
-
-.tabla-tickets {
-  /* espacio extra si necesitas diferenciarla */
-}
-
-/* Links del título del ticket */
-
-.link-ticket {
-  color: #003a70;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.link-ticket:hover {
-  text-decoration: underline;
-}
-
-/* Badges tipo semáforo y estado */
-
-.badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  color: #fff;
-  font-weight: 600;
-}
-
-.badge-roja {
-  background: #d32f2f;
-}
-
-.badge-amarilla {
-  background: #fbc02d;
-  color: #000;
-}
-
-.badge-verde {
-  background: #388e3c;
-}
-
-.badge-estado-abierto {
-  background: #d32f2f;
-}
-
-.badge-estado-cerrado {
-  background: #388e3c;
-}
-
-/* Detalle del ticket */
-
-.ticket-detalle {
-  background: #ffffff;
-  padding: 16px 18px;
-  border-radius: 8px;
-  border: 1px solid #dde3ec;
-  margin-bottom: 20px;
-}
-
-.ticket-detalle dt {
-  font-weight: 600;
-  margin-top: 8px;
-}
-
-.ticket-detalle dd {
-  margin-left: 0;
-  margin-bottom: 4px;
-}
-
-.ticket-descripcion {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  background-color: #fafafa;
-  border: 1px solid #ddd;
-  padding: 10px;
-  border-radius: 4px;
-}
-
-/* Paneles (actualizar, historial, responder) */
-
-.panel {
-  background: #ffffff;
-  padding: 16px 18px;
-  border-radius: 8px;
-  border: 1px solid #dde3ec;
-  margin-top: 16px;
-}
-
-.panel-title {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 1.05rem;
-  color: #003a70;
-}
-
-/* Formularios del detalle */
-
-.form-actualizar-ticket label,
-.form-responder-ticket label {
-  display: block;
-  margin-top: 10px;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.form-actualizar-ticket select,
-.form-responder-ticket select,
-.form-responder-ticket input[type="text"],
-.form-responder-ticket textarea {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 8px;
-  margin-top: 4px;
-  border-radius: 4px;
-  border: 1px solid #c4ccdd;
-  font-family: inherit;
-  font-size: 0.9rem;
-}
-
-.form-responder-ticket textarea {
-  min-height: 140px;
-}
-
-/* Botones genéricos */
-
-.btn {
-  display: inline-block;
-  margin-top: 12px;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.btn-primario {
-  background: #003a70;
-  color: #fff;
-}
-
-.btn-primario:hover {
-  background: #004b94;
-}
-
-/* Historial de respuestas */
-
-.panel-historial .respuesta-item {
-  border-bottom: 1px solid #eef0f6;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-}
-
-.respuesta-header {
-  font-size: 0.85rem;
-  margin-bottom: 4px;
-}
-
-.respuesta-remitente {
-  font-weight: 600;
-}
-
-.respuesta-fecha {
-  margin-left: 4px;
-}
-
-.respuesta-mensaje {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  background: #fafafa;
-  border-radius: 4px;
-  border: 1px solid #e0e6f0;
-  padding: 8px;
-  font-size: 0.88rem;
-}
-
-/* =======================
-   Home - layout imagen + panel derecho
+   Home - Layout y Módulos
    ======================= */
 
 .home-layout {
@@ -897,11 +351,6 @@ table.tabla tr:hover td {
 .home-left {
   flex: 1 1 520px;
   min-width: 320px;
-}
-
-.home-ti-link {
-  text-decoration: none;
-  color: inherit;
 }
 
 .home-ti-card {
@@ -921,83 +370,88 @@ table.tabla tr:hover td {
 
 .home-right {
   flex: 0 0 340px;
-  margin-left: auto; /* empuja el panel a la derecha */
+  margin-left: auto;
   display: flex;
   flex-direction: column;
-  gap: 18px; /* distancia moderada entre USD y cumpleaños */
+  gap: 18px;
 }
 
-.home-usd {
-  font-size: 1.15rem;
-  margin: 6px 0 0;
+/* Tarjeta USD del Día */
+.tarjeta-usd {
+  background: linear-gradient(135deg, #f1f8e9 0%, #ffffff 100%);
+  border-left: 5px solid #4caf50 !important;
+  padding: 1.2rem;
 }
 
-.cumple-list {
-  margin: 0;
-  padding-left: 18px;
+.usd-valor {
+  color: #2e7d32;
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 5px 0;
 }
 
-.cumple-list li {
-  margin: 6px 0;
+.usd-label {
+  font-size: 0.8rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
 }
 
-/* Asegura que el contenedor de tarjetas tenga espacio */
+.chart-box {
+  width: 100%;
+  height: 80px;
+  margin-top: 10px;
+}
+
+/* Sección Cumpleaños */
 .cumple-cards {
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Más espacio entre tarjetas */
+  gap: 15px;
   margin-top: 15px;
-}
-
-/* Color por defecto y futuro (Azul) */
-.cumple-card.cumple-futuro .cumple-fecha {
-  background: #e1f5fe; /* Celeste actual */
-  color: #0277bd;
-}
-
-/* Color para fechas que ya pasaron (Verde) */
-.cumple-card.cumple-pasado .cumple-fecha {
-  background: #e8f5e9; /* Fondo verde suave */
-  color: #2e7d32;      /* Texto verde oscuro */
 }
 
 .cumple-card {
   display: flex;
-  /* stretch permite que los hijos (fecha e info) ocupen todo el alto disponible */
-  align-items: stretch; 
+  align-items: stretch;
   background: #ffffff;
-  border: 2px solid #2aa8d6; 
+  border: 2px solid #2aa8d6;
   border-radius: 12px;
-  /* Importante para que las esquinas de la franja celeste respeten el radio de la tarjeta */
-  overflow: hidden; 
+  overflow: hidden;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   transition: transform 0.2s ease;
-  /* Aseguramos que no haya padding que separe el contenido del borde */
-  padding: 0; 
-  min-height: 80px; /* Ajusta según el alto que desees */
+  min-height: 80px;
 }
 
 .cumple-card.cumple-hoy {
   box-shadow: 0 0 10px rgba(42, 168, 214, 0.5);
   border-width: 3px;
 }
+
 .cumple-card.cumple-hoy .cumple-fecha {
   background: #2aa8d6;
   color: white;
 }
 
+.cumple-card.cumple-futuro .cumple-fecha {
+  background: #e1f5fe;
+  color: #0277bd;
+}
+
+.cumple-card.cumple-pasado .cumple-fecha {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
 .cumple-fecha {
   min-width: 85px;
-  background: #e1f5fe; /* Celeste de fondo */
-  color: #0277bd;
-  /* Centrado del texto de la fecha */
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
   border-right: 2px solid #2aa8d6;
-  /* Quitamos paddings laterales excesivos para que el borde se pegue */
-  padding: 0 10px; 
+  padding: 0 10px;
 }
 
 .cumple-info {
@@ -1006,8 +460,7 @@ table.tabla tr:hover td {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  /* Alineación a la izquierda para el nombre y área */
-  text-align: left; 
+  text-align: left;
 }
 
 .cumple-nombre {
@@ -1020,4 +473,30 @@ table.tabla tr:hover td {
   font-size: 0.9rem;
   color: #666;
   margin-top: 4px;
+}
+
+/* =======================
+   Responsive básico
+   ======================= */
+
+@media (max-width: 768px) {
+  header {
+    padding: 8px 16px 0;
+  }
+
+  nav.main-nav {
+    margin-left: 0;
+    gap: 16px;
+  }
+
+  .nav-user {
+    width: 100%;
+    margin-left: 0;
+    padding: 4px 0 10px;
+  }
+
+  .home-right {
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
 }
