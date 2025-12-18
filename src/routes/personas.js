@@ -55,7 +55,7 @@ router.get('/', async (req, res) => {
     const [results] = await db.query(sql);
 
     res.render('personas/index', {
-      titulo: 'Personas y Cultura',
+      titulo: 'Personas',
       personas: results
     });
   } catch (err) {

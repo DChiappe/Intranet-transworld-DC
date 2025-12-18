@@ -1,15 +1,23 @@
 // src/services/mailer.js
 const nodemailer = require('nodemailer');
-const mg = require('nodemailer-mailgun-transport');
 
-
-const mailgunOptions = {
+// Brevo utiliza SMTP estándar. OnRender permite el puerto 587 sin problemas.
+const transporter = nodemailer.createTransport({
+  host: 'smtp-relay.brevo.com',
+  port: 587,
   auth: {
-    api_key: process.env.MAILGUN_API_KEY,
-    domain: process.env.MAILGUN_DOMAIN
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS 
   }
-}
+});
 
-const transporter = nodemailer.createTransport(mg(mailgunOptions));
+// Verificación opcional para asegurar que la conexión es correcta al iniciar
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('Error en la configuración de Brevo:', error);
+  } else {
+    console.log('Servidor de correos (Brevo) listo');
+  }
+});
 
 module.exports = transporter;

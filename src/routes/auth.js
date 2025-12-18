@@ -1,8 +1,9 @@
 const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
-
 const pool = require('../db');
+// Importar el transporter actualizado
+const transporter = require('../services/mailer'); 
 
 function getBaseUrl(req) {
   return process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`;
@@ -44,8 +45,6 @@ router.get('/login', (req, res) => {
 // POST /login
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
-
-  // 1) Compatibilidad con login "legacy" por .env (admin fijo)
   const validUser = process.env.AUTH_USER || 'admin';
   const validPass = process.env.AUTH_PASS || '1234';
 
@@ -54,10 +53,8 @@ router.post('/login', async (req, res) => {
     return res.redirect('/');
   }
 
-  // 2) Login por BD (email)
   try {
     const email = String(username || '').trim().toLowerCase();
-
     const [rows] = await pool.query(
       'SELECT id, first_name, last_name, email, role, email_confirmed, password_hash, password_salt FROM users WHERE email = ? LIMIT 1',
       [email]
@@ -68,21 +65,11 @@ router.post('/login', async (req, res) => {
         titulo: 'Iniciar sesión',
         error: 'Usuario o contraseña incorrectos',
         info: null
-  
       });
     }
 
     const u = rows[0];
 
-    /*if (!u.email_confirmed) {
-      return res.status(401).render('login', {
-        titulo: 'Iniciar sesión',
-        error: 'Debes confirmar tu correo antes de ingresar.',
-        info: null
-      });
-    } */
-
-    // Requisito: si no tiene rol asignado, NO puede iniciar sesión
     if (!u.role || String(u.role).trim() === '') {
       return res.status(403).render('login', {
         titulo: 'Iniciar sesión',
@@ -91,9 +78,7 @@ router.post('/login', async (req, res) => {
       });
     }
 
-
     const computed = pbkdf2Hash(password, u.password_salt);
-
     if (!safeEqualHex(computed, u.password_hash)) {
       return res.status(401).render('login', {
         titulo: 'Iniciar sesión',
@@ -123,11 +108,7 @@ router.post('/login', async (req, res) => {
 // GET /register
 router.get('/register', (req, res) => {
   if (req.session && req.session.user) return res.redirect('/');
-
-  res.render('register', {
-    titulo: 'Registro',
-    error: null
-  });
+  res.render('register', { titulo: 'Registro', error: null });
 });
 
 // POST /register
@@ -140,27 +121,17 @@ router.post('/register', async (req, res) => {
     const password2 = String(req.body.password2 || '');
 
     if (!firstName || !lastName || !email || !password || !password2) {
-      return res.status(400).render('register', {
-        titulo: 'Registro',
-        error: 'Todos los campos son obligatorios.'
-      });
+      return res.status(400).render('register', { titulo: 'Registro', error: 'Todos los campos son obligatorios.' });
     }
 
     if (password.length < 6) {
-      return res.status(400).render('register', {
-        titulo: 'Registro',
-        error: 'La contraseña debe tener al menos 6 caracteres.'
-      });
+      return res.status(400).render('register', { titulo: 'Registro', error: 'La contraseña debe tener al menos 6 caracteres.' });
     }
 
     if (password !== password2) {
-      return res.status(400).render('register', {
-        titulo: 'Registro',
-        error: 'Las contraseñas no coinciden.'
-      });
+      return res.status(400).render('register', { titulo: 'Registro', error: 'Las contraseñas no coinciden.' });
     }
 
-    // Si ya existe, redirigir a login
     const [exists] = await pool.query('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
     if (exists.length) {
       return res.redirect('/login?exists=1');
@@ -168,7 +139,6 @@ router.post('/register', async (req, res) => {
 
     const saltHex = crypto.randomBytes(16).toString('hex');
     const hashHex = pbkdf2Hash(password, saltHex);
-
     const token = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
@@ -179,40 +149,29 @@ router.post('/register', async (req, res) => {
       [firstName, lastName, email, hashHex, saltHex, token, expires]
     );
 
-    // Enviar correo de confirmación
     const confirmUrl = `${getBaseUrl(req)}/confirm?token=${token}`;
 
+    // Enviar correo de confirmación con remitente de Brevo
     await transporter.sendMail({
-      from: process.env.MAIL_FROM || `Intranet <no-reply@${process.env.MAILGUN_DOMAIN}>`,
+      from: process.env.ROM, 
       to: email,
       subject: 'Confirma tu correo - Intranet Transworld',
-      text:
-        `Hola ${firstName},\n\n` +
-        `Para activar tu cuenta, confirma tu correo en este enlace:\n${confirmUrl}\n\n` +
-        `Si no solicitaste este registro, puedes ignorar este mensaje.\n`,
+      text: `Hola ${firstName},\n\nPara activar tu cuenta, confirma tu correo en este enlace:\n${confirmUrl}\n\nSi no solicitaste este registro, puedes ignorar este mensaje.\n`,
     });
 
-    // Notificar admin (opcional)
     if (process.env.ADMIN_NOTIFY_EMAIL) {
       transporter.sendMail({
-        from: process.env.MAIL_FROM || `Intranet <no-reply@${process.env.MAILGUN_DOMAIN}>`,
+        from: process.env.MAIL_FROM,
         to: process.env.ADMIN_NOTIFY_EMAIL,
         subject: 'Nuevo usuario pendiente de rol',
-        text:
-          `Nuevo registro:\n` +
-          `Nombre: ${firstName} ${lastName}\n` +
-          `Email: ${email}\n` +
-          `Acción sugerida: asignar rol en /roles\n`,
+        text: `Nuevo registro:\nNombre: ${firstName} ${lastName}\nEmail: ${email}\nAcción sugerida: asignar rol en /roles\n`,
       }).catch(() => {});
     }
 
     return res.redirect('/login?registered=1');
   } catch (err) {
     console.error('Register error:', err);
-    return res.status(500).render('register', {
-      titulo: 'Registro',
-      error: 'Error interno al registrar. Intenta nuevamente.'
-    });
+    return res.status(500).render('register', { titulo: 'Registro', error: 'Error interno al registrar. Intenta nuevamente.' });
   }
 });
 
@@ -221,11 +180,7 @@ router.get('/confirm', async (req, res) => {
   try {
     const token = String(req.query.token || '').trim();
     if (!token) {
-      return res.status(400).render('confirm', {
-        titulo: 'Confirmación',
-        ok: false,
-        message: 'Token inválido.'
-      });
+      return res.status(400).render('confirm', { titulo: 'Confirmación', ok: false, message: 'Token inválido.' });
     }
 
     const [rows] = await pool.query(
@@ -234,29 +189,17 @@ router.get('/confirm', async (req, res) => {
     );
 
     if (!rows.length) {
-      return res.status(400).render('confirm', {
-        titulo: 'Confirmación',
-        ok: false,
-        message: 'Token inválido o expirado.'
-      });
+      return res.status(400).render('confirm', { titulo: 'Confirmación', ok: false, message: 'Token inválido o expirado.' });
     }
 
     const u = rows[0];
     if (u.email_confirmed) {
-      return res.render('confirm', {
-        titulo: 'Confirmación',
-        ok: true,
-        message: 'Tu correo ya estaba confirmado. Ya puedes iniciar sesión.'
-      });
+      return res.render('confirm', { titulo: 'Confirmación', ok: true, message: 'Tu correo ya estaba confirmado. Ya puedes iniciar sesión.' });
     }
 
     const exp = u.confirm_expires ? new Date(u.confirm_expires) : null;
     if (!exp || exp.getTime() < Date.now()) {
-      return res.status(400).render('confirm', {
-        titulo: 'Confirmación',
-        ok: false,
-        message: 'Este enlace expiró. Regístrate nuevamente para recibir otro.'
-      });
+      return res.status(400).render('confirm', { titulo: 'Confirmación', ok: false, message: 'Este enlace expiró. Regístrate nuevamente para recibir otro.' });
     }
 
     await pool.query(
@@ -264,22 +207,13 @@ router.get('/confirm', async (req, res) => {
       [u.id]
     );
 
-    return res.render('confirm', {
-      titulo: 'Confirmación',
-      ok: true,
-      message: 'Correo confirmado correctamente. Ya puedes iniciar sesión.'
-    });
+    return res.render('confirm', { titulo: 'Confirmación', ok: true, message: 'Correo confirmado correctamente. Ya puedes iniciar sesión.' });
   } catch (err) {
     console.error('Confirm error:', err);
-    return res.status(500).render('confirm', {
-      titulo: 'Confirmación',
-      ok: false,
-      message: 'Error interno al confirmar. Intenta nuevamente.'
-    });
+    return res.status(500).render('confirm', { titulo: 'Confirmación', ok: false, message: 'Error interno al confirmar. Intenta nuevamente.' });
   }
 });
 
-// GET /logout
 router.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
 });
