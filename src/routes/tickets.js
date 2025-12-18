@@ -2,12 +2,13 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const transporter = require('../services/mailer');
+// Cambiamos transporter por la función sendMail del nuevo mailer
+const { sendMail } = require('../services/mailer'); 
 const requireRole = require('../middlewares/requireRole');
 
 
 // POST /tickets/:id/actualizar
-router.post('/:id/actualizar', requireRole('admin'),async (req, res) => {
+router.post('/:id/actualizar', requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { categoria, prioridad, estado } = req.body;
 
@@ -27,7 +28,7 @@ router.post('/:id/actualizar', requireRole('admin'),async (req, res) => {
 });
 
 // POST /tickets/:id/responder
-router.post('/:id/responder', requireRole('admin'),async (req, res) => {
+router.post('/:id/responder', requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { asunto_respuesta, mensaje_respuesta } = req.body;
 
@@ -57,7 +58,7 @@ router.post('/:id/responder', requireRole('admin'),async (req, res) => {
         ? asunto_respuesta
         : `Respuesta a tu ticket #${id}: ${titulo}`;
 
-    // 3) Guardar respuesta en BD (primero aseguramos esto)
+    // 3) Guardar respuesta en BD
     const sqlRespuesta = `
       INSERT INTO ticket_respuestas (ticket_id, mensaje, remitente)
       VALUES (?, ?, 'soporte')
@@ -65,22 +66,21 @@ router.post('/:id/responder', requireRole('admin'),async (req, res) => {
 
     await db.query(sqlRespuesta, [id, mensaje_respuesta]);
 
-    // 4) Enviar correo SIN bloquear la respuesta HTTP
-    transporter
-      .sendMail({
-        from: process.env.SMTP_FROM || 'Mesa de Soporte <dchiappe@transworld.cl>',
-        to: solicitante_email,
-        subject,
-        text: mensaje_respuesta
-      })
-      .then(info => {
-        console.log('Correo de respuesta enviado:', info.messageId || info);
-      })
-      .catch(err => {
-        console.error('Error enviando correo de respuesta:', err);
-      });
+    // 4) Enviar correo vía API de Brevo
+    // Usamos el remitente verificado dchiappe@transworld.cl
+    sendMail({
+      to: solicitante_email,
+      subject: subject,
+      text: mensaje_respuesta
+    })
+    .then(() => {
+      console.log('Correo de respuesta enviado exitosamente vía API');
+    })
+    .catch(err => {
+      console.error('Error enviando correo de respuesta vía API:', err);
+    });
 
-    // 5) Volver al detalle del ticket (el usuario no espera al correo)
+    // 5) Volver al detalle del ticket inmediatamente
     res.redirect(`/sistemas/tickets/${id}`);
   } catch (err) {
     console.error('Error en flujo de respuesta de ticket:', err);
