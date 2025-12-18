@@ -1,29 +1,32 @@
 // src/services/mailer.js
-const nodemailer = require('nodemailer');
+const Brevo = require('@getbrevo/brevo');
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com', // 
-  port: 587, // 
-  secure: false, // false para puerto 587; true para 465
-  auth: {
-    user: process.env.SMTP_USER, // Tu usuario: 9e32ca001@smtp-brevo.com 
-    pass: process.env.SMTP_PASS  // Tu API Key: xkeysib-...
-  },
-  // Configuraciones adicionales para evitar Timeouts en OnRender
-  connectionTimeout: 10000, // 10 segundos
-  greetingTimeout: 10000,
-  tls: {
-    // Esto ayuda si hay problemas con los certificados en el entorno de red
-    rejectUnauthorized: false 
+// Configuración de la API de Brevo
+const apiInstance = new Brevo.TransactionalEmailsApi();
+apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.SMTP_PASS);
+
+/**
+ * Función para enviar correos usando la API (evita errores de conexión SMTP)
+ */
+const sendMail = async ({ to, subject, text }) => {
+  const sendSmtpEmail = new Brevo.SendSmtpEmail();
+
+  sendSmtpEmail.subject = subject;
+  sendSmtpEmail.textContent = text;
+  sendSmtpEmail.sender = { 
+    name: "Intranet Transworld", 
+    email: process.env.MAIL_FROM // dchiappe@transworld.cl 
+  };
+  sendSmtpEmail.to = [{ email: to }];
+
+  try {
+    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log('Correo enviado exitosamente vía API:', data.body);
+    return data;
+  } catch (error) {
+    console.error('Error al enviar vía API de Brevo:', error);
+    throw error;
   }
-});
+};
 
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('Error en la configuración de Brevo:', error);
-  } else {
-    console.log('Servidor de correos (Brevo) conectado exitosamente');
-  }
-});
-
-module.exports = transporter;
+module.exports = { sendMail };

@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const router = express.Router();
 const pool = require('../db');
 // Importar el transporter actualizado
-const transporter = require('../services/mailer'); 
+const { sendMail } = require('../services/mailer');
 
 function getBaseUrl(req) {
   return process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`;
@@ -152,16 +152,14 @@ router.post('/register', async (req, res) => {
     const confirmUrl = `${getBaseUrl(req)}/confirm?token=${token}`;
 
     // Enviar correo de confirmación con remitente de Brevo
-    await transporter.sendMail({
-      from: process.env.ROM, 
+    await sendMail({
       to: email,
       subject: 'Confirma tu correo - Intranet Transworld',
       text: `Hola ${firstName},\n\nPara activar tu cuenta, confirma tu correo en este enlace:\n${confirmUrl}\n\nSi no solicitaste este registro, puedes ignorar este mensaje.\n`,
     });
 
     if (process.env.ADMIN_NOTIFY_EMAIL) {
-      transporter.sendMail({
-        from: process.env.MAIL_FROM,
+      sendMail({
         to: process.env.ADMIN_NOTIFY_EMAIL,
         subject: 'Nuevo usuario pendiente de rol',
         text: `Nuevo registro:\nNombre: ${firstName} ${lastName}\nEmail: ${email}\nAcción sugerida: asignar rol en /roles\n`,
