@@ -9,6 +9,7 @@
 <body class="intranet-body">
 
   <div class="contenedor pagina-ticket-detalle">
+    <a class="link-volver" href="/sistemas/tickets">← Volver al listado de tickets</a>
     <h2 class="page-title">Ticket #<%= ticket.id %></h2>
 
     <dl class="ticket-detalle">
@@ -108,6 +109,29 @@
       </div>
     <% } %>
 
+    <!-- Responder al usuario -->
+    <div class="panel panel-responder">
+      <h3 class="panel-title">Responder al usuario</h3>
+      <form action="/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
+        <label for="asunto_respuesta">Asunto</label>
+        <input
+          type="text"
+          id="asunto_respuesta"
+          name="asunto_respuesta"
+          placeholder="Opcional: si lo dejas vacío se genera uno por defecto"
+        />
+
+        <label for="mensaje_respuesta">Mensaje</label>
+        <textarea
+          id="mensaje_respuesta"
+          name="mensaje_respuesta"
+          rows="6"
+          required
+        ></textarea>
+
+        <button type="submit" class="btn btn-primario">Enviar respuesta</button>
+      </form>
+    </div>
 
     <!-- Historial de respuestas -->
     <div class="panel panel-historial">
@@ -133,31 +157,7 @@
       <% } %>
     </div>
 
-    <!-- Responder al usuario -->
-    <div class="panel panel-responder">
-      <h3 class="panel-title">Responder al usuario</h3>
-      <form action="/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
-        <label for="asunto_respuesta">Asunto</label>
-        <input
-          type="text"
-          id="asunto_respuesta"
-          name="asunto_respuesta"
-          placeholder="Opcional: si lo dejas vacío se genera uno por defecto"
-        />
 
-        <label for="mensaje_respuesta">Mensaje</label>
-        <textarea
-          id="mensaje_respuesta"
-          name="mensaje_respuesta"
-          rows="6"
-          required
-        ></textarea>
-
-        <button type="submit" class="btn btn-primario">Enviar respuesta</button>
-      </form>
-    </div>
-
-    <a class="link-volver" href="/sistemas/tickets">← Volver al listado de tickets</a>
   </div>
 </body>
 </html>
