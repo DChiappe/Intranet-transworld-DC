@@ -27,3 +27,4 @@ exports.cumpleaniosLista = (req, res) => {
     cumpleanios
   });
 };
+  
