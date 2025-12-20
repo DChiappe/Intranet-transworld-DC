@@ -1,13 +1,15 @@
 <div class="contenedor">
   <h2 class="page-title">Eventos y Galerías</h2>
-  <p class="page-description">Selecciona un evento para ver su galería de fotos o administra las carpetas existentes.</p>
+  <p class="page-description">Selecciona un evento para ver su galería de fotos.</p>
 
-  <div style="margin-bottom: 20px;">
-    <a class="boton-opcion" href="/marketing/eventos/nuevo">
-      + Crear nuevo evento
-      <span>Generar una nueva carpeta para subir fotos.</span>
-    </a>
-  </div>
+  <% if (can.eventos_write) { %>
+    <div style="margin-bottom: 20px;">
+      <a class="boton-opcion" href="/marketing/eventos/nuevo">
+        + Crear nuevo evento
+        <span>Generar una nueva carpeta para subir fotos.</span>
+      </a>
+    </div>
+  <% } %>
 
   <% if (!eventos || eventos.length === 0) { %>
     <p class="no-data">No hay eventos creados por el momento.</p>
@@ -31,9 +33,11 @@
             <div class="acciones-evento">
               <a href="/marketing/eventos/<%= ev.slug %>">Ver fotos</a>
               
-              <form action="/marketing/eventos/<%= ev.slug %>/eliminar" method="POST" onsubmit="return confirm('¿Estás seguro? Se eliminará el evento y TODAS sus fotos de la nube.');" style="display:inline;">
-                <button type="submit" class="btn-borrar-evento">Eliminar</button>
-              </form>
+              <% if (can.eventos_write) { %>
+                <form action="/marketing/eventos/<%= ev.slug %>/eliminar" method="POST" onsubmit="return confirm('¿Estás seguro? Se eliminará el evento y TODAS sus fotos.');" style="display:inline; margin-left: 10px;">
+                  <button type="submit" class="btn-borrar-evento" style="background: none; border: none; color: #d9534f; cursor: pointer; text-decoration: underline; font-size: 0.9rem;">Eliminar</button>
+                </form>
+              <% } %>
             </div>
           </div>
         </div>
