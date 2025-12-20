@@ -11,7 +11,7 @@
     </p>
   <% } %>
 
-  <% if (typeof can !== 'undefined' && can.eventos_write) { %>
+  <% if (can.eventos_write) { %>
     <div class="panel" style="margin-bottom: 30px;">
       <h3 class="panel-title">Subir nuevas fotos</h3>
       <form action="/marketing/eventos/<%= evento.slug %>/fotos" method="POST" enctype="multipart/form-data" class="form-ticket">
@@ -37,8 +37,8 @@
             loading="lazy"
           >
           
-          <% if (typeof can !== 'undefined' && can.eventos_write) { %>
-            <form action="/marketing/eventos/<%= evento.slug %>/fotos/eliminar" method="POST" onsubmit="return confirm('¿Eliminar esta foto definitivamente de la nube?');" style="margin-top: 8px;">
+          <% if (can.eventos_write) { %>
+            <form action="/marketing/eventos/<%= evento.slug %>/fotos/eliminar" method="POST" onsubmit="return confirm('¿Eliminar esta foto?');" style="margin-top: 8px;">
               <input type="hidden" name="public_id" value="<%= img.public_id %>">
               <button type="submit" class="btn-borrar-foto">Eliminar</button>
             </form>
