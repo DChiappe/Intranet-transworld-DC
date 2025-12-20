@@ -1,17 +1,19 @@
-// src/routes/marketing.js
 const express = require('express');
 const multer = require('multer');
 const db = require('../db'); // Conexión a Base de Datos MySQL
 const cloudinary = require('../services/cloudinary');
-const requireRole = require('../middlewares/requireRole');
+const requireRole = require('../middlewares/requireRole'); // Importamos el mismo middleware de procesos
 
 const router = express.Router();
+
+// Definimos los roles permitidos para escritura (siguiendo el estilo de configuración de procesos.js)
+const WRITE_ROLES = ['admin', 'marketing'];
 
 // Configuración de multer: Memoria para no guardar archivos en disco (Railway/Render)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Función para crear slugs seguros (ej: "Paseo 2025" -> "paseo-2025")
+// Función para crear slugs seguros
 function createSlug(text) {
   return text.toString().toLowerCase().trim()
     .replace(/\s+/g, '-')     
@@ -20,15 +22,15 @@ function createSlug(text) {
 }
 
 // ==========================================
-// RUTAS PRINCIPALES
+// RUTAS DE LECTURA (Acceso para todos los logueados)
 // ==========================================
 
-// CORRECCIÓN: Redireccionar directo a la lista de eventos (saltamos el index)
+// Redireccionar raíz a eventos
 router.get('/', (req, res) => {
   res.redirect('/marketing/eventos');
 });
 
-// GET /marketing/eventos - Listar eventos desde MySQL
+// Listar eventos
 router.get('/eventos', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM eventos ORDER BY fecha_creacion DESC');
@@ -39,45 +41,7 @@ router.get('/eventos', async (req, res) => {
   }
 });
 
-// GET /marketing/eventos/nuevo - Formulario de creación
-router.get('/eventos/nuevo', requireRole('admin', 'marketing'), (req, res) => {
-  res.render('marketing/eventos_nuevo', { 
-    titulo: 'Crear Nuevo Evento', 
-    error: null 
-  });
-});
-
-// POST /marketing/eventos/nuevo - Guardar en BD
-router.post('/eventos/nuevo', requireRole('admin', 'marketing'), async (req, res) => {
-  const { nombre, descripcion } = req.body;
-  const slug = createSlug(nombre);
-
-  try {
-    // Insertamos nombre, slug y descripción en MySQL
-    await db.query('INSERT INTO eventos (nombre, slug, descripcion) VALUES (?, ?, ?)', 
-      [nombre, slug, descripcion]);
-    
-    // Redirigimos al listado
-    res.redirect('/marketing/eventos');
-  } catch (err) {
-    console.error('Error creando evento:', err);
-    // Si el error es por nombre duplicado (ER_DUP_ENTRY)
-    const errorMsg = err.code === 'ER_DUP_ENTRY' 
-      ? 'Ya existe un evento con ese nombre (o slug idéntico).' 
-      : 'Ocurrió un error al crear el evento.';
-      
-    res.render('marketing/eventos_nuevo', { 
-      titulo: 'Crear Nuevo Evento', 
-      error: errorMsg 
-    });
-  }
-});
-
-// ==========================================
-// RUTAS DE DETALLE Y FOTOS (CLOUDINARY)
-// ==========================================
-
-// GET /marketing/eventos/:slug - Ver detalle y galería
+// Ver detalle y galería
 router.get('/eventos/:slug', async (req, res) => {
   const { slug } = req.params;
   try {
@@ -88,7 +52,6 @@ router.get('/eventos/:slug', async (req, res) => {
     const evento = rows[0];
 
     // 2. Obtener imágenes desde Cloudinary
-    // Buscamos en la "carpeta" eventos/nombre-del-slug/
     const result = await cloudinary.api.resources({
       type: 'upload',
       prefix: `eventos/${slug}/`,
@@ -102,8 +65,8 @@ router.get('/eventos/:slug', async (req, res) => {
 
     res.render('marketing/evento_detalle', {
       titulo: evento.nombre,
-      evento,   // Pasamos el objeto completo (nombre, descripcion)
-      slug,     // Mantenemos slug por compatibilidad si lo usas
+      evento,
+      slug,
       imagenes
     });
   } catch (err) {
@@ -112,8 +75,44 @@ router.get('/eventos/:slug', async (req, res) => {
   }
 });
 
-// POST Subir fotos
-router.post('/eventos/:slug/fotos', requireRole('admin', 'marketing'), upload.array('fotos', 20), async (req, res) => {
+// ==========================================
+// RUTAS DE ESCRITURA (Protegidas con requireRole)
+// ==========================================
+
+// Formulario de creación
+router.get('/eventos/nuevo', requireRole(...WRITE_ROLES), (req, res) => {
+  res.render('marketing/eventos_nuevo', { 
+    titulo: 'Crear Nuevo Evento', 
+    error: null 
+  });
+});
+
+// Procesar creación de evento (BD)
+router.post('/eventos/nuevo', requireRole(...WRITE_ROLES), async (req, res) => {
+  const { nombre, descripcion } = req.body;
+  const slug = createSlug(nombre);
+
+  try {
+    await db.query('INSERT INTO eventos (nombre, slug, descripcion) VALUES (?, ?, ?)', 
+      [nombre, slug, descripcion]);
+    
+    res.redirect('/marketing/eventos');
+  } catch (err) {
+    console.error('Error creando evento:', err);
+    const errorMsg = err.code === 'ER_DUP_ENTRY' 
+      ? 'Ya existe un evento con ese nombre.' 
+      : 'Ocurrió un error al crear el evento.';
+      
+    res.render('marketing/eventos_nuevo', { 
+      titulo: 'Crear Nuevo Evento', 
+      error: errorMsg 
+    });
+  }
+});
+
+// Subir fotos (Cloudinary)
+// Note: requireRole va antes que upload.array para bloquear antes de procesar archivos
+router.post('/eventos/:slug/fotos', requireRole(...WRITE_ROLES), upload.array('fotos', 20), async (req, res) => {
   const { slug } = req.params;
   try {
     const promises = req.files.map(file => {
@@ -137,8 +136,8 @@ router.post('/eventos/:slug/fotos', requireRole('admin', 'marketing'), upload.ar
   }
 });
 
-// POST Eliminar foto
-router.post('/eventos/:slug/fotos/eliminar', requireRole('admin', 'marketing'), async (req, res) => {
+// Eliminar foto individual
+router.post('/eventos/:slug/fotos/eliminar', requireRole(...WRITE_ROLES), async (req, res) => {
   const { public_id } = req.body;
   const { slug } = req.params;
 
@@ -151,15 +150,11 @@ router.post('/eventos/:slug/fotos/eliminar', requireRole('admin', 'marketing'), 
   }
 });
 
-// POST Eliminar Evento Completo (BD + Todas las fotos)
-router.post('/eventos/:slug/eliminar', requireRole('admin', 'marketing'), async (req, res) => {
+// Eliminar Evento Completo
+router.post('/eventos/:slug/eliminar', requireRole(...WRITE_ROLES), async (req, res) => {
   const { slug } = req.params;
   try {
-    // 1. Borrar todas las fotos de esa carpeta en Cloudinary
-    // Nota: delete_resources_by_prefix borra los archivos, pero la carpeta vacía podría quedar en Cloudinary (no afecta funcionalidad)
     await cloudinary.api.delete_resources_by_prefix(`eventos/${slug}/`);
-    
-    // 2. Borrar registro de la BD MySQL
     await db.query('DELETE FROM eventos WHERE slug = ?', [slug]);
 
     res.redirect('/marketing/eventos');
