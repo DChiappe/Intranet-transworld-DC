@@ -12,7 +12,7 @@
       <h3 class="panel-title">Subir nuevo procedimiento</h3>
 
       <form action="/procesos/procedimientos/subir" method="POST" enctype="multipart/form-data" class="form-ticket">
-        <input type="file" name="archivo" required style="margin-bottom: 10px;">
+        <input type="file" name="archivo" required style="margin-bottom: 10px;" accept=".pdf,.doc,.docx">
         <button type="submit" class="btn btn-primario">Subir archivo</button>
       </form>
 
@@ -28,31 +28,60 @@
     <% if (!archivos || archivos.length === 0) { %>
       <p class="no-data">No hay archivos cargados en esta sección.</p>
     <% } else { %>
-      <ul class="lista-archivos">
+      
+      <div class="grid-archivos">
         <% archivos.forEach(function(archivo) { %>
-          <li style="display:flex; gap:10px; align-items:center; justify-content:space-between; padding: 10px 0; border-bottom: 1px solid #eee;">
-            <span style="font-weight: 500;"><%= archivo.name %></span>
-
-            <div style="display:flex; gap:8px; align-items:center;">
-              <a class="btn btn-secundario" href="<%= archivo.url %>" target="_blank" rel="noopener" style="font-size: 0.9rem; padding: 5px 10px;">
-                Descargar
-              </a>
-
-              <% if (canWrite) { %>
-                <form
-                  action="/procesos/procedimientos/<%= encodeURIComponent(archivo.name) %>/eliminar"
-                  method="POST"
-                  onsubmit="return confirm('¿Eliminar este archivo?');"
-                  style="margin:0;"
-                >
-                  <input type="hidden" name="public_id" value="<%= archivo.public_id %>">
-                  <button type="submit" class="btn-borrar-evento" style="border: none; cursor: pointer; color: #d9534f; background: transparent; text-decoration: underline;">Eliminar</button>
-                </form>
-              <% } %>
+          <% 
+             // Lógica para intentar generar miniatura de Cloudinary
+             // Si es PDF, intentamos cambiar la extensión a .jpg para obtener la portada
+             let thumbUrl = archivo.url;
+             if (archivo.format === 'pdf' || archivo.url.endsWith('.pdf')) {
+                // Truco de Cloudinary: si termina en .pdf, lo cambiamos a .jpg para preview
+                thumbUrl = archivo.url.substr(0, archivo.url.lastIndexOf('.')) + '.jpg';
+             }
+          %>
+          
+          <div class="card-archivo">
+            <div class="preview-container" onclick="abrirModal('<%= archivo.url %>', '<%= archivo.name %>')">
+              <img 
+                src="<%= thumbUrl %>" 
+                alt="Vista previa" 
+                class="preview-img"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+              >
+              <div class="icon-fallback" style="display: none;">
+                📄
+                <span>Ver PDF</span>
+              </div>
             </div>
-          </li>
+
+            <div class="card-body">
+              <h4 class="card-title" title="<%= archivo.name %>"><%= archivo.name %></h4>
+              
+              <div class="card-actions">
+                <a href="<%= archivo.url %>" target="_blank" download class="btn-secundario" style="font-size: 0.8rem; padding: 4px 8px;">
+                  ⬇ Descargar
+                </a>
+
+                <% if (canWrite) { %>
+                  <form
+                    action="/procesos/procedimientos/<%= encodeURIComponent(archivo.name) %>/eliminar"
+                    method="POST"
+                    onsubmit="return confirm('¿Eliminar este archivo?');"
+                    style="margin:0;"
+                  >
+                    <input type="hidden" name="public_id" value="<%= archivo.public_id %>">
+                    <button type="submit" style="background:none; border:none; cursor:pointer; font-size:1.1rem;" title="Eliminar">
+                      🗑️
+                    </button>
+                  </form>
+                <% } %>
+              </div>
+            </div>
+          </div>
         <% }) %>
-      </ul>
+      </div>
+
     <% } %>
 
     <% if (!canWrite) { %>
@@ -69,3 +98,55 @@
     </a>
   </div>
 </div>
+
+<div id="pdfModal" class="modal-overlay" onclick="cerrarModal(event)">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle" style="margin:0; font-size:1.1rem;">Visualizador</h3>
+      <span class="modal-close" onclick="cerrarModal()">&times;</span>
+    </div>
+    <iframe id="pdfFrame" class="pdf-frame" src=""></iframe>
+  </div>
+</div>
+
+<script>
+  function abrirModal(url, nombre) {
+    const modal = document.getElementById('pdfModal');
+    const iframe = document.getElementById('pdfFrame');
+    const title = document.getElementById('modalTitle');
+    
+    // Asignar URL al iframe
+    iframe.src = url;
+    title.innerText = nombre || 'Documento';
+    
+    // Mostrar modal
+    modal.style.display = 'block';
+    
+    // Bloquear scroll del body
+    document.body.style.overflow = 'hidden';
+  }
+
+  function cerrarModal(event) {
+    // Si se pasa evento, verificar que el click fue en el overlay (fuera del contenido)
+    if (event && event.target !== document.getElementById('pdfModal') && event.target.className !== 'modal-close') {
+      return;
+    }
+
+    const modal = document.getElementById('pdfModal');
+    const iframe = document.getElementById('pdfFrame');
+    
+    // Ocultar modal y limpiar src para detener carga/memoria
+    modal.style.display = 'none';
+    iframe.src = '';
+    
+    // Restaurar scroll del body
+    document.body.style.overflow = 'auto';
+  }
+  
+  // Cerrar con tecla Escape
+  document.addEventListener('keydown', function(event) {
+    if (event.key === "Escape") {
+      cerrarModal();
+    }
+  });
+</script>
