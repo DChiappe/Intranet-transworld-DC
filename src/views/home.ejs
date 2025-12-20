@@ -1,5 +1,5 @@
 <%
-  // Funciones y lógica previa que ya tenías...
+  // 1. Función para formatear nombres
   function titleCase(s) {
     if (!s) return '';
     const palabras = String(s).toLowerCase().trim().split(/\s+/);
@@ -20,17 +20,24 @@
   }
 
   const mesNum = new Date().getMonth() + 1;
-  const cumpleaniosOrdenados = [...cumpleaniosMes].sort((a, b) => {
-    const aPasado = a.dia < diaHoy;
-    const bPasado = b.dia < diaHoy;
-    if (aPasado !== bPasado) return aPasado ? 1 : -1;
-    return a.dia - b.dia;
-  });
+
+  // 2. Ordenar cumpleaños
+  let cumpleaniosOrdenados = [];
+  if (typeof cumpleaniosMes !== 'undefined' && cumpleaniosMes) {
+    cumpleaniosOrdenados = [...cumpleaniosMes].sort((a, b) => {
+      const dHoy = (typeof diaHoy !== 'undefined') ? diaHoy : new Date().getDate(); 
+      const aPasado = a.dia < dHoy;
+      const bPasado = b.dia < dHoy;
+      if (aPasado !== bPasado) return aPasado ? 1 : -1;
+      return a.dia - b.dia;
+    });
+  }
 %>
 
 <h2>Bienvenida/o a la intranet</h2>
 
 <div class="home-layout">
+  
   <div class="home-left">
     <a href="/sistemas/tickets" class="home-ti-link" title="Ir a Tickets">
       <div class="home-ti-card">
@@ -38,46 +45,51 @@
       </div>
     </a>
 
-    <% if (typeof eventosCarousel !== 'undefined' && eventosCarousel.length > 0) { %>
+    <% if (typeof eventosCarousel !== 'undefined' && eventosCarousel && eventosCarousel.length > 0) { %>
       <div class="home-carousel-container">
-        <% eventosCarousel.forEach((evento, index) => { %>
-          <a href="/marketing/eventos/<%= evento.id %>" class="carousel-slide fade" style="display: <%= index === 0 ? 'block' : 'none' %>;">
+        
+        <% for (let i = 0; i < eventosCarousel.length; i++) { 
+             let evento = eventosCarousel[i];
+             let displayStyle = (i === 0) ? 'display:block;' : 'display:none;';
+        %>
+          <a href="/marketing/eventos/<%= evento.slug %>" class="carousel-slide fade" style="<%= displayStyle %>">
             <img src="<%= evento.imagen %>" alt="<%= evento.titulo %>">
             <div class="carousel-caption">
-              <%= evento.titulo %>
+              <%= evento.nombre %>
             </div>
           </a>
-        <% }) %>
-        
+        <% } %>
+
         <div class="carousel-dots">
-          <% eventosCarousel.forEach((_, index) => { %>
-            <span class="dot" onclick="currentSlide(<%= index + 1 %>)"></span>
-          <% }) %>
+          <% for (let i = 0; i < eventosCarousel.length; i++) { %>
+            <span class="dot" onclick="currentSlide(<%= i + 1 %>)"></span>
+          <% } %>
         </div>
+
       </div>
     <% } %>
-
   </div>
 
   <div class="home-right">
     
     <div class="tarjeta tarjeta-usd">
       <div class="usd-label">Dólar Observado</div>
-      <p class="usd-valor">$<%= usdHoy %></p>
+      <p class="usd-valor">$<%= (typeof usdHoy !== 'undefined') ? usdHoy : '---' %></p>
       <div class="chart-box">
         <canvas id="usdChart"></canvas>
       </div>
     </div>
 
     <div class="tarjeta">
-      <h3>Cumpleaños de <%= mesNombre %></h3>
+      <h3>Cumpleaños de <%= (typeof mesNombre !== 'undefined') ? mesNombre : 'Mes Actual' %></h3>
 
       <% if (!cumpleaniosOrdenados || cumpleaniosOrdenados.length === 0) { %>
         <p>No hay cumpleaños registrados para este mes.</p>
       <% } else { %>
         <div class="cumple-cards">
+          <% const dHoy = (typeof diaHoy !== 'undefined') ? diaHoy : new Date().getDate(); %>
           <% cumpleaniosOrdenados.forEach((p) => { 
-            let estadoClase = (p.dia < diaHoy) ? 'cumple-pasado' : (p.dia === diaHoy ? 'cumple-hoy' : 'cumple-futuro');
+            let estadoClase = (p.dia < dHoy) ? 'cumple-pasado' : (p.dia === dHoy ? 'cumple-hoy' : 'cumple-futuro');
           %>
             <div class="cumple-card <%= estadoClase %>">
               <div class="cumple-fecha">
@@ -88,7 +100,7 @@
                 <div class="cumple-area"><%= titleCase(p.area) %></div>
               </div>
             </div>
-          <% }) %>
+          <% }); %>
         </div>
       <% } %>
     </div>
@@ -97,73 +109,93 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-  // --- Lógica del Gráfico USD ---
-  const rawData = '<%- JSON.stringify(usdHistorico) %>';
+  const rawData = '<%- (typeof usdHistorico !== "undefined") ? JSON.stringify(usdHistorico) : "[]" %>';
   const datosHistoricos = JSON.parse(rawData);
+
   const ctx = document.getElementById('usdChart').getContext('2d');
   
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: datosHistoricos.map(d => new Date(d.fecha).getDate()),
-      datasets: [{
-        label: 'USD',
-        data: datosHistoricos.map(d => d.valor),
-        borderColor: '#4caf50',
-        backgroundColor: 'rgba(76, 175, 80, 0.1)',
-        borderWidth: 2,
-        fill: true,
-        pointRadius: 2,
-        tension: 0.3
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { enabled: true } },
-      scales: {
-        x: { display: false },
-        y: { 
-          display: false,
-          suggestedMin: Math.min(...datosHistoricos.map(d => d.valor)) - 5,
-          suggestedMax: Math.max(...datosHistoricos.map(d => d.valor)) + 5
+  if (datosHistoricos.length > 0) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: datosHistoricos.map(d => new Date(d.fecha).getDate()),
+        datasets: [{
+          label: 'USD',
+          data: datosHistoricos.map(d => d.valor),
+          borderColor: '#4caf50',
+          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          pointRadius: 2,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: true } },
+        scales: {
+          x: { display: false },
+          y: { 
+            display: false,
+            suggestedMin: Math.min(...datosHistoricos.map(d => d.valor)) - 5,
+            suggestedMax: Math.max(...datosHistoricos.map(d => d.valor)) + 5
+          }
         }
       }
-    }
-  });
+    });
+  }
 
   // --- Lógica del Carrusel ---
   let slideIndex = 0;
   const slides = document.getElementsByClassName("carousel-slide");
   const dots = document.getElementsByClassName("dot");
-  
+
   if (slides.length > 0) {
-    showSlides(); // Iniciar automático
+    showSlides(); 
   }
 
   function showSlides() {
     for (let i = 0; i < slides.length; i++) {
       slides[i].style.display = "none";  
     }
-    slideIndex++;
-    if (slideIndex > slides.length) {slideIndex = 1}    
     
-    // Resetear dots
-    if(dots.length > 0) {
+    slideIndex++;
+    if (slideIndex > slides.length) { slideIndex = 1; }    
+    
+    if (dots.length > 0) {
        for (let i = 0; i < dots.length; i++) {
            dots[i].className = dots[i].className.replace(" active", "");
        }
-       dots[slideIndex-1].className += " active";
+       if (dots[slideIndex-1]) {
+         dots[slideIndex-1].className += " active";
+       }
     }
 
-    slides[slideIndex-1].style.display = "block";  
-    setTimeout(showSlides, 4000); // Cambiar cada 4 segundos
+    if (slides[slideIndex-1]) {
+      slides[slideIndex-1].style.display = "block";  
+    }
+
+    setTimeout(showSlides, 4000); 
   }
 
-  // Opcional: Control manual por dots
   function currentSlide(n) {
-    // Nota: Para implementar control manual completo necesitarías detener el timeout
-    // y manejar el índice manualmente. Por simplicidad, esto es solo visual o requiere lógica extra.
+    slideIndex = n - 1; 
+    for (let i = 0; i < slides.length; i++) {
+      slides[i].style.display = "none";  
+    }
+    if (dots.length > 0) {
+       for (let i = 0; i < dots.length; i++) {
+           dots[i].className = dots[i].className.replace(" active", "");
+       }
+       if (dots[slideIndex]) {
+         dots[slideIndex].className += " active";
+       }
+    }
+    if (slides[slideIndex]) {
+      slides[slideIndex].style.display = "block";  
+    }
   }
 </script>
