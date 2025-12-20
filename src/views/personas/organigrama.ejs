@@ -1,8 +1,8 @@
 <h2>Organigrama</h2>
 <p>A continuación se presenta el organigrama actualizado de Transworld.</p>
 
-<% const canWrite = (typeof can !== 'undefined' && can.organigrama_write); [cite: 28] %>
-<% const url = (typeof organigramaUrl !== 'undefined' && organigramaUrl) ? organigramaUrl : "/img/Organigrama%20TW.png"; [cite: 29] %>
+<% const canWrite = (typeof can !== 'undefined' && can.organigrama_write); %>
+<% const url = (typeof organigramaUrl !== 'undefined' && organigramaUrl) ? organigramaUrl : "/img/Organigrama%20TW.png"; %>
 
 <div class="panel" style="margin-bottom: 16px;">
   <h3 class="panel-title">Archivo actual</h3>
@@ -12,8 +12,7 @@
 
     <% if (canWrite) { %>
       <form action="/personas/organigrama/eliminar" method="POST"
-          
-      onsubmit="return confirm('¿Eliminar el organigrama actual?');" style="margin:0;"> [cite: 30]
+            onsubmit="return confirm('¿Eliminar el organigrama actual?');" style="margin:0;">
         <button type="submit" class="btn btn-peligro">Eliminar</button>
       </form>
     <% } %>
@@ -21,8 +20,7 @@
 
   <% if (!canWrite) { %>
     <p class="small-text" style="margin-top:10px;">
-    
-      Tienes acceso de solo lectura en esta sección. [cite: 31]
+      Tienes acceso de solo lectura en esta sección.
     </p>
   <% } %>
 </div>
@@ -37,7 +35,7 @@
     </form>
     <p class="small-text" style="margin-top:8px;">
       Puedes subir imagen (PNG/JPG) o PDF.
-      El nuevo archivo reemplazará al anterior. [cite: 32]
+      El nuevo archivo reemplazará al anterior.
     </p>
   </div>
 <% } %>
