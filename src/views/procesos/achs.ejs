@@ -1,70 +1,66 @@
-<h2>ACHS y procedimientos por accidentes</h2>
-<p>
-  Documentos de seguridad, protocolos de actuación y material asociado a ACHS.
-</p>
+<div class="contenedor">
+  <h2 class="page-title">ACHS y procedimientos por accidentes</h2>
+  <p class="page-description">
+    Documentos de seguridad, protocolos de actuación y material asociado a ACHS.
+  </p>
 
-<!-- Requiere (backend):
-  - archivos: string[]
-  - POST /procesos/achs/subir
-  - POST /procesos/achs/:archivo/eliminar
-  - GET  /docs/achs/:archivo
--->
+  <% const canWrite = (typeof can !== 'undefined' && can.achs_write); %>
 
-<% const canWrite = (typeof can !== 'undefined' && can.achs_write); %>
+  <% if (canWrite) { %>
+    <div class="panel">
+      <h3 class="panel-title">Subir documento ACHS</h3>
 
-<% if (canWrite) { %>
-  <div class="panel">
-    <h3 class="panel-title">Subir documento ACHS</h3>
+      <form action="/procesos/achs/subir" method="POST" enctype="multipart/form-data" class="form-ticket">
+        <input type="file" name="archivo" required style="margin-bottom: 10px;">
+        <button type="submit" class="btn btn-primario">Subir archivo</button>
+      </form>
+    </div>
+  <% } %>
 
-    <form action="/procesos/achs/subir" method="POST" enctype="multipart/form-data">
-      <input type="file" name="archivo" required>
-      <button type="submit" class="btn btn-primario">Subir archivo</button>
-    </form>
+  <div class="panel" style="margin-top: 18px;">
+    <h3 class="panel-title">Archivos disponibles</h3>
+
+    <% if (!archivos || archivos.length === 0) { %>
+      <p class="no-data">No hay archivos cargados en esta sección.</p>
+    <% } else { %>
+      <ul class="lista-archivos">
+        <% archivos.forEach(function(archivo) { %>
+          <li style="display:flex; gap:10px; align-items:center; justify-content:space-between; padding: 10px 0; border-bottom: 1px solid #eee;">
+            <span style="font-weight: 500;"><%= archivo.name %></span>
+
+            <div style="display:flex; gap:8px; align-items:center;">
+              <a class="btn btn-secundario" href="<%= archivo.url %>" target="_blank" rel="noopener" style="font-size: 0.9rem; padding: 5px 10px;">
+                Descargar
+              </a>
+
+              <% if (canWrite) { %>
+                <form
+                  action="/procesos/achs/<%= encodeURIComponent(archivo.name) %>/eliminar"
+                  method="POST"
+                  onsubmit="return confirm('¿Eliminar este archivo?');"
+                  style="margin:0;"
+                >
+                  <input type="hidden" name="public_id" value="<%= archivo.public_id %>">
+                  <button type="submit" class="btn-borrar-evento" style="border: none; cursor: pointer; color: #d9534f; background: transparent; text-decoration: underline;">Eliminar</button>
+                </form>
+              <% } %>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+
+    <% if (!canWrite) { %>
+      <p class="small-text" style="margin-top:10px; color: #666;">
+        Tienes acceso de solo lectura en esta sección.
+      </p>
+    <% } %>
   </div>
-<% } %>
 
-<div class="panel" style="margin-top: 18px;">
-  <h3 class="panel-title">Archivos disponibles</h3>
-
-  <% if (!archivos || archivos.length === 0) { %>
-    <p>No hay archivos cargados en esta sección.</p>
-  <% } else { %>
-    <ul class="lista-archivos">
-      <% archivos.forEach(function(a) { %>
-        <li style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
-          <span><%= a %></span>
-
-          <div style="display:flex; gap:8px; align-items:center;">
-            <a class="btn" href="/docs/achs/<%= encodeURIComponent(a) %>" target="_blank" rel="noopener">
-              Descargar
-            </a>
-
-            <% if (canWrite) { %>
-              <form
-                action="/procesos/achs/<%= encodeURIComponent(a) %>/eliminar"
-                method="POST"
-                onsubmit="return confirm('¿Eliminar este archivo?');"
-                style="margin:0;"
-              >
-                <button type="submit" class="btn btn-peligro">Eliminar</button>
-              </form>
-            <% } %>
-          </div>
-        </li>
-      <% }) %>
-    </ul>
-  <% } %>
-
-  <% if (!canWrite) { %>
-    <p class="small-text" style="margin-top:10px;">
-      Tienes acceso de solo lectura en esta sección.
-    </p>
-  <% } %>
-</div>
-
-<div class="grid-opciones" style="margin-top: 18px;">
-  <a class="boton-opcion" href="/procesos">
-    Volver a Procesos y Documentos
-    <span>Regresar al menú principal de documentos.</span>
-  </a>
+  <div class="grid-opciones" style="margin-top: 25px;">
+    <a class="boton-opcion" href="/procesos">
+      Volver a Procesos y Documentos
+      <span>Regresar al menú principal de documentos.</span>
+    </a>
+  </div>
 </div>

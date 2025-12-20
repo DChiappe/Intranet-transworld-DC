@@ -1,47 +1,50 @@
+// src/routes/personas.js
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-
-const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
-
+const cloudinary = require('../services/cloudinary'); // Importamos el servicio
 const requireRole = require('../middlewares/requireRole');
 
-const ORG_DIR = path.join(__dirname, '..', 'public', 'img', 'organigrama');
-if (!fs.existsSync(ORG_DIR)) fs.mkdirSync(ORG_DIR, { recursive: true });
+// Configuración de multer: Memoria (RAM)
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-function getOrganigramaUrl() {
-  // Busca un archivo cargado en /public/img/organigrama/
-  const files = fs.readdirSync(ORG_DIR, { withFileTypes: true })
-    .filter(d => d.isFile())
-    .map(d => d.name)
-    .filter(n => /\.(png|jpe?g|webp|pdf)$/i.test(n))
-    .sort((a, b) => a.localeCompare(b));
+// Función auxiliar para obtener el último organigrama de Cloudinary
+async function getOrganigramaUrl() {
+  try {
+    // Buscamos recursos en la carpeta 'organigrama'
+    // Nota: El organigrama suele ser imagen, pero si permiten PDF usamos resource_type: 'auto' o buscamos en ambos.
+    // Por simplicidad buscamos imágenes primero, que es lo más común.
+    const result = await cloudinary.api.resources({
+      type: 'upload',
+      prefix: 'organigrama/',
+      max_results: 10,
+      direction: 'desc', // Los más nuevos primero
+      resource_type: 'image' // O 'raw' si suben PDFs.
+    });
 
-  if (!files.length) return null;
-  return `/img/organigrama/${encodeURIComponent(files[0])}`;
+    // Si no hay imágenes, intentamos buscar 'raw' (PDFs)
+    if (!result.resources || result.resources.length === 0) {
+      const resultRaw = await cloudinary.api.resources({
+        type: 'upload',
+        prefix: 'organigrama/',
+        max_results: 10,
+        direction: 'desc',
+        resource_type: 'raw'
+      });
+      if (resultRaw.resources.length > 0) {
+        return resultRaw.resources[0].secure_url;
+      }
+      return null;
+    }
+
+    return result.resources[0].secure_url;
+  } catch (err) {
+    console.error('Error obteniendo organigrama de Cloudinary:', err);
+    return null;
+  }
 }
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, ORG_DIR),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const allowed = new Set(['.png', '.jpg', '.jpeg', '.webp', '.pdf']);
-    const safeExt = allowed.has(ext) ? ext : '.bin';
-    cb(null, `organigrama_${Date.now()}${safeExt}`);
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 20 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const ok = /\.(png|jpe?g|webp|pdf)$/i.test(file.originalname);
-    if (!ok) return cb(new Error('Formato no permitido (solo PNG/JPG/WEBP/PDF)'));
-    cb(null, true);
-  }
-});
 
 // GET /personas  → página principal + cumpleaños
 router.get('/', async (req, res) => {
@@ -65,48 +68,60 @@ router.get('/', async (req, res) => {
 });
 
 // GET /personas/organigrama
-router.get('/organigrama', (req, res) => {
-  const organigramaUrl = getOrganigramaUrl();
+router.get('/organigrama', async (req, res) => {
+  const organigramaUrl = await getOrganigramaUrl();
   res.render('personas/organigrama', {
     titulo: 'Organigrama',
     organigramaUrl
   });
 });
 
-// POST /personas/organigrama/subir  (solo admin/rrhh)
-router.post('/organigrama/subir', requireRole('admin', 'rrhh'), (req, res) => {
-  upload.single('organigrama')(req, res, (err) => {
-    if (err) {
-      console.error('Error subiendo organigrama:', err.message);
-      return res.status(400).send(err.message);
-    }
+// POST /personas/organigrama/subir (solo admin/rrhh)
+router.post('/organigrama/subir', requireRole('admin', 'rrhh'), upload.single('organigrama'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No se subió ningún archivo.');
+  }
 
-    // Limpia archivos antiguos (deja solo el nuevo)
-    try {
-      const current = req.file?.filename;
-      const files = fs.readdirSync(ORG_DIR);
-      files.forEach((f) => {
-        if (f !== current) {
-          try { fs.unlinkSync(path.join(ORG_DIR, f)); } catch {}
+  try {
+    // Subimos a Cloudinary (resource_type: 'auto' detecta si es img o pdf)
+    await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { 
+          folder: 'organigrama',
+          resource_type: 'auto' 
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
         }
-      });
-    } catch {}
+      );
+      stream.end(req.file.buffer);
+    });
 
-    return res.redirect('/personas/organigrama');
-  });
+    // Opcional: Podríamos borrar los organigramas viejos aquí para no acumular basura,
+    // pero Cloudinary tiene mucho espacio.
+    
+    res.redirect('/personas/organigrama');
+  } catch (err) {
+    console.error('Error subiendo organigrama a Cloudinary:', err);
+    res.status(500).send('Error al subir el archivo.');
+  }
 });
 
 // POST /personas/organigrama/eliminar (solo admin/rrhh)
-router.post('/organigrama/eliminar', requireRole('admin', 'rrhh'), (req, res) => {
+router.post('/organigrama/eliminar', requireRole('admin', 'rrhh'), async (req, res) => {
   try {
-    const files = fs.readdirSync(ORG_DIR);
-    files.forEach((f) => {
-      try { fs.unlinkSync(path.join(ORG_DIR, f)); } catch {}
-    });
+    // Borramos todo lo que haya en la carpeta organigrama
+    // Primero imágenes
+    await cloudinary.api.delete_resources_by_prefix('organigrama/', { resource_type: 'image' });
+    // Luego archivos raw (PDFs)
+    await cloudinary.api.delete_resources_by_prefix('organigrama/', { resource_type: 'raw' });
+    
+    res.redirect('/personas/organigrama');
   } catch (e) {
     console.error('Error eliminando organigrama:', e);
+    res.status(500).send('Error al eliminar.');
   }
-  return res.redirect('/personas/organigrama');
 });
 
 module.exports = router;
