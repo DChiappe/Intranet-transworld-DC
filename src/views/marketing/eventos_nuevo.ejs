@@ -1,16 +1,23 @@
-<h2>Nuevo evento</h2>
+<div class="contenedor">
+  <h2>Crear Nuevo Evento</h2>
 
-<% if (typeof error !== 'undefined' && error) { %>
-  <p class="mensaje-error"><%= error %></p>
-<% } %>
+  <% if (error) { %>
+    <p class="mensaje-error" style="color: red; background: #fee; padding: 10px; border-radius: 5px;"><%= error %></p>
+  <% } %>
 
-<form action="/marketing/eventos/nuevo" method="POST" class="form-evento">
-  <label for="nombre">Nombre del evento</label>
-  <input type="text" id="nombre" name="nombre" required placeholder="Ej: Aniversario 2025">
+  <div class="panel">
+    <form action="/marketing/eventos/nuevo" method="POST" class="form-ticket">
+      <label for="nombre">Nombre del Evento (Ej: Paseo de Fin de Año)</label>
+      <input type="text" id="nombre" name="nombre" required placeholder="Ingresa el nombre...">
 
-  <button type="submit">Crear evento</button>
-</form>
+      <label for="descripcion" style="margin-top: 15px; display: block;">Descripción del Evento</label>
+      <textarea id="descripcion" name="descripcion" rows="4" placeholder="Escribe una breve reseña del evento..."></textarea>
 
-<a class="boton-opcion" href="/marketing/eventos" style="margin-top:20px; display:inline-block;">
-  Volver a eventos
-</a>
+      <button type="submit" class="btn btn-primario" style="margin-top: 20px;">Crear Carpeta y Guardar</button>
+    </form>
+  </div>
+
+  <a class="link-volver" href="/marketing/eventos" style="margin-top:20px; display:inline-block;">
+    ← Volver a la lista
+  </a>
+</div>

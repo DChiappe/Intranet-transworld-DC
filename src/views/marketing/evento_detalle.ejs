@@ -3,12 +3,18 @@
     <a href="/marketing/eventos" class="link-volver">← Volver a Eventos</a>
   </div>
 
-  <h2 class="page-title">Evento: <%= slug %></h2>
+  <h2 class="page-title">Evento: <%= evento.nombre %></h2>
+  
+  <% if (evento.descripcion) { %>
+    <p class="page-description" style="margin-bottom: 25px; font-style: italic; color: #555;">
+      <%= evento.descripcion %>
+    </p>
+  <% } %>
 
-  <% if (can.eventos_write) { %>
+  <% if (typeof can !== 'undefined' && can.eventos_write) { %>
     <div class="panel" style="margin-bottom: 30px;">
       <h3 class="panel-title">Subir nuevas fotos</h3>
-      <form action="/marketing/eventos/<%= slug %>/fotos" method="POST" enctype="multipart/form-data" class="form-ticket">
+      <form action="/marketing/eventos/<%= evento.slug %>/fotos" method="POST" enctype="multipart/form-data" class="form-ticket">
         <input type="file" name="fotos" multiple accept="image/*" required style="margin-bottom: 10px; display: block;">
         <button type="submit" class="btn btn-primario">Subir a la nube</button>
       </form>
@@ -18,21 +24,21 @@
   <h3 class="panel-title">Galería de Imágenes</h3>
 
   <% if (!imagenes || imagenes.length === 0) { %>
-    <p class=\"no-data\">No hay imágenes cargadas para este evento aún.</p>
+    <p class="no-data">No hay imágenes cargadas para este evento aún.</p>
   <% } else { %>
     <div class="galeria-evento">
       <% imagenes.forEach(function(img) { %>
         <div class="galeria-item">
           <img
             src="<%= img.url %>"
-            alt="<%= slug %>"
+            alt="<%= evento.nombre %>"
             class="galeria-thumb"
             data-full="<%= img.url %>"
             loading="lazy"
           >
           
-          <% if (can.eventos_write) { %>
-            <form action="/marketing/eventos/<%= slug %>/fotos/eliminar" method="POST" onsubmit="return confirm('¿Eliminar esta foto definitivamente de la nube?');" style="margin-top: 8px;">
+          <% if (typeof can !== 'undefined' && can.eventos_write) { %>
+            <form action="/marketing/eventos/<%= evento.slug %>/fotos/eliminar" method="POST" onsubmit="return confirm('¿Eliminar esta foto definitivamente de la nube?');" style="margin-top: 8px;">
               <input type="hidden" name="public_id" value="<%= img.public_id %>">
               <button type="submit" class="btn-borrar-foto">Eliminar</button>
             </form>

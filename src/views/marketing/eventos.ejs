@@ -1,33 +1,43 @@
-<h2>Eventos</h2>
-<p>Selecciona un evento para ver su galería de fotos o administra las carpetas existentes.</p>
+<div class="contenedor">
+  <h2 class="page-title">Eventos y Galerías</h2>
+  <p class="page-description">Selecciona un evento para ver su galería de fotos o administra las carpetas existentes.</p>
 
-<div style="margin-bottom: 20px;">
-  <a class="boton-opcion" href="/marketing/eventos/nuevo">
-    Crear nuevo evento
-    <span>Generar una nueva carpeta para subir fotos.</span>
-  </a>
-</div>
+  <div style="margin-bottom: 20px;">
+    <a class="boton-opcion" href="/marketing/eventos/nuevo">
+      + Crear nuevo evento
+      <span>Generar una nueva carpeta para subir fotos.</span>
+    </a>
+  </div>
 
-<% if (!eventos || eventos.length === 0) { %>
-  <p>No hay eventos creados por el momento.</p>
-<% } else { %>
-  <div class="grid-eventos">
-    <% eventos.forEach(function(slug) { %>
-      <div class="card-evento">
-        <div class="icono-carpeta">
-          <div class="carpeta-tapa"></div>
-          <div class="carpeta-cuerpo"></div>
-        </div>
-        <div class="card-evento-texto">
-          <h3><%= slug %></h3>
-          <div class="acciones-evento">
-            <a href="/marketing/eventos/<%= slug %>">Ver fotos</a>
-            <form action="/marketing/eventos/<%= slug %>/eliminar" method="POST" onsubmit="return confirm('¿Eliminar este evento y todas sus fotos?');">
-              <button type="submit" class="btn-borrar-evento">Eliminar</button>
-            </form>
+  <% if (!eventos || eventos.length === 0) { %>
+    <p class="no-data">No hay eventos creados por el momento.</p>
+  <% } else { %>
+    <div class="grid-eventos">
+      <% eventos.forEach(function(ev) { %>
+        <div class="card-evento">
+          <div class="icono-carpeta">
+            <div class="carpeta-tapa"></div>
+            <div class="carpeta-cuerpo"></div>
+          </div>
+          <div class="card-evento-texto">
+            <h3><%= ev.nombre %></h3>
+            
+            <% if (ev.descripcion) { %>
+              <p class="small-text" style="margin-bottom: 10px; color: #666;">
+                <%= ev.descripcion.length > 60 ? ev.descripcion.substring(0, 60) + '...' : ev.descripcion %>
+              </p>
+            <% } %>
+
+            <div class="acciones-evento">
+              <a href="/marketing/eventos/<%= ev.slug %>">Ver fotos</a>
+              
+              <form action="/marketing/eventos/<%= ev.slug %>/eliminar" method="POST" onsubmit="return confirm('¿Estás seguro? Se eliminará el evento y TODAS sus fotos de la nube.');" style="display:inline;">
+                <button type="submit" class="btn-borrar-evento">Eliminar</button>
+              </form>
+            </div>
           </div>
         </div>
-      </div>
-    <% }) %>
-  </div>
-<% } %>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
