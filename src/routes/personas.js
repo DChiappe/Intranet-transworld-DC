@@ -71,6 +71,8 @@ router.get('/', async (req, res) => {
       nombre: formatNombre(p.nombre)
     }));
 
+    // ExpressLayouts hace disponible res.locals.can automáticamente en la vista,
+    // pero pasamos 'user' explícitamente por si acaso se usa en otro lado.
     res.render('personas/index', {
       titulo: 'Personas',
       personas: personasFormateadas,
@@ -83,6 +85,7 @@ router.get('/', async (req, res) => {
 });
 
 // --- Rutas de CRUD (Crear, Editar, Eliminar) ---
+// Solo RRHH y Admin
 
 // GET /personas/crear (Formulario)
 router.get('/crear', requireRole('admin', 'rrhh'), (req, res) => {
@@ -154,7 +157,7 @@ router.get('/organigrama', async (req, res) => {
   res.render('personas/organigrama', {
     titulo: 'Organigrama',
     organigramaUrl,
-    user: req.session.user // Pasamos user para validar permisos en la vista
+    user: req.session.user
   });
 });
 

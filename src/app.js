@@ -74,6 +74,7 @@ app.use((req, res, next) => {
       organigrama_write: hasRole('admin', 'rrhh'),
       eventos_write: hasRole('admin', 'marketing'),
       tickets_reply: hasRole('admin'), // Capacidad para responder tickets en sistemas
+      personas_write: hasRole('admin', 'rrhh'),
     };
   } else {
     res.locals.can = {};
