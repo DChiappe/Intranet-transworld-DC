@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { sendMail } = require('../services/mailer');
+// Faltaba importar esto para proteger las rutas de admin
+const requireRole = require('../middlewares/requireRole'); 
 
 // ======================================================================
 //  Página principal de la sección Sistemas
@@ -36,10 +38,8 @@ router.get('/tickets', async (req, res) => {
 
 // ======================================================================
 //  NUEVO: Formulario de creación (GET)
-//  Ruta: /sistemas/tickets/nuevo
 // ======================================================================
 router.get('/tickets/nuevo', (req, res) => {
-  // Renderizamos la vista dentro de la carpeta sistemas
   res.render('sistemas/ticket_nuevo', {
     titulo: 'Abrir Nuevo Ticket'
   });
@@ -47,7 +47,6 @@ router.get('/tickets/nuevo', (req, res) => {
 
 // ======================================================================
 //  NUEVO: Procesar creación (POST)
-//  Ruta: /sistemas/tickets/crear
 // ======================================================================
 router.post('/tickets/crear', async (req, res) => {
   const { titulo, descripcion, categoria, prioridad } = req.body;
@@ -79,7 +78,79 @@ router.post('/tickets/crear', async (req, res) => {
 });
 
 // ======================================================================
-//  Detalle de un ticket
+//  ADMIN: Actualizar Ticket (Estado, Prioridad)
+// ======================================================================
+router.post('/tickets/:id/actualizar', requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  const { categoria, prioridad, estado } = req.body;
+
+  const sql = `
+    UPDATE tickets
+    SET categoria = ?, prioridad = ?, estado = ?
+    WHERE id = ?
+  `;
+
+  try {
+    await db.query(sql, [categoria, prioridad, estado, id]);
+    res.redirect(`/sistemas/tickets/${id}`);
+  } catch (err) {
+    console.error('Error actualizando ticket:', err);
+    res.status(500).send('Error actualizando ticket');
+  }
+});
+
+// ======================================================================
+//  ADMIN: Responder Ticket
+// ======================================================================
+router.post('/tickets/:id/responder', requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  const { asunto_respuesta, mensaje_respuesta } = req.body;
+
+  if (!mensaje_respuesta || !mensaje_respuesta.trim()) {
+    return res.status(400).send('El mensaje de respuesta no puede estar vacío.');
+  }
+
+  const sqlTicket = `SELECT solicitante_email, titulo FROM tickets WHERE id = ?`;
+
+  try {
+    const [results] = await db.query(sqlTicket, [id]);
+
+    if (results.length === 0) {
+      return res.status(404).send('Ticket no encontrado');
+    }
+
+    const { solicitante_email, titulo } = results[0];
+
+    const subject =
+      asunto_respuesta && asunto_respuesta.trim().length > 0
+        ? asunto_respuesta
+        : `Respuesta a tu ticket #${id}: ${titulo}`;
+
+    const sqlRespuesta = `
+      INSERT INTO ticket_respuestas (ticket_id, mensaje, remitente)
+      VALUES (?, ?, 'soporte')
+    `;
+
+    await db.query(sqlRespuesta, [id, mensaje_respuesta]);
+
+    // Envío de correo vía API de Brevo
+    sendMail({
+      to: solicitante_email,
+      subject: subject,
+      text: mensaje_respuesta
+    })
+    .then(() => console.log('Correo de respuesta enviado exitosamente'))
+    .catch(err => console.error('Error enviando correo:', err));
+
+    res.redirect(`/sistemas/tickets/${id}`);
+  } catch (err) {
+    console.error('Error en flujo de respuesta:', err);
+    res.status(500).send('Error al procesar la respuesta.');
+  }
+});
+
+// ======================================================================
+//  Detalle de un ticket (Debe ir al final de las rutas /tickets/...)
 // ======================================================================
 router.get('/tickets/:id', async (req, res) => {
   const { id } = req.params;

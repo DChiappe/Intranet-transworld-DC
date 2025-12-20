@@ -70,13 +70,12 @@
       </dd>
     </dl>
 
-    <!-- Panel para actualizar área / importancia / estado -->
     <% const canReply = (typeof can !== 'undefined' && can.tickets_reply); %>
 
     <% if (canReply) { %>
       <div class="panel panel-actualizar-ticket">
         <h3 class="panel-title">Actualizar área / importancia / estado</h3>
-        <form action="/tickets/<%= ticket.id %>/actualizar" method="POST" class="form-actualizar-ticket">
+        <form action="/sistemas/tickets/<%= ticket.id %>/actualizar" method="POST" class="form-actualizar-ticket">
           <label for="categoria">Área (categoría)</label>
           <select id="categoria" name="categoria">
             <option value="Sistemas" <%= ticket.categoria === 'Sistemas' ? 'selected' : '' %>>Sistemas</option>
@@ -109,10 +108,9 @@
       </div>
     <% } %>
 
-    <!-- Responder al usuario -->
     <div class="panel panel-responder">
       <h3 class="panel-title">Responder al usuario</h3>
-      <form action="/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
+      <form action="/sistemas/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
         <label for="asunto_respuesta">Asunto</label>
         <input
           type="text"
@@ -133,7 +131,6 @@
       </form>
     </div>
 
-    <!-- Historial de respuestas -->
     <div class="panel panel-historial">
       <h3 class="panel-title">Historial de respuestas</h3>
       <% if (respuestas && respuestas.length > 0) { %>
@@ -156,8 +153,6 @@
         <p class="small-text">No hay respuestas registradas aún.</p>
       <% } %>
     </div>
-
-
   </div>
 </body>
 </html>
