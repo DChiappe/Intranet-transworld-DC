@@ -1,0 +1,35 @@
+<div class="contenedor-formulario" style="max-width: 600px; margin: 0 auto;">
+  <div style="margin-bottom: 20px;">
+    <a href="/personas" class="link-volver" style="text-decoration: none; color: #555;">← Volver al listado</a>
+  </div>
+
+  <h2>Editar Persona</h2>
+
+  <form action="/personas/editar/<%= persona.id %>" method="POST" class="form-general">
+    <div class="campo" style="margin-bottom: 15px;">
+      <label for="nombre" style="display: block; margin-bottom: 5px; font-weight: bold;">Nombre Completo:</label>
+      <input type="text" id="nombre" name="nombre" required 
+             value="<%= persona.nombre %>"
+             style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
+    <div class="campo" style="margin-bottom: 15px;">
+      <label for="area" style="display: block; margin-bottom: 5px; font-weight: bold;">Área / Cargo:</label>
+      <input type="text" id="area" name="area" required 
+             value="<%= persona.area %>"
+             style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
+    <div class="campo" style="margin-bottom: 20px;">
+      <label for="fecha_nacimiento" style="display: block; margin-bottom: 5px; font-weight: bold;">Fecha de Nacimiento:</label>
+      <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required 
+             value="<%= new Date(persona.fecha_nacimiento).toISOString().split('T')[0] %>"
+             style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
+    <button type="submit" class="btn btn-primario" 
+            style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
+      Actualizar Datos
+    </button>
+  </form>
+</div>
