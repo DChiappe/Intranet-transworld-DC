@@ -1,5 +1,5 @@
 <%
-  // 1. Función para formatear nombres (Nombre Apellido1 Apellido2)
+  // Funciones y lógica previa que ya tenías...
   function titleCase(s) {
     if (!s) return '';
     const palabras = String(s).toLowerCase().trim().split(/\s+/);
@@ -20,8 +20,6 @@
   }
 
   const mesNum = new Date().getMonth() + 1;
-
-  // 2. Lógica de reordenamiento de cumpleaños
   const cumpleaniosOrdenados = [...cumpleaniosMes].sort((a, b) => {
     const aPasado = a.dia < diaHoy;
     const bPasado = b.dia < diaHoy;
@@ -39,6 +37,26 @@
         <img src="/img/Img%20Servicios%20TI.png" alt="Servicios TI" class="home-ti-img" />
       </div>
     </a>
+
+    <% if (typeof eventosCarousel !== 'undefined' && eventosCarousel.length > 0) { %>
+      <div class="home-carousel-container">
+        <% eventosCarousel.forEach((evento, index) => { %>
+          <a href="/marketing/eventos/<%= evento.id %>" class="carousel-slide fade" style="display: <%= index === 0 ? 'block' : 'none' %>;">
+            <img src="<%= evento.imagen %>" alt="<%= evento.titulo %>">
+            <div class="carousel-caption">
+              <%= evento.titulo %>
+            </div>
+          </a>
+        <% }) %>
+        
+        <div class="carousel-dots">
+          <% eventosCarousel.forEach((_, index) => { %>
+            <span class="dot" onclick="currentSlide(<%= index + 1 %>)"></span>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
   </div>
 
   <div class="home-right">
@@ -80,10 +98,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Inyectamos los datos desde el servidor de forma segura para evitar errores de sintaxis en editores
+  // --- Lógica del Gráfico USD ---
   const rawData = '<%- JSON.stringify(usdHistorico) %>';
   const datosHistoricos = JSON.parse(rawData);
-
   const ctx = document.getElementById('usdChart').getContext('2d');
   
   new Chart(ctx, {
@@ -104,19 +121,49 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: true }
-      },
+      plugins: { legend: { display: false }, tooltip: { enabled: true } },
       scales: {
         x: { display: false },
         y: { 
           display: false,
-          // Ajuste opcional para que la línea no se vea tan plana
           suggestedMin: Math.min(...datosHistoricos.map(d => d.valor)) - 5,
           suggestedMax: Math.max(...datosHistoricos.map(d => d.valor)) + 5
         }
       }
     }
   });
+
+  // --- Lógica del Carrusel ---
+  let slideIndex = 0;
+  const slides = document.getElementsByClassName("carousel-slide");
+  const dots = document.getElementsByClassName("dot");
+  
+  if (slides.length > 0) {
+    showSlides(); // Iniciar automático
+  }
+
+  function showSlides() {
+    for (let i = 0; i < slides.length; i++) {
+      slides[i].style.display = "none";  
+    }
+    slideIndex++;
+    if (slideIndex > slides.length) {slideIndex = 1}    
+    
+    // Resetear dots
+    if(dots.length > 0) {
+       for (let i = 0; i < dots.length; i++) {
+           dots[i].className = dots[i].className.replace(" active", "");
+       }
+       dots[slideIndex-1].className += " active";
+    }
+
+    slides[slideIndex-1].style.display = "block";  
+    setTimeout(showSlides, 4000); // Cambiar cada 4 segundos
+  }
+
+  // Opcional: Control manual por dots
+  function currentSlide(n) {
+    // Nota: Para implementar control manual completo necesitarías detener el timeout
+    // y manejar el índice manualmente. Por simplicidad, esto es solo visual o requiere lógica extra.
+  }
 </script>
