@@ -1,35 +1,25 @@
 // ================================
-// Zona horaria del servidor
+// Zona horaria y Configuración
 // ================================
 process.env.TZ = 'America/Santiago';
+require('dotenv').config();
 
-
-// ================================
-// Dependencias principales
-// ================================
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const expressLayouts = require('express-ejs-layouts');
-require('dotenv').config();
-
 
 // ================================
-// Rutas (importadas)
+// Importación de Rutas
 // ================================
+const authRoutes = require('./routes/auth');
 const indexRoutes = require('./routes/index');
 const procesosRoutes = require('./routes/procesos');
 const personasRoutes = require('./routes/personas');
-const sistemasRoutes = require('./routes/sistemas');
+const sistemasRoutes = require('./routes/sistemas'); // Maneja todo lo de tickets ahora
 const marketingRoutes = require('./routes/marketing');
-const authRoutes = require('./routes/auth');
 const rolesRoutes = require('./routes/roles');
 const docsRoutes = require('./routes/docs');
-
-// ❗ Importante: rutas POST /tickets/:id/...
-// Estas están en: /src/routes/tickets.js
-const ticketsRouter = require('./routes/tickets');
-
 
 // ================================
 // Inicializar app
@@ -37,81 +27,59 @@ const ticketsRouter = require('./routes/tickets');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-
 // ================================
 // Motor de vistas + layouts
 // ================================
+// Si mantienes la carpeta src en GitHub, __dirname ya apunta a /src
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-
 app.use(expressLayouts);
-app.set('layout', 'layout'); // usa src/views/layout.ejs
-
-
+app.set('layout', 'layout'); 
 
 // ================================
-// Lectura de formularios POST
+// Middlewares Básicos
 // ================================
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ================================
 // Sesiones
 // ================================
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'cambia-este-secreto',
+    secret: process.env.SESSION_SECRET || 'transworld-secret-key',
     resave: false,
     saveUninitialized: false,
-    cookie: {
-      maxAge: 1000 * 60 * 60 // 1h
-    }
+    cookie: { maxAge: 1000 * 60 * 60 } // 1 hora
   })
 );
 
-
 // ================================
-// Hacer usuario disponible en TODAS las vistas
+// Variables Globales y Permisos
 // ================================
 app.use((req, res, next) => {
-  res.locals.usuario = req.session.user || null;
+  const user = req.session.user || null;
+  res.locals.usuario = user;
+
+  if (user) {
+    const role = user.role || null;
+    const hasRole = (...roles) => roles.includes(role);
+
+    res.locals.can = {
+      procedimientos_write: hasRole('admin', 'control_y_seguridad', 'teresa'),
+      protocolos_write: hasRole('admin', 'control_y_seguridad'),
+      achs_write: hasRole('admin', 'teresa'),
+      reglamento_write: hasRole('admin', 'teresa'),
+      organigrama_write: hasRole('admin', 'rrhh'),
+      eventos_write: hasRole('admin', 'marketing'),
+      tickets_reply: hasRole('admin'), // Capacidad para responder tickets en sistemas
+    };
+  } else {
+    res.locals.can = {};
+  }
   next();
 });
-
-app.use((req, res, next) => {
-  res.locals.usuario = req.session?.user || null;
-
-  const role = res.locals.usuario?.role || null;
-  const hasRole = (...roles) => role && roles.includes(role);
-
-  // Capacidades (solo UI por ahora)
-  res.locals.can = {
-    // Procesos
-    procedimientos_write: hasRole('admin', 'control_y_seguridad', 'teresa'),
-    protocolos_write: hasRole('admin', 'control_y_seguridad'),
-    achs_write: hasRole('admin', 'teresa'),
-    reglamento_write: hasRole('admin', 'teresa'),
-
-    // Personas
-    organigrama_write: hasRole('admin', 'rrhh'),
-
-    // Marketing
-    eventos_write: hasRole('admin', 'marketing'),
-
-    // Sistemas
-    tickets_reply: hasRole('admin'),
-  };
-
-  next();
-});
-
-// ================================
-// Archivos estáticos
-// ================================
-// Esto sirve /public/css, /public/img, /public/js, etc.
-app.use(express.static(path.join(__dirname, 'public')));
-
 
 // ================================
 // Middleware de protección
@@ -121,42 +89,32 @@ function requireAuth(req, res, next) {
   return res.redirect('/login');
 }
 
+// ================================
+// Montaje de Rutas
+// ================================
 
-// ================================
-// Rutas NO protegidas (login)
-// ================================
+// 1. Rutas Públicas
 app.use('/', authRoutes);
 
-
-// ================================
-// Rutas protegidas
-// ================================
+// 2. Rutas Protegidas
 app.use('/', requireAuth, indexRoutes);
 app.use('/procesos', requireAuth, procesosRoutes);
 app.use('/personas', requireAuth, personasRoutes);
-app.use('/sistemas', requireAuth, sistemasRoutes);
+app.use('/sistemas', requireAuth, sistemasRoutes); // Centraliza /tickets
 app.use('/marketing', requireAuth, marketingRoutes);
 app.use('/roles', requireAuth, rolesRoutes);
 app.use('/docs', requireAuth, docsRoutes);
 
-
-// RUTAS DE TICKETS (responder / actualizar)
-// Están separadas porque no forman parte visual de /sistemas
-// Pero deben estar protegidas también
-app.use('/tickets', requireAuth, ticketsRouter);
-
-
 // ================================
-// 404 opcional
+// Manejo de Errores (404)
 // ================================
-// app.use((req, res) => {
-//   res.status(404).render('404', { titulo: 'Página no encontrada' });
-// });
-
+app.use((req, res) => {
+  res.status(404).render('404', { titulo: 'Página no encontrada' });
+});
 
 // ================================
 // Iniciar servidor
 // ================================
 app.listen(PORT, () => {
-  console.log(`Servidor escuchando en http://localhost:${PORT}`);
+  console.log(`Servidor de Intranet corriendo en puerto ${PORT}`);
 });
