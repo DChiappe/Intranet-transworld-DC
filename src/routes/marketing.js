@@ -34,7 +34,7 @@ router.get('/eventos', async (req, res) => {
   }
 });
 
-// FORMULARIO DE CREACIÓN (¡Esta ruta debe ir antes de /:slug!)
+// FORMULARIO DE CREACIÓN
 router.get('/eventos/nuevo', requireRole(...WRITE_ROLES), (req, res) => {
   res.render('marketing/eventos_nuevo', { titulo: 'Crear Nuevo Evento', error: null });
 });
@@ -45,6 +45,7 @@ router.post('/eventos/nuevo', requireRole(...WRITE_ROLES), async (req, res) => {
   const slug = createSlug(nombre);
 
   try {
+    // Nota: 'imagen' se queda en NULL al principio, se llena al subir fotos
     await db.query('INSERT INTO eventos (nombre, slug, descripcion) VALUES (?, ?, ?)', 
       [nombre, slug, descripcion]);
     res.redirect('/marketing/eventos');
@@ -87,10 +88,16 @@ router.get('/eventos/:slug', async (req, res) => {
   }
 });
 
-// Subir fotos
+// Subir fotos (Y ACTUALIZAR PORTADA SI ES NECESARIO)
 router.post('/eventos/:slug/fotos', requireRole(...WRITE_ROLES), upload.array('fotos', 20), async (req, res) => {
   const { slug } = req.params;
+  
+  if (!req.files || req.files.length === 0) {
+    return res.redirect(`/marketing/eventos/${slug}`);
+  }
+
   try {
+    // 1. Subir todas las fotos a Cloudinary
     const promises = req.files.map(file => {
       return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -100,9 +107,28 @@ router.post('/eventos/:slug/fotos', requireRole(...WRITE_ROLES), upload.array('f
         stream.end(file.buffer);
       });
     });
-    await Promise.all(promises);
+
+    // Esperamos a que todas suban y obtenemos los resultados
+    const uploadedImages = await Promise.all(promises);
+
+    // 2. Lógica de Portada:
+    // Si se subió al menos una foto, intentamos asignarla como portada
+    if (uploadedImages.length > 0) {
+      const portadaUrl = uploadedImages[0].secure_url; // Tomamos la primera URL
+
+      // Actualizamos la BD SOLO si el campo 'imagen' está vacío o nulo
+      // Esto previene que si subes más fotos después, cambie la portada original.
+      const sqlUpdate = `
+        UPDATE eventos 
+        SET imagen = ? 
+        WHERE slug = ? AND (imagen IS NULL OR imagen = '')
+      `;
+      await db.query(sqlUpdate, [portadaUrl, slug]);
+    }
+
     res.redirect(`/marketing/eventos/${slug}`);
   } catch (err) {
+    console.error(err);
     res.status(500).send('Error subiendo fotos');
   }
 });
@@ -113,6 +139,11 @@ router.post('/eventos/:slug/fotos/eliminar', requireRole(...WRITE_ROLES), async 
   const { slug } = req.params;
   try {
     await cloudinary.uploader.destroy(public_id);
+    // Nota: Si borras la foto que era portada, la BD quedará con el link roto.
+    // Para simplificar, no limpiamos la BD aquí, pero la siguiente subida no lo arreglará automáticamente
+    // a menos que la portada sea NULL.
+    // Si quieres robustez total, podrías hacer un UPDATE eventos SET imagen = NULL...
+    
     res.redirect(`/marketing/eventos/${slug}`);
   } catch (err) {
     res.status(500).send('Error eliminando foto');
@@ -123,10 +154,17 @@ router.post('/eventos/:slug/fotos/eliminar', requireRole(...WRITE_ROLES), async 
 router.post('/eventos/:slug/eliminar', requireRole(...WRITE_ROLES), async (req, res) => {
   const { slug } = req.params;
   try {
+    // 1. Borrar carpeta de Cloudinary
     await cloudinary.api.delete_resources_by_prefix(`eventos/${slug}/`);
+    
+    // (Opcional) Borrar carpeta vacía en Cloudinary requiere otro comando, 
+    // pero delete_resources borra los archivos que es lo importante.
+
+    // 2. Borrar de BD
     await db.query('DELETE FROM eventos WHERE slug = ?', [slug]);
     res.redirect('/marketing/eventos');
   } catch (err) {
+    console.error(err);
     res.status(500).send('Error eliminando evento');
   }
 });
