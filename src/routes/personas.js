@@ -13,18 +13,14 @@ const upload = multer({ storage });
 // Función auxiliar para obtener el último organigrama de Cloudinary
 async function getOrganigramaUrl() {
   try {
-    // Buscamos recursos en la carpeta 'organigrama'
-    // Nota: El organigrama suele ser imagen, pero si permiten PDF usamos resource_type: 'auto' o buscamos en ambos.
-    // Por simplicidad buscamos imágenes primero, que es lo más común.
     const result = await cloudinary.api.resources({
       type: 'upload',
       prefix: 'organigrama/',
       max_results: 10,
       direction: 'desc', // Los más nuevos primero
-      resource_type: 'image' // O 'raw' si suben PDFs.
+      resource_type: 'image'
     });
 
-    // Si no hay imágenes, intentamos buscar 'raw' (PDFs)
     if (!result.resources || result.resources.length === 0) {
       const resultRaw = await cloudinary.api.resources({
         type: 'upload',
@@ -46,10 +42,38 @@ async function getOrganigramaUrl() {
   }
 }
 
+// Función para formatear nombres: "APELLIDO APELLIDO2 NOMBRE" -> "Nombre Apellido Apellido2"
+function formatNombre(nombreCompleto) {
+  if (!nombreCompleto) return '';
+  
+  // Dividir por espacios y eliminar vacíos
+  const parts = nombreCompleto.trim().split(/\s+/);
+  
+  // Función helper para Capitalizar (primera mayúscula, resto minúscula)
+  const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+
+  // Caso 1: APELLIDO NOMBRE (2 partes) -> Nombre Apellido
+  if (parts.length === 2) {
+    return `${capitalize(parts[1])} ${capitalize(parts[0])}`;
+  } 
+  // Caso 2: APELLIDO APELLIDO2 NOMBRE (3 partes) -> Nombre Apellido Apellido2
+  else if (parts.length === 3) {
+    return `${capitalize(parts[2])} ${capitalize(parts[0])} ${capitalize(parts[1])}`;
+  } 
+  // Caso 3: APELLIDO APELLIDO2 NOMBRE NOMBRE2 (4 o más) -> Nombre Apellido Apellido2 (Omite segundo nombre)
+  else if (parts.length >= 4) {
+    return `${capitalize(parts[2])} ${capitalize(parts[0])} ${capitalize(parts[1])}`;
+  }
+  
+  // Fallback por si acaso
+  return parts.map(capitalize).join(' ');
+}
+
 // GET /personas  → página principal + cumpleaños
 router.get('/', async (req, res) => {
+  // Agregamos 'id' al SELECT para poder editar/eliminar
   const sql = `
-    SELECT nombre, area, fecha_nacimiento
+    SELECT id, nombre, area, fecha_nacimiento
     FROM cumpleanios
     ORDER BY MONTH(fecha_nacimiento), DAY(fecha_nacimiento)
   `;
@@ -57,9 +81,16 @@ router.get('/', async (req, res) => {
   try {
     const [results] = await db.query(sql);
 
+    // Procesamos los nombres antes de enviarlos a la vista
+    const personasFormateadas = results.map(p => ({
+      ...p,
+      nombre: formatNombre(p.nombre)
+    }));
+
     res.render('personas/index', {
       titulo: 'Personas',
-      personas: results
+      personas: personasFormateadas,
+      user: req.session.user // Pasamos el usuario para validar roles en la vista
     });
   } catch (err) {
     console.error('Error consultando personas:', err);
@@ -83,7 +114,6 @@ router.post('/organigrama/subir', requireRole('admin', 'rrhh'), upload.single('o
   }
 
   try {
-    // Subimos a Cloudinary (resource_type: 'auto' detecta si es img o pdf)
     await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         { 
@@ -97,9 +127,6 @@ router.post('/organigrama/subir', requireRole('admin', 'rrhh'), upload.single('o
       );
       stream.end(req.file.buffer);
     });
-
-    // Opcional: Podríamos borrar los organigramas viejos aquí para no acumular basura,
-    // pero Cloudinary tiene mucho espacio.
     
     res.redirect('/personas/organigrama');
   } catch (err) {
@@ -111,10 +138,7 @@ router.post('/organigrama/subir', requireRole('admin', 'rrhh'), upload.single('o
 // POST /personas/organigrama/eliminar (solo admin/rrhh)
 router.post('/organigrama/eliminar', requireRole('admin', 'rrhh'), async (req, res) => {
   try {
-    // Borramos todo lo que haya en la carpeta organigrama
-    // Primero imágenes
     await cloudinary.api.delete_resources_by_prefix('organigrama/', { resource_type: 'image' });
-    // Luego archivos raw (PDFs)
     await cloudinary.api.delete_resources_by_prefix('organigrama/', { resource_type: 'raw' });
     
     res.redirect('/personas/organigrama');

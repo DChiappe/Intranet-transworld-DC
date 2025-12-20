@@ -1,15 +1,20 @@
 <h2>Personas</h2>
 <p>Conoce la estructura organizacional, la cultura de la empresa y los cumpleaños del equipo.</p>
 
-<!-- Botón del organigrama -->
-<div class="grid-opciones" style="margin-bottom: 30px;">
+<div class="grid-opciones" style="margin-bottom: 30px; display: flex; gap: 10px;">
   <a class="boton-opcion" href="/personas/organigrama">
     Organigrama
     <span>Visualiza la estructura interna del equipo.</span>
   </a>
+
+  <% if (user && (user.rol === 'admin' || user.rol === 'rrhh')) { %>
+    <a class="boton-opcion" href="/personas/crear" style="border-left: 4px solid #28a745;">
+      Agregar Persona
+      <span>Registra un nuevo colaborador.</span>
+    </a>
+  <% } %>
 </div>
 
-<!-- Cumpleaños ordenados -->
 <h3>Cumpleaños del equipo</h3>
 
 <% if (!personas || personas.length === 0) { %>
@@ -21,6 +26,9 @@
         <th>Nombre</th>
         <th>Área</th>
         <th>Cumpleaños</th>
+        <% if (user && (user.rol === 'admin' || user.rol === 'rrhh')) { %>
+          <th style="text-align: center;">Acciones</th>
+        <% } %>
       </tr>
     </thead>
     <tbody>
@@ -34,6 +42,23 @@
               month: '2-digit'
             }) %>
           </td>
+          
+          <% if (user && (user.rol === 'admin' || user.rol === 'rrhh')) { %>
+            <td style="text-align: center;">
+              <a href="/personas/editar/<%= p.id %>" 
+                 style="background-color: #007bff; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; margin-right: 5px;"
+                 title="Editar">
+                 ✏️
+              </a>
+              
+              <a href="/personas/eliminar/<%= p.id %>" 
+                 onclick="return confirm('¿Estás seguro de eliminar a esta persona?');"
+                 style="background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none;"
+                 title="Eliminar">
+                 🗑️
+              </a>
+            </td>
+          <% } %>
         </tr>
       <% }) %>
     </tbody>
