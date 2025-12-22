@@ -45,7 +45,8 @@ router.post('/:id', requireAdmin, async (req, res) => {
       'marketing',
       'rrhh',
       'teresa',
-      'control_y_seguridad'
+      'control_y_seguridad',
+      'usuario'
     ]);
 
     if (!allowed.has(role)) {

@@ -75,7 +75,7 @@
     <% if (canReply) { %>
       <div class="panel panel-actualizar-ticket">
         <h3 class="panel-title">Actualizar área / importancia / estado</h3>
-        <form action="/sistemas/tickets/<%= ticket.id %>/actualizar" method="POST" class="form-actualizar-ticket">
+        <form action="/tickets/<%= ticket.id %>/actualizar" method="POST" class="form-actualizar-ticket">
           <label for="categoria">Área (categoría)</label>
           <select id="categoria" name="categoria">
             <option value="Sistemas" <%= ticket.categoria === 'Sistemas' ? 'selected' : '' %>>Sistemas</option>
@@ -108,51 +108,56 @@
       </div>
     <% } %>
 
-    <div class="panel panel-responder">
-      <h3 class="panel-title">Responder al usuario</h3>
-      <form action="/sistemas/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
-        <label for="asunto_respuesta">Asunto</label>
-        <input
-          type="text"
-          id="asunto_respuesta"
-          name="asunto_respuesta"
-          placeholder="Opcional: si lo dejas vacío se genera uno por defecto"
-        />
+    <% if (canReply) { %>
+      <div class="panel panel-responder">
+        <h3 class="panel-title">Responder al usuario</h3>
+        <form action="/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
+          <label for="asunto_respuesta">Asunto</label>
+          <input
+            type="text"
+            id="asunto_respuesta"
+            name="asunto_respuesta"
+            placeholder="Opcional: si lo dejas vacío se genera uno por defecto"
+          />
 
-        <label for="mensaje_respuesta">Mensaje</label>
-        <textarea
-          id="mensaje_respuesta"
-          name="mensaje_respuesta"
-          rows="6"
-          required
-        ></textarea>
+          <label for="mensaje_respuesta">Mensaje</label>
+          <textarea
+            id="mensaje_respuesta"
+            name="mensaje_respuesta"
+            rows="6"
+            required
+          ></textarea>
 
-        <button type="submit" class="btn btn-primario">Enviar respuesta</button>
-      </form>
-    </div>
+          <button type="submit" class="btn btn-primario">Enviar respuesta</button>
+        </form>
+      </div>
+    <% } %>
 
-    <div class="panel panel-historial">
-      <h3 class="panel-title">Historial de respuestas</h3>
-      <% if (respuestas && respuestas.length > 0) { %>
-        <% respuestas.forEach(r => { %>
-          <div class="respuesta-item">
-            <div class="respuesta-header">
-              <strong class="respuesta-remitente"><%= r.remitente %></strong>
-              <span class="small-text respuesta-fecha">
-                <% if (r.fecha && r.fecha.toLocaleString) { %>
-                  - <%= r.fecha.toLocaleString('es-CL') %>
-                <% } else { %>
-                  - <%= r.fecha %>
-                <% } %>
-              </span>
+    <% if (canReply) { %>
+      <div class="panel panel-historial">
+        <h3 class="panel-title">Historial de respuestas</h3>
+        <% if (respuestas && respuestas.length > 0) { %>
+          <% respuestas.forEach(r => { %>
+            <div class="respuesta-item">
+              <div class="respuesta-header">
+                <strong class="respuesta-remitente"><%= r.remitente %></strong>
+                <span class="small-text respuesta-fecha">
+                  <% if (r.fecha && r.fecha.toLocaleString) { %>
+                    - <%= r.fecha.toLocaleString('es-CL') %>
+                  <% } else { %>
+                    - <%= r.fecha %>
+                  <% } %>
+                </span>
+              </div>
+              <pre class="respuesta-mensaje"><%= r.mensaje %></pre>
             </div>
-            <pre class="respuesta-mensaje"><%= r.mensaje %></pre>
-          </div>
-        <% }) %>
-      <% } else { %>
-        <p class="small-text">No hay respuestas registradas aún.</p>
-      <% } %>
-    </div>
+          <% }) %>
+        <% } else { %>
+          <p class="small-text">No hay respuestas registradas aún.</p>
+        <% } %>
+      </div>
+    <% } %>
+
   </div>
 </body>
 </html>
