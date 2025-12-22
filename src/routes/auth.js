@@ -38,7 +38,8 @@ router.get('/login', (req, res) => {
   res.render('login', {
     titulo: 'Iniciar sesión',
     error: null,
-    info
+    info,
+    layout: false // <--- ESTO DESACTIVA EL LAYOUT
   });
 });
 
@@ -48,6 +49,7 @@ router.post('/login', async (req, res) => {
   const validUser = process.env.AUTH_USER || 'admin';
   const validPass = process.env.AUTH_PASS || '1234';
 
+  // Login de respaldo (hardcoded)
   if (username === validUser && password === validPass) {
     req.session.user = { id: 0, username: validUser, role: 'admin', email: null };
     return res.redirect('/');
@@ -64,7 +66,8 @@ router.post('/login', async (req, res) => {
       return res.status(401).render('login', {
         titulo: 'Iniciar sesión',
         error: 'Usuario o contraseña incorrectos',
-        info: null
+        info: null,
+        layout: false // <--- ESTO DESACTIVA EL LAYOUT
       });
     }
 
@@ -74,7 +77,8 @@ router.post('/login', async (req, res) => {
       return res.status(403).render('login', {
         titulo: 'Iniciar sesión',
         error: 'Tu cuenta está registrada, pero aún no tiene un rol asignado. Contacta al administrador para habilitar el acceso.',
-        info: null
+        info: null,
+        layout: false // <--- ESTO DESACTIVA EL LAYOUT
       });
     }
 
@@ -83,7 +87,8 @@ router.post('/login', async (req, res) => {
       return res.status(401).render('login', {
         titulo: 'Iniciar sesión',
         error: 'Usuario o contraseña incorrectos',
-        info: null
+        info: null,
+        layout: false // <--- ESTO DESACTIVA EL LAYOUT
       });
     }
 
@@ -100,7 +105,8 @@ router.post('/login', async (req, res) => {
     return res.status(500).render('login', {
       titulo: 'Iniciar sesión',
       error: 'Error interno. Intenta nuevamente.',
-      info: null
+      info: null,
+      layout: false // <--- ESTO DESACTIVA EL LAYOUT
     });
   }
 });
@@ -108,7 +114,11 @@ router.post('/login', async (req, res) => {
 // GET /register
 router.get('/register', (req, res) => {
   if (req.session && req.session.user) return res.redirect('/');
-  res.render('register', { titulo: 'Registro', error: null });
+  res.render('register', { 
+    titulo: 'Registro', 
+    error: null,
+    layout: false // <--- ESTO DESACTIVA EL LAYOUT
+  });
 });
 
 // POST /register
@@ -121,15 +131,27 @@ router.post('/register', async (req, res) => {
     const password2 = String(req.body.password2 || '');
 
     if (!firstName || !lastName || !email || !password || !password2) {
-      return res.status(400).render('register', { titulo: 'Registro', error: 'Todos los campos son obligatorios.' });
+      return res.status(400).render('register', { 
+        titulo: 'Registro', 
+        error: 'Todos los campos son obligatorios.',
+        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+      });
     }
 
     if (password.length < 6) {
-      return res.status(400).render('register', { titulo: 'Registro', error: 'La contraseña debe tener al menos 6 caracteres.' });
+      return res.status(400).render('register', { 
+        titulo: 'Registro', 
+        error: 'La contraseña debe tener al menos 6 caracteres.',
+        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+      });
     }
 
     if (password !== password2) {
-      return res.status(400).render('register', { titulo: 'Registro', error: 'Las contraseñas no coinciden.' });
+      return res.status(400).render('register', { 
+        titulo: 'Registro', 
+        error: 'Las contraseñas no coinciden.',
+        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+      });
     }
 
     const [exists] = await pool.query('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
@@ -151,7 +173,7 @@ router.post('/register', async (req, res) => {
 
     const confirmUrl = `${getBaseUrl(req)}/confirm?token=${token}`;
 
-    // Enviar correo de confirmación con remitente de Brevo
+    // Enviar correo de confirmación
     await sendMail({
       to: email,
       subject: 'Confirma tu correo - Intranet Transworld',
@@ -169,7 +191,11 @@ router.post('/register', async (req, res) => {
     return res.redirect('/login?registered=1');
   } catch (err) {
     console.error('Register error:', err);
-    return res.status(500).render('register', { titulo: 'Registro', error: 'Error interno al registrar. Intenta nuevamente.' });
+    return res.status(500).render('register', { 
+      titulo: 'Registro', 
+      error: 'Error interno al registrar. Intenta nuevamente.',
+      layout: false // <--- ESTO DESACTIVA EL LAYOUT
+    });
   }
 });
 
@@ -178,7 +204,12 @@ router.get('/confirm', async (req, res) => {
   try {
     const token = String(req.query.token || '').trim();
     if (!token) {
-      return res.status(400).render('confirm', { titulo: 'Confirmación', ok: false, message: 'Token inválido.' });
+      return res.status(400).render('confirm', { 
+        titulo: 'Confirmación', 
+        ok: false, 
+        message: 'Token inválido.',
+        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+      });
     }
 
     const [rows] = await pool.query(
@@ -187,17 +218,32 @@ router.get('/confirm', async (req, res) => {
     );
 
     if (!rows.length) {
-      return res.status(400).render('confirm', { titulo: 'Confirmación', ok: false, message: 'Token inválido o expirado.' });
+      return res.status(400).render('confirm', { 
+        titulo: 'Confirmación', 
+        ok: false, 
+        message: 'Token inválido o expirado.',
+        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+      });
     }
 
     const u = rows[0];
     if (u.email_confirmed) {
-      return res.render('confirm', { titulo: 'Confirmación', ok: true, message: 'Tu correo ya estaba confirmado. Ya puedes iniciar sesión.' });
+      return res.render('confirm', { 
+        titulo: 'Confirmación', 
+        ok: true, 
+        message: 'Tu correo ya estaba confirmado. Ya puedes iniciar sesión.',
+        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+      });
     }
 
     const exp = u.confirm_expires ? new Date(u.confirm_expires) : null;
     if (!exp || exp.getTime() < Date.now()) {
-      return res.status(400).render('confirm', { titulo: 'Confirmación', ok: false, message: 'Este enlace expiró. Regístrate nuevamente para recibir otro.' });
+      return res.status(400).render('confirm', { 
+        titulo: 'Confirmación', 
+        ok: false, 
+        message: 'Este enlace expiró. Regístrate nuevamente para recibir otro.',
+        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+      });
     }
 
     await pool.query(
@@ -205,10 +251,20 @@ router.get('/confirm', async (req, res) => {
       [u.id]
     );
 
-    return res.render('confirm', { titulo: 'Confirmación', ok: true, message: 'Correo confirmado correctamente. Ya puedes iniciar sesión.' });
+    return res.render('confirm', { 
+      titulo: 'Confirmación', 
+      ok: true, 
+      message: 'Correo confirmado correctamente. Ya puedes iniciar sesión.',
+      layout: false // <--- ESTO DESACTIVA EL LAYOUT
+    });
   } catch (err) {
     console.error('Confirm error:', err);
-    return res.status(500).render('confirm', { titulo: 'Confirmación', ok: false, message: 'Error interno al confirmar. Intenta nuevamente.' });
+    return res.status(500).render('confirm', { 
+      titulo: 'Confirmación', 
+      ok: false, 
+      message: 'Error interno al confirmar. Intenta nuevamente.',
+      layout: false // <--- ESTO DESACTIVA EL LAYOUT
+    });
   }
 });
 
