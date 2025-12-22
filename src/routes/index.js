@@ -3,9 +3,6 @@ const router = express.Router();
 const db = require('../db');
 const { getUsdHoy } = require('../services/usdService');
 
-// ==========================================
-// RUTA: HOME (INICIO)
-// ==========================================
 router.get('/', async (req, res) => {
   try {
     // 1. Obtener datos del dólar
@@ -28,16 +25,17 @@ router.get('/', async (req, res) => {
     `;
     const [resultsMes] = await db.query(sqlMes, [mes]);
 
-    // 4. Obtener Eventos para el Carrusel
+    // 4. CARRUSEL: Obtener TODAS las fotos de TODOS los eventos
+    // Hacemos JOIN para traer también el nombre del evento
+    // LIMIT 30 para no sobrecargar si hay miles de fotos.
     const sqlEventos = `
-      SELECT * FROM eventos 
-      WHERE imagen IS NOT NULL AND imagen != '' 
-      ORDER BY id DESC LIMIT 10
+      SELECT ef.url as imagen, e.nombre, e.slug
+      FROM eventos_fotos ef
+      JOIN eventos e ON ef.evento_id = e.id
+      ORDER BY RAND() 
+      LIMIT 30
     `;
     const [eventosRows] = await db.query(sqlEventos);
-
-    // Mezclamos el array aleatoriamente
-    const eventosCarousel = eventosRows.sort(() => Math.random() - 0.5);
 
     // 5. Renderizar vista
     res.render('home', {
@@ -47,40 +45,13 @@ router.get('/', async (req, res) => {
       mesNombre,
       diaHoy,
       cumpleaniosMes: resultsMes,
-      eventosCarousel, 
+      eventosCarousel: eventosRows, // Ahora contiene muchas fotos mezcladas de distintos eventos
       user: req.session.user
     });
 
   } catch (err) {
     console.error('Error en la home:', err);
     res.status(500).send('Error interno del servidor');
-  }
-});
-
-// ==========================================
-// RUTA: PERFIL DE USUARIO (NUEVA)
-// ==========================================
-router.get('/perfil', async (req, res) => {
-  try {
-    // Verificación de seguridad (aunque el middleware ya lo hace)
-    if (!req.session.user) return res.redirect('/login');
-
-    const id = req.session.user.id;
-    
-    // Consultamos los datos más recientes del usuario desde la BD
-    const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
-    
-    // Si por alguna razón el usuario no existe en BD
-    if (rows.length === 0) return res.redirect('/');
-
-    res.render('perfil', {
-      titulo: 'Mi Perfil',
-      usuario: rows[0] // Pasamos el objeto completo a la vista
-    });
-
-  } catch (err) {
-    console.error('Error cargando perfil:', err);
-    res.status(500).send('Error al cargar perfil');
   }
 });
 
