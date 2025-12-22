@@ -1,0 +1,136 @@
+<style>
+  /* Estilos específicos para la tarjeta de perfil */
+  .perfil-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+  }
+
+  .card-perfil {
+    background: #fff;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 12px;
+    border: 1px solid #dde3ec; /* Tu borde estándar */
+    box-shadow: 0 4px 20px rgba(0, 58, 112, 0.08); /* Sombra suave azulada */
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .perfil-header {
+    background: linear-gradient(135deg, #003a70 0%, #0059b3 100%); /* Azul corporativo */
+    height: 120px;
+    position: relative;
+    margin-bottom: 60px; /* Espacio para la foto */
+  }
+
+  .perfil-avatar {
+    width: 110px;
+    height: 110px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    bottom: -55px; /* Mitad afuera */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: #003a70;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+
+  .perfil-body {
+    padding: 0 30px 40px;
+  }
+
+  .perfil-nombre {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #003a70;
+    font-weight: 700;
+  }
+
+  .perfil-rol {
+    display: inline-block;
+    background: #e7f3ff;
+    color: #0059b3;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 8px;
+    margin-bottom: 20px;
+  }
+
+  .perfil-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    text-align: left;
+    margin-top: 20px;
+    background: #f9fbff;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #eef3f9;
+  }
+
+  .info-item label {
+    display: block;
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .info-item span {
+    font-size: 1.1rem;
+    color: #333;
+    font-weight: 500;
+  }
+</style>
+
+<div class="contenedor">
+  <div style="margin-bottom: 20px;">
+    <a href="/" class="link-volver">← Volver al inicio</a>
+  </div>
+
+  <div class="perfil-wrapper">
+    <div class="card-perfil">
+      
+      <div class="perfil-header">
+        <div class="perfil-avatar">
+          <%= usuario.nombre ? usuario.nombre.charAt(0).toUpperCase() : 'U' %>
+        </div>
+      </div>
+
+      <div class="perfil-body">
+        <h1 class="perfil-nombre">
+          <%= usuario.nombre %> <%= usuario.apellido %>
+        </h1>
+        
+        <span class="perfil-rol">
+          <%= usuario.role ? usuario.role.toUpperCase() : 'USUARIO' %>
+        </span>
+
+        <div class="perfil-info-grid">
+          <div class="info-item">
+            <label>Correo Electrónico</label>
+            <span><%= usuario.mail || usuario.email %></span>
+          </div>
+          
+          <div class="info-item">
+            <label>Nombre de Usuario</label>
+            <span><%= usuario.username || '-' %></span>
+          </div>
+
+          </div>
+
+        </div>
+    </div>
+  </div>
+</div>

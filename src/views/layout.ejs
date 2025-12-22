@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= titulo || "Intranet" %></title>
 
-    <!-- CSS global -->
     <link rel="stylesheet" href="/css/intranet.css">
 </head>
 
@@ -18,10 +17,8 @@
     </div>
 
     <nav class="main-nav">
-      <!-- Inicio -->
       <a href="/">Inicio</a>
 
-      <!-- Procesos y Documentos -->
       <div class="nav-item">
         <a href="/procesos">Procesos y Documentos</a>
         <div class="dropdown-menu">
@@ -32,16 +29,13 @@
         </div>
       </div>
 
-      <!-- Personas y Cultura -->
       <div class="nav-item">
         <a href="/personas">Personas</a>
         <div class="dropdown-menu">
           <a href="/personas/organigrama">Organigrama</a>
-          <!-- Agrega más subpestañas aquí cuando existan -->
-        </div>
+          </div>
       </div>
 
-      <!-- Sistemas y Herramientas -->
       <div class="nav-item">
         <a href="/sistemas">Ticketera</a>
         <div class="dropdown-menu">
@@ -50,23 +44,22 @@
         </div>
       </div>
 
-      <!-- Marketing -->
       <div class="nav-item">
         <a href="/marketing">Marketing y Eventos</a>
         <div class="dropdown-menu">
           <a href="/marketing/eventos">Galería de eventos</a>
         </div>
       </div>
-      <!-- Roles (solo admin) -->
+      
       <% if (typeof usuario !== 'undefined' && usuario && usuario.role === 'admin') { %>
         <a href="/roles">Roles</a>
       <% } %>
 
-      <!-- Usuario conectado -->
       <% if (typeof usuario !== 'undefined' && usuario) { %>
         <div class="nav-user">
-          <span><strong><%= usuario.username %></strong></span>
-          <a href="/logout">Cerrar sesión</a>
+          <a href="/perfil" title="Ir a mi perfil"><strong><%= usuario.username %></strong></a>
+          
+          <a href="/logout" style="margin-left: 12px; opacity: 0.9;">Cerrar sesión</a>
         </div>
       <% } %>
       
@@ -74,13 +67,9 @@
   </div>
 </header>
 
-
-<!-- CONTENIDO DINÁMICO -->
 <main>
     <%- body %>
 </main>
 
-
 </body>
 </html>
-
