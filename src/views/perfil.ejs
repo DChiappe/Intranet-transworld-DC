@@ -110,7 +110,7 @@
 
       <div class="perfil-body">
         <h1 class="perfil-nombre">
-          <%= usuario.nombre %> <%= usuario.apellido %>
+          <%= usuario.first_name %> <%= usuario.last_name %>
         </h1>
         
         <span class="perfil-rol">
@@ -120,13 +120,9 @@
         <div class="perfil-info-grid">
           <div class="info-item">
             <label>Correo Electrónico</label>
-            <span><%= usuario.mail || usuario.email %></span>
+            <span><%= usuario.mail || usuario.mail %></span>
           </div>
           
-          <div class="info-item">
-            <label>Nombre de Usuario</label>
-            <span><%= usuario.username || '-' %></span>
-          </div>
 
           </div>
 
