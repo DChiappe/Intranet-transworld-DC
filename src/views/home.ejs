@@ -1,5 +1,5 @@
 <%
-  // 1. Función para formatear nombres
+  // 1. Funciones y lógica previa (sin cambios)
   function titleCase(s) {
     if (!s) return '';
     const palabras = String(s).toLowerCase().trim().split(/\s+/);
@@ -34,6 +34,76 @@
   }
 %>
 
+<style>
+  /* Hacemos transparente el fondo principal para ver el carrusel */
+  body, main {
+    background: transparent !important;
+  }
+
+  /* Contenedor fijo al fondo */
+  .fullscreen-carousel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Detrás de todo */
+    overflow: hidden;
+  }
+
+  /* Cada slide ocupa toda la pantalla */
+  .bg-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none; /* JS lo maneja */
+  }
+
+  /* La imagen cubre todo sin deformarse */
+  .bg-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.6); /* Oscurecemos un poco la foto para que resalten las tarjetas */
+  }
+
+  /* Animación suave */
+  .fade-bg {
+    animation-name: fadeBg;
+    animation-duration: 2s;
+  }
+
+  @keyframes fadeBg {
+    from {opacity: 0.4} 
+    to {opacity: 1}
+  }
+
+  /* Ajuste para que el título "Bienvenida" se lea bien sobre fotos */
+  h2 {
+    color: #fff; /* Título en blanco */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  }
+</style>
+
+
+<% if (typeof eventosCarousel !== 'undefined' && eventosCarousel && eventosCarousel.length > 0) { %>
+  <div class="fullscreen-carousel">
+    <% for (let i = 0; i < eventosCarousel.length; i++) { 
+         let evento = eventosCarousel[i];
+         let displayStyle = (i === 0) ? 'display:block;' : 'display:none;';
+    %>
+      <div class="bg-slide fade-bg" style="<%= displayStyle %>">
+        <img src="<%= evento.imagen %>" alt="Fondo Evento">
+        </div>
+    <% } %>
+  </div>
+<% } else { %>
+  <div class="fullscreen-carousel" style="background: #003a70;"></div>
+<% } %>
+
+
 <h2>Bienvenida/o a la intranet de Transworld</h2>
 
 <div class="home-layout">
@@ -44,31 +114,8 @@
         <img src="/img/Img%20Servicios%20TI.png" alt="Servicios TI" class="home-ti-img" />
       </div>
     </a>
-
-    <% if (typeof eventosCarousel !== 'undefined' && eventosCarousel && eventosCarousel.length > 0) { %>
-      <div class="home-carousel-container">
-        
-        <% for (let i = 0; i < eventosCarousel.length; i++) { 
-             let evento = eventosCarousel[i];
-             let displayStyle = (i === 0) ? 'display:block;' : 'display:none;';
-        %>
-          <a href="/marketing/eventos/<%= evento.slug %>" class="carousel-slide fade" style="<%= displayStyle %>">
-            <img src="<%= evento.imagen %>" alt="<%= evento.titulo %>">
-            <div class="carousel-caption">
-              <%= evento.nombre %>
-            </div>
-          </a>
-        <% } %>
-
-        <div class="carousel-dots">
-          <% for (let i = 0; i < eventosCarousel.length; i++) { %>
-            <span class="dot" onclick="currentSlide(<%= i + 1 %>)"></span>
-          <% } %>
-        </div>
-
-      </div>
-    <% } %>
-  </div>
+    
+    </div>
 
   <div class="home-right">
     
@@ -87,7 +134,9 @@
         <p>No hay cumpleaños registrados para este mes.</p>
       <% } else { %>
         <div class="cumple-cards">
-          <% const dHoy = (typeof diaHoy !== 'undefined') ? diaHoy : new Date().getDate(); %>
+          <% 
+             const dHoy = (typeof diaHoy !== 'undefined') ? diaHoy : new Date().getDate();
+          %>
           <% cumpleaniosOrdenados.forEach((p) => { 
             let estadoClase = (p.dia < dHoy) ? 'cumple-pasado' : (p.dia === dHoy ? 'cumple-hoy' : 'cumple-futuro');
           %>
@@ -111,6 +160,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+  // --- 1. Gráfico USD ---
   const rawData = '<%- (typeof usdHistorico !== "undefined") ? JSON.stringify(usdHistorico) : "[]" %>';
   const datosHistoricos = JSON.parse(rawData);
 
@@ -148,10 +198,10 @@
     });
   }
 
-  // --- Lógica del Carrusel ---
+  // --- 2. Lógica del Carrusel de Fondo ---
   let slideIndex = 0;
-  const slides = document.getElementsByClassName("carousel-slide");
-  const dots = document.getElementsByClassName("dot");
+  // Apuntamos a la nueva clase "bg-slide"
+  const slides = document.getElementsByClassName("bg-slide");
 
   if (slides.length > 0) {
     showSlides(); 
@@ -165,37 +215,10 @@
     slideIndex++;
     if (slideIndex > slides.length) { slideIndex = 1; }    
     
-    if (dots.length > 0) {
-       for (let i = 0; i < dots.length; i++) {
-           dots[i].className = dots[i].className.replace(" active", "");
-       }
-       if (dots[slideIndex-1]) {
-         dots[slideIndex-1].className += " active";
-       }
-    }
-
     if (slides[slideIndex-1]) {
       slides[slideIndex-1].style.display = "block";  
     }
 
-    setTimeout(showSlides, 4000); 
-  }
-
-  function currentSlide(n) {
-    slideIndex = n - 1; 
-    for (let i = 0; i < slides.length; i++) {
-      slides[i].style.display = "none";  
-    }
-    if (dots.length > 0) {
-       for (let i = 0; i < dots.length; i++) {
-           dots[i].className = dots[i].className.replace(" active", "");
-       }
-       if (dots[slideIndex]) {
-         dots[slideIndex].className += " active";
-       }
-    }
-    if (slides[slideIndex]) {
-      slides[slideIndex].style.display = "block";  
-    }
+    setTimeout(showSlides, 5000); // 5 segundos por foto
   }
 </script>
