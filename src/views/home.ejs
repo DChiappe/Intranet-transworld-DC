@@ -34,96 +34,6 @@
   }
 %>
 
-<style>
-  /* --- ESTILOS FONDO --- */
-  body, main { background: transparent !important; }
-  .fullscreen-carousel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
-  .bg-slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; }
-  .bg-slide img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.6); }
-  .fade-bg { animation-name: fadeBg; animation-duration: 2s; }
-  @keyframes fadeBg { from {opacity: 0.4} to {opacity: 1} }
-  h2 { color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
-
-  /* --- ESTILOS CARRUSEL NOTICIAS (NUEVO) --- */
-  .news-carousel-container {
-    position: relative;
-    width: 100%;
-    max-width: 300px; /* Mismo ancho que tarjeta TI */
-    height: 200px;
-    margin-top: 20px; /* Separación de la tarjeta de arriba */
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    background: #000;
-    border: 1px solid #dde3ec;
-  }
-
-  .news-slide {
-    display: none;
-    width: 100%;
-    height: 100%;
-  }
-
-  .news-slide.active {
-    display: block;
-    animation: fadeNews 0.5s;
-  }
-
-  @keyframes fadeNews { from {opacity: .6} to {opacity: 1} }
-
-  .news-slide a {
-    display: block;
-    width: 100%;
-    height: 100%;
-    text-decoration: none;
-    position: relative;
-  }
-
-  .news-slide img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  .news-slide:hover img {
-    transform: scale(1.05);
-  }
-
-  .news-caption {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0));
-    color: #fff;
-    padding: 20px 10px 10px;
-    font-size: 0.95rem;
-    font-weight: bold;
-    text-align: center;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-  }
-
-  /* Flechas de control */
-  .news-ctrl {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.4);
-    color: white;
-    border: none;
-    font-size: 1.5rem;
-    padding: 8px 12px;
-    cursor: pointer;
-    z-index: 10;
-    transition: background 0.3s;
-    user-select: none;
-  }
-  .news-ctrl:hover { background: rgba(0, 0, 0, 0.8); }
-  .news-prev { left: 0; border-radius: 0 4px 4px 0; }
-  .news-next { right: 0; border-radius: 4px 0 0 4px; }
-</style>
-
-
 <% if (typeof eventosCarousel !== 'undefined' && eventosCarousel && eventosCarousel.length > 0) { %>
   <div class="fullscreen-carousel">
     <% for (let i = 0; i < eventosCarousel.length; i++) { 
@@ -136,15 +46,16 @@
     <% } %>
   </div>
 <% } else { %>
-  <div class="fullscreen-carousel" style="background: #bcbcbc;"></div>
+  <div class="fullscreen-carousel" style="background: #b5b5b5;"></div>
 <% } %>
 
 
-<h2>Bienvenida/o a la intranet de Transworld</h2>
+<h2 class="home-title">Bienvenida/o a la intranet de Transworld</h2>
 
 <div class="home-layout">
   
   <div class="home-left">
+    
     <a href="/sistemas/tickets" class="home-ti-link" title="Ir a Tickets">
       <div class="home-ti-card">
         <img src="/img/Img%20Servicios%20TI.png" alt="Servicios TI" class="home-ti-img" />
@@ -163,6 +74,11 @@
               <img src="<%= noticia.imagen %>" alt="<%= noticia.titulo %>">
               <div class="news-caption">
                 <%= noticia.titulo %>
+                <% if(noticia.subtitulo) { %>
+                  <div class="news-subcaption">
+                    <%= noticia.subtitulo %>
+                  </div>
+                <% } %>
               </div>
             </a>
           </div>
