@@ -392,11 +392,6 @@ table.tabla tr:hover td { background: #eef3ff; }
 .respuesta-remitente { font-weight: 600; }
 .respuesta-fecha { margin-left: 4px; }
 .respuesta-mensaje { white-space: pre-wrap; word-wrap: break-word; background: #fafafa; border-radius: 4px; border: 1px solid #e0e6f0; padding: 8px; font-size: 0.88rem; }
-.home-layout { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
-.home-left { flex: 1 1 520px; min-width: 320px; }
-.home-ti-link { text-decoration: none; color: inherit; }
-.home-ti-card { background: #fff; border: 1px solid #dde3ec; border-radius: 10px; padding: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); max-width: 300px; }
-.home-ti-img { width: 100%; height: auto; display: block; border-radius: 8px; }
 .home-right { flex: 0 0 340px; margin-left: auto; display: flex; flex-direction: column; gap: 18px; }
 .home-usd { font-size: 1.15rem; margin: 6px 0 0; }
 .cumple-list { margin: 0; padding-left: 18px; }
@@ -569,38 +564,6 @@ body, main {
   margin-top: 0;
 }
 
-/* --- Ajuste de Columna Izquierda (Más ancha) --- */
-.home-left {
-  flex: 1 1 500px; /* Base ancha */
-  min-width: 320px;
-}
-
-/* --- Tarjeta TI (Agrandada) --- */
-.home-ti-card {
-  background: #fff;
-  border: 1px solid #dde3ec;
-  border-radius: 10px;
-  padding: 0; 
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-  overflow: hidden; 
-  width: 100%; 
-  height: 300px; /* Altura fija grande */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.3s;
-}
-
-.home-ti-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; 
-  display: block;
-}
-
-.home-ti-card:hover {
-  transform: scale(1.02);
-}
 
 /* --- Carrusel de Noticias (Agrandado) --- */
 .news-carousel-container {
@@ -701,4 +664,81 @@ body, main {
 .news-next { 
   right: 0; 
   border-radius: 8px 0 0 8px; 
+}
+
+/* =======================
+   Home - layout imagen + panel derecho
+   ======================= */
+
+.home-layout {
+  display: flex;
+  gap: 25px; /* Un poco más de espacio entre columnas */
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+/* Columna Izquierda: Aumentamos el flex-basis para que sea ancha por defecto */
+.home-left {
+  flex: 1 1 600px; 
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px; /* Espacio entre Ticketera y Noticias */
+}
+
+.home-ti-link {
+  text-decoration: none;
+  color: inherit;
+  display: block; /* Importante para que ocupe el ancho */
+}
+
+/* TARJETA TICKETERA: Rectangular y Ancha */
+.home-ti-card {
+  background: #fff;
+  border: 1px solid #dde3ec;
+  border-radius: 12px;
+  padding: 0; /* Sin padding para que la imagen toque los bordes */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  
+  /* CLAVE: Ancho total y altura fija rectangular */
+  width: 100%;
+  max-width: none; /* Quitamos el límite de 300px anterior */
+  height: 320px;   /* Altura para formato banner */
+  
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.home-ti-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+.home-ti-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Recorta la imagen para llenar el rectángulo sin deformarse */
+  display: block;
+}
+
+/* Columna Derecha */
+.home-right {
+  flex: 0 0 340px; /* Ancho fijo para el sidebar */
+  /* Si la pantalla es chica, baja */
+  margin-left: 0; 
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Responsive: Si la pantalla es muy chica, la derecha pasa abajo */
+@media (max-width: 950px) {
+  .home-right {
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
 }
