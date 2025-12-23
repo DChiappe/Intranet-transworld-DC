@@ -58,7 +58,6 @@
     <% if (typeof usuario !== 'undefined' && usuario) { %>
       <div class="nav-user">
         <a href="/perfil" title="Ir a mi perfil" class="user-name"><strong><%= usuario.username %></strong></a>
-        <a href="/logout" class="btn-logout">Cerrar sesión</a>
       </div>
     <% } %>
 
@@ -71,33 +70,25 @@
 
 <footer>
   <div class="footer-content">
-    
     <div class="footer-icon">
-      <a href="/" title="Ir al Inicio" style="text-decoration: none; color: inherit;">
-        🏠
-      </a>
+      <a href="/" title="Ir al Inicio" style="text-decoration: none; color: inherit;">🏠</a>
     </div>
-
     <div class="footer-col">
       <a href="/procesos/protocolos">Protocolos</a>
       <a href="/procesos/reglamento">Reglamento interno</a>
       <a href="/procesos/procedimientos">Procedimientos</a>
     </div>
-
     <div class="footer-col">
       <a href="#">Nosotros</a>
     </div>
-
     <div class="footer-col">
       <a href="/sistemas/tickets">Soporte</a>
     </div>
-
     <div class="footer-col">
       <strong>Links externos</strong>
       <a href="https://transworld.mirexmas.com/" target="_blank" rel="noopener noreferrer">Rex+</a>
       <a href="https://www.achs.cl/" target="_blank" rel="noopener noreferrer">ACHS</a>
     </div>
-
   </div>
 </footer>
 
