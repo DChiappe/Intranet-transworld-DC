@@ -12,13 +12,15 @@
 
 <header>
   <div class="header-inner">
+    
     <div class="logo-container">
-      <img src="/img/PNG-LOGO-TW-2.png" alt="Transworld" class="logo-tw">
+      <a href="/" title="Ir al Inicio">
+        <img src="/img/PNG-LOGO-TW-2.png" alt="Transworld" class="logo-tw">
+      </a>
     </div>
 
     <nav class="main-nav">
-      <a href="/">Inicio</a>
-
+      
       <div class="nav-item">
         <a href="/procesos">Procesos y Documentos</a>
         <div class="dropdown-menu">
@@ -33,7 +35,7 @@
         <a href="/personas">Personas</a>
         <div class="dropdown-menu">
           <a href="/personas/organigrama">Organigrama</a>
-          </div>
+        </div>
       </div>
 
       <div class="nav-item">
@@ -50,16 +52,16 @@
       <% if (typeof usuario !== 'undefined' && usuario && usuario.role === 'admin') { %>
         <a href="/roles">Roles</a>
       <% } %>
-
-      <% if (typeof usuario !== 'undefined' && usuario) { %>
-        <div class="nav-user">
-          <a href="/perfil" title="Ir a mi perfil"><strong><%= usuario.username %></strong></a>
-          
-          <a href="/logout" style="margin-left: 12px; opacity: 0.9;">Cerrar sesión</a>
-        </div>
-      <% } %>
       
     </nav>
+
+    <% if (typeof usuario !== 'undefined' && usuario) { %>
+      <div class="nav-user">
+        <a href="/perfil" title="Ir a mi perfil" class="user-name"><strong><%= usuario.username %></strong></a>
+        <a href="/logout" class="btn-logout">Cerrar sesión</a>
+      </div>
+    <% } %>
+
   </div>
 </header>
 
@@ -71,7 +73,9 @@
   <div class="footer-content">
     
     <div class="footer-icon">
-      🏠
+      <a href="/" title="Ir al Inicio" style="text-decoration: none; color: inherit;">
+        🏠
+      </a>
     </div>
 
     <div class="footer-col">

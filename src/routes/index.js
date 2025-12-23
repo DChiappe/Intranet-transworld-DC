@@ -3,6 +3,9 @@ const router = express.Router();
 const db = require('../db');
 const { getUsdHoy } = require('../services/usdService');
 
+// ==========================================
+// RUTA: HOME (INICIO)
+// ==========================================
 router.get('/', async (req, res) => {
   try {
     // 1. Obtener datos del dólar
@@ -26,8 +29,7 @@ router.get('/', async (req, res) => {
     const [resultsMes] = await db.query(sqlMes, [mes]);
 
     // 4. CARRUSEL: Obtener TODAS las fotos de TODOS los eventos
-    // Hacemos JOIN para traer también el nombre del evento
-    // LIMIT 30 para no sobrecargar si hay miles de fotos.
+    // Usamos la tabla nueva eventos_fotos
     const sqlEventos = `
       SELECT ef.url as imagen, e.nombre, e.slug
       FROM eventos_fotos ef
@@ -45,13 +47,38 @@ router.get('/', async (req, res) => {
       mesNombre,
       diaHoy,
       cumpleaniosMes: resultsMes,
-      eventosCarousel: eventosRows, // Ahora contiene muchas fotos mezcladas de distintos eventos
+      eventosCarousel: eventosRows, 
       user: req.session.user
     });
 
   } catch (err) {
     console.error('Error en la home:', err);
     res.status(500).send('Error interno del servidor');
+  }
+});
+
+// ==========================================
+// RUTA: PERFIL DE USUARIO
+// ==========================================
+router.get('/perfil', async (req, res) => {
+  try {
+    if (!req.session.user) return res.redirect('/login');
+
+    const id = req.session.user.id;
+    
+    // Consultamos datos frescos del usuario
+    const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
+    
+    if (rows.length === 0) return res.redirect('/');
+
+    res.render('perfil', {
+      titulo: 'Mi Perfil',
+      usuario: rows[0]
+    });
+
+  } catch (err) {
+    console.error('Error cargando perfil:', err);
+    res.status(500).send('Error al cargar perfil');
   }
 });
 
