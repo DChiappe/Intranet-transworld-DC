@@ -30,7 +30,7 @@ router.get('/login', (req, res) => {
     req.query.registered === '1'
       ? 'Registro creado. Revisa tu correo para confirmar la cuenta.'
       : req.query.confirmed === '1'
-      ? 'Correo confirmado. Ya puedes iniciar sesión.'
+      ? 'Correo confirmado. Cuando se te asigne un rol podrás iniciar sesión.'
       : req.query.exists === '1'
       ? 'Ese correo ya está registrado. Inicia sesión.'
       : null;
