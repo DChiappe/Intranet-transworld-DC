@@ -69,6 +69,7 @@ app.use((req, res, next) => {
     res.locals.can = {
       procedimientos_write: hasRole('admin', 'control_y_seguridad', 'teresa'),
       protocolos_write: hasRole('admin', 'control_y_seguridad'),
+      personas_write: hasRole('admin', 'rrhh'),
       achs_write: hasRole('admin', 'teresa'),
       reglamento_write: hasRole('admin', 'teresa'),
       organigrama_write: hasRole('admin', 'rrhh'),
