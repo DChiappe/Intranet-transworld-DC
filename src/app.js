@@ -21,6 +21,7 @@ const ticketsRoutes = require('./routes/tickets');   // Acciones (Crear, Respond
 const marketingRoutes = require('./routes/marketing');
 const rolesRoutes = require('./routes/roles');
 const docsRoutes = require('./routes/docs');
+const noticiasRoutes = require('./routes/noticias');
 
 // ================================
 // Inicializar app
@@ -107,6 +108,7 @@ app.use('/tickets', requireAuth, ticketsRoutes);   // Maneja /tickets/... (Accio
 app.use('/marketing', requireAuth, marketingRoutes);
 app.use('/roles', requireAuth, rolesRoutes);
 app.use('/docs', requireAuth, docsRoutes);
+app.use('/noticias', requireAuth, noticiasRoutes);
 
 // ================================
 // Manejo de Errores (404)
