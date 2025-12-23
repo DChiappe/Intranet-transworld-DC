@@ -28,8 +28,7 @@ router.get('/', async (req, res) => {
     `;
     const [resultsMes] = await db.query(sqlMes, [mes]);
 
-    // 4. CARRUSEL: Obtener TODAS las fotos de TODOS los eventos
-    // Usamos la tabla nueva eventos_fotos
+    // 4. CARRUSEL DE FONDO: Obtener fotos de eventos
     const sqlEventos = `
       SELECT ef.url as imagen, e.nombre, e.slug
       FROM eventos_fotos ef
@@ -39,7 +38,15 @@ router.get('/', async (req, res) => {
     `;
     const [eventosRows] = await db.query(sqlEventos);
 
-    // 5. Renderizar vista
+    // 5. CARRUSEL DE NOTICIAS (NUEVO): Obtener últimas 5 noticias con imagen
+    const sqlNoticias = `
+      SELECT id, titulo, imagen, subtitulo FROM noticias 
+      WHERE imagen IS NOT NULL AND imagen != ''
+      ORDER BY fecha_creacion DESC LIMIT 5
+    `;
+    const [noticiasRows] = await db.query(sqlNoticias);
+
+    // 6. Renderizar vista
     res.render('home', {
       titulo: 'Inicio',
       usdHoy,
@@ -47,7 +54,8 @@ router.get('/', async (req, res) => {
       mesNombre,
       diaHoy,
       cumpleaniosMes: resultsMes,
-      eventosCarousel: eventosRows, 
+      eventosCarousel: eventosRows,
+      noticiasCarousel: noticiasRows, // <-- Variable nueva para la vista
       user: req.session.user
     });
 
@@ -66,7 +74,6 @@ router.get('/perfil', async (req, res) => {
 
     const id = req.session.user.id;
     
-    // Consultamos datos frescos del usuario
     const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
     
     if (rows.length === 0) return res.redirect('/');

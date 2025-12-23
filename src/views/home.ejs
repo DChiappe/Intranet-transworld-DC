@@ -1,5 +1,5 @@
 <%
-  // 1. Funciones y lógica previa (sin cambios)
+  // 1. Funciones y lógica previa
   function titleCase(s) {
     if (!s) return '';
     const palabras = String(s).toLowerCase().trim().split(/\s+/);
@@ -35,56 +35,92 @@
 %>
 
 <style>
-  /* Hacemos transparente el fondo principal para ver el carrusel */
-  body, main {
-    background: transparent !important;
-  }
+  /* --- ESTILOS FONDO --- */
+  body, main { background: transparent !important; }
+  .fullscreen-carousel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+  .bg-slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; }
+  .bg-slide img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.6); }
+  .fade-bg { animation-name: fadeBg; animation-duration: 2s; }
+  @keyframes fadeBg { from {opacity: 0.4} to {opacity: 1} }
+  h2 { color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
 
-  /* Contenedor fijo al fondo */
-  .fullscreen-carousel {
-    position: fixed;
-    top: 0;
-    left: 0;
+  /* --- ESTILOS CARRUSEL NOTICIAS (NUEVO) --- */
+  .news-carousel-container {
+    position: relative;
     width: 100%;
-    height: 100%;
-    z-index: -1; /* Detrás de todo */
+    max-width: 300px; /* Mismo ancho que tarjeta TI */
+    height: 200px;
+    margin-top: 20px; /* Separación de la tarjeta de arriba */
+    border-radius: 10px;
     overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    background: #000;
+    border: 1px solid #dde3ec;
   }
 
-  /* Cada slide ocupa toda la pantalla */
-  .bg-slide {
-    position: absolute;
-    top: 0;
-    left: 0;
+  .news-slide {
+    display: none;
     width: 100%;
     height: 100%;
-    display: none; /* JS lo maneja */
   }
 
-  /* La imagen cubre todo sin deformarse */
-  .bg-slide img {
+  .news-slide.active {
+    display: block;
+    animation: fadeNews 0.5s;
+  }
+
+  @keyframes fadeNews { from {opacity: .6} to {opacity: 1} }
+
+  .news-slide a {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    position: relative;
+  }
+
+  .news-slide img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: brightness(0.6); /* Oscurecemos un poco la foto para que resalten las tarjetas */
+    transition: transform 0.3s ease;
   }
 
-  /* Animación suave */
-  .fade-bg {
-    animation-name: fadeBg;
-    animation-duration: 2s;
+  .news-slide:hover img {
+    transform: scale(1.05);
   }
 
-  @keyframes fadeBg {
-    from {opacity: 0.4} 
-    to {opacity: 1}
+  .news-caption {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0));
+    color: #fff;
+    padding: 20px 10px 10px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
   }
 
-  /* Ajuste para que el título "Bienvenida" se lea bien sobre fotos */
-  h2 {
-    color: #fff; /* Título en blanco */
-    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  /* Flechas de control */
+  .news-ctrl {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.4);
+    color: white;
+    border: none;
+    font-size: 1.5rem;
+    padding: 8px 12px;
+    cursor: pointer;
+    z-index: 10;
+    transition: background 0.3s;
+    user-select: none;
   }
+  .news-ctrl:hover { background: rgba(0, 0, 0, 0.8); }
+  .news-prev { left: 0; border-radius: 0 4px 4px 0; }
+  .news-next { right: 0; border-radius: 4px 0 0 4px; }
 </style>
 
 
@@ -96,11 +132,11 @@
     %>
       <div class="bg-slide fade-bg" style="<%= displayStyle %>">
         <img src="<%= evento.imagen %>" alt="Fondo Evento">
-        </div>
+      </div>
     <% } %>
   </div>
 <% } else { %>
-  <div class="fullscreen-carousel" style="background: #c9c9c9;"></div>
+  <div class="fullscreen-carousel" style="background: #003a70;"></div>
 <% } %>
 
 
@@ -114,8 +150,27 @@
         <img src="/img/Img%20Servicios%20TI.png" alt="Servicios TI" class="home-ti-img" />
       </div>
     </a>
-    
-    </div>
+
+    <% if (typeof noticiasCarousel !== 'undefined' && noticiasCarousel && noticiasCarousel.length > 0) { %>
+      <div class="news-carousel-container">
+        
+        <button class="news-ctrl news-prev" onclick="plusNews(-1)">&#10094;</button>
+        <button class="news-ctrl news-next" onclick="plusNews(1)">&#10095;</button>
+
+        <% noticiasCarousel.forEach((noticia, index) => { %>
+          <div class="news-slide <%= index === 0 ? 'active' : '' %>">
+            <a href="/noticias/<%= noticia.id %>" title="Ver noticia completa">
+              <img src="<%= noticia.imagen %>" alt="<%= noticia.titulo %>">
+              <div class="news-caption">
+                <%= noticia.titulo %>
+              </div>
+            </a>
+          </div>
+        <% }); %>
+
+      </div>
+    <% } %>
+  </div>
 
   <div class="home-right">
     
@@ -134,9 +189,7 @@
         <p>No hay cumpleaños registrados para este mes.</p>
       <% } else { %>
         <div class="cumple-cards">
-          <% 
-             const dHoy = (typeof diaHoy !== 'undefined') ? diaHoy : new Date().getDate();
-          %>
+          <% const dHoy = (typeof diaHoy !== 'undefined') ? diaHoy : new Date().getDate(); %>
           <% cumpleaniosOrdenados.forEach((p) => { 
             let estadoClase = (p.dia < dHoy) ? 'cumple-pasado' : (p.dia === dHoy ? 'cumple-hoy' : 'cumple-futuro');
           %>
@@ -198,9 +251,8 @@
     });
   }
 
-  // --- 2. Lógica del Carrusel de Fondo ---
+  // --- 2. Lógica del Carrusel de Fondo (Automático) ---
   let slideIndex = 0;
-  // Apuntamos a la nueva clase "bg-slide"
   const slides = document.getElementsByClassName("bg-slide");
 
   if (slides.length > 0) {
@@ -219,6 +271,36 @@
       slides[slideIndex-1].style.display = "block";  
     }
 
-    setTimeout(showSlides, 5000); // 5 segundos por foto
+    setTimeout(showSlides, 5000); 
+  }
+
+  // --- 3. Lógica del Carrusel de Noticias (Manual) ---
+  let newsIndex = 1;
+  
+  // Inicializar si existen slides
+  if (document.getElementsByClassName("news-slide").length > 0) {
+    showNews(newsIndex);
+  }
+
+  function plusNews(n) {
+    showNews(newsIndex += n);
+  }
+
+  function showNews(n) {
+    let i;
+    let x = document.getElementsByClassName("news-slide");
+    if (x.length === 0) return;
+
+    if (n > x.length) {newsIndex = 1}    
+    if (n < 1) {newsIndex = x.length}
+    
+    for (i = 0; i < x.length; i++) {
+      x[i].classList.remove("active");
+      x[i].style.display = "none";  
+    }
+    
+    // Mostrar el actual
+    x[newsIndex-1].style.display = "block";  
+    x[newsIndex-1].classList.add("active");
   }
 </script>

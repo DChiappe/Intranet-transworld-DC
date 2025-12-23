@@ -37,8 +37,6 @@ router.post('/:id', requireAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id);
     const role = String(req.body.role || '').trim();
-
-    // Roles disponibles (solo valores, NO permisos aún)
     const allowed = new Set([
       '', // sin asignar
       'admin',
@@ -46,7 +44,8 @@ router.post('/:id', requireAdmin, async (req, res) => {
       'rrhh',
       'teresa',
       'control_y_seguridad',
-      'usuario'
+      'usuario',
+      'noticias'
     ]);
 
     if (!allowed.has(role)) {

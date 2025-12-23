@@ -1,0 +1,20 @@
+<div class="contenedor">
+  <h2>Publicar Nueva Noticia</h2>
+  <div class="panel">
+    <form action="/noticias/crear" method="POST" enctype="multipart/form-data" class="form-ticket">
+      <label>Título</label>
+      <input type="text" name="titulo" required>
+
+      <label>Subtítulo (Opcional)</label>
+      <input type="text" name="subtitulo">
+
+      <label>Imagen de Portada</label>
+      <input type="file" name="imagen" accept="image/*" required>
+
+      <label>Contenido</label>
+      <textarea name="contenido" rows="10" required></textarea>
+
+      <button type="submit" class="btn btn-primario">Publicar</button>
+    </form>
+  </div>
+</div>
