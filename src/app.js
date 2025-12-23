@@ -16,7 +16,8 @@ const authRoutes = require('./routes/auth');
 const indexRoutes = require('./routes/index');
 const procesosRoutes = require('./routes/procesos');
 const personasRoutes = require('./routes/personas');
-const sistemasRoutes = require('./routes/sistemas'); // Maneja todo lo de tickets ahora
+const sistemasRoutes = require('./routes/sistemas'); // Listados y Vistas
+const ticketsRoutes = require('./routes/tickets');   // Acciones (Crear, Responder, Editar) <--- AGREGADO
 const marketingRoutes = require('./routes/marketing');
 const rolesRoutes = require('./routes/roles');
 const docsRoutes = require('./routes/docs');
@@ -30,7 +31,6 @@ const PORT = process.env.PORT || 3000;
 // ================================
 // Motor de vistas + layouts
 // ================================
-// Si mantienes la carpeta src en GitHub, __dirname ya apunta a /src
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(expressLayouts);
@@ -73,8 +73,7 @@ app.use((req, res, next) => {
       reglamento_write: hasRole('admin', 'teresa'),
       organigrama_write: hasRole('admin', 'rrhh'),
       eventos_write: hasRole('admin', 'marketing'),
-      tickets_reply: hasRole('admin'), // Capacidad para responder tickets en sistemas
-      personas_write: hasRole('admin', 'rrhh'),
+      tickets_reply: hasRole('admin'), 
     };
   } else {
     res.locals.can = {};
@@ -101,7 +100,8 @@ app.use('/', authRoutes);
 app.use('/', requireAuth, indexRoutes);
 app.use('/procesos', requireAuth, procesosRoutes);
 app.use('/personas', requireAuth, personasRoutes);
-app.use('/sistemas', requireAuth, sistemasRoutes); // Centraliza /tickets
+app.use('/sistemas', requireAuth, sistemasRoutes); // Maneja /sistemas/tickets (Vistas)
+app.use('/tickets', requireAuth, ticketsRoutes);   // Maneja /tickets/... (Acciones) <--- AGREGADO
 app.use('/marketing', requireAuth, marketingRoutes);
 app.use('/roles', requireAuth, rolesRoutes);
 app.use('/docs', requireAuth, docsRoutes);
