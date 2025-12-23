@@ -70,7 +70,18 @@
       </dd>
     </dl>
 
-    <% const canReply = (typeof can !== 'undefined' && can.tickets_reply); %>
+    <% 
+       // 1. Permiso de Admin/Soporte (definido en app.js)
+       const canReply = (typeof can !== 'undefined' && can.tickets_reply);
+
+       // 2. Verificación si es el Dueño del ticket
+       // 'usuario' está disponible en la vista gracias a res.locals.usuario en app.js
+       const currentUserEmail = (typeof usuario !== 'undefined' && usuario) ? usuario.email : '';
+       const isOwner = (ticket.solicitante_email === currentUserEmail);
+
+       // 3. Lógica combinada: Puede responder si es Admin O si es el Dueño
+       const showReplyForm = canReply || isOwner;
+    %>
 
     <% if (canReply) { %>
       <div class="panel panel-actualizar-ticket">
@@ -104,13 +115,13 @@
     <% } else { %>
       <div class="panel panel-actualizar-ticket">
         <h3 class="panel-title">Gestión del ticket</h3>
-        <p class="small-text">Este ticket es de solo lectura para tu perfil.</p>
+        <p class="small-text">Solo el administrador puede cambiar el estado o prioridad.</p>
       </div>
     <% } %>
 
-    <% if (canReply) { %>
+    <% if (showReplyForm) { %>
       <div class="panel panel-responder">
-        <h3 class="panel-title">Responder al usuario</h3>
+        <h3 class="panel-title">Agregar una respuesta</h3>
         <form action="/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
           <label for="asunto_respuesta">Asunto</label>
           <input
@@ -133,7 +144,7 @@
       </div>
     <% } %>
 
-    <% if (canReply) { %>
+    <% if (showReplyForm) { %>
       <div class="panel panel-historial">
         <h3 class="panel-title">Historial de respuestas</h3>
         <% if (respuestas && respuestas.length > 0) { %>

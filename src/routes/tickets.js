@@ -84,17 +84,19 @@ router.post('/:id/actualizar', requireRole('admin'), async (req, res) => {
   }
 });
 
-// POST /tickets/:id/responder - Enviar respuesta al solicitante
-router.post('/:id/responder', requireRole('admin'), async (req, res) => {
+// POST /tickets/:id/responder - Enviar respuesta (Admin o Dueño del ticket)
+// Quitamos el middleware requireRole('admin') de aquí para validarlo dentro
+router.post('/:id/responder', async (req, res) => {
   const { id } = req.params;
   const { asunto_respuesta, mensaje_respuesta } = req.body;
+  const user = req.session.user;
 
   if (!mensaje_respuesta || !mensaje_respuesta.trim()) {
     return res.status(400).send('El mensaje de respuesta no puede estar vacío.');
   }
 
   const sqlTicket = `
-    SELECT solicitante_email, titulo
+    SELECT solicitante_email, solicitante_nombre, titulo
     FROM tickets
     WHERE id = ?
   `;
@@ -106,28 +108,51 @@ router.post('/:id/responder', requireRole('admin'), async (req, res) => {
       return res.status(404).send('Ticket no encontrado');
     }
 
-    const { solicitante_email, titulo } = results[0];
+    const ticket = results[0];
+    const isAdmin = user.role === 'admin'; // O tu lógica de roles de soporte
+    const isOwner = user.email === ticket.solicitante_email;
 
-    const subject =
-      asunto_respuesta && asunto_respuesta.trim().length > 0
-        ? asunto_respuesta
-        : `Respuesta a tu ticket #${id}: ${titulo}`;
+    // VALIDACIÓN DE SEGURIDAD:
+    // Solo permitimos pasar si es Admin O es el Dueño del ticket
+    if (!isAdmin && !isOwner) {
+      return res.status(403).send('No tienes permiso para responder este ticket.');
+    }
 
+    // Configuración según quién responde
+    let remitenteNombre = '';
+    let emailDestino = '';
+    let asuntoEmail = '';
+
+    if (isAdmin) {
+      // Si responde Soporte/Admin -> Se envía al Usuario
+      remitenteNombre = 'Soporte';
+      emailDestino = ticket.solicitante_email;
+      asuntoEmail = asunto_respuesta || `Respuesta a tu ticket #${id}: ${ticket.titulo}`;
+    } else {
+      // Si responde el Usuario -> Se envía al Admin
+      remitenteNombre = user.username || user.first_name; // El nombre del usuario
+      emailDestino = process.env.ADMIN_NOTIFY_EMAIL; // El correo de avisos de admin
+      asuntoEmail = `Nueva respuesta del usuario en Ticket #${id}: ${ticket.titulo}`;
+    }
+
+    // Insertar respuesta en la BD
     const sqlRespuesta = `
       INSERT INTO ticket_respuestas (ticket_id, mensaje, remitente)
-      VALUES (?, ?, 'soporte')
+      VALUES (?, ?, ?)
     `;
 
-    await db.query(sqlRespuesta, [id, mensaje_respuesta]);
+    await db.query(sqlRespuesta, [id, mensaje_respuesta, remitenteNombre]);
 
-    // Envío de correo vía API de Brevo (usando dchiappe@transworld.cl configurado en mailer.js)
-    sendMail({
-      to: solicitante_email,
-      subject: subject,
-      text: mensaje_respuesta
-    })
-    .then(() => console.log('Correo de respuesta enviado exitosamente vía API'))
-    .catch(err => console.error('Error enviando correo de respuesta:', err));
+    // Envío de correo (Solo si hay destinatario válido)
+    if (emailDestino) {
+      sendMail({
+        to: emailDestino,
+        subject: asuntoEmail,
+        text: `Nueva respuesta de ${remitenteNombre}:\n\n${mensaje_respuesta}`
+      })
+      .then(() => console.log('Correo de respuesta enviado exitosamente'))
+      .catch(err => console.error('Error enviando correo de respuesta:', err));
+    }
 
     res.redirect(`/sistemas/tickets/${id}`);
   } catch (err) {
@@ -135,5 +160,4 @@ router.post('/:id/responder', requireRole('admin'), async (req, res) => {
     res.status(500).send('Error al procesar la respuesta.');
   }
 });
-
 module.exports = router;
