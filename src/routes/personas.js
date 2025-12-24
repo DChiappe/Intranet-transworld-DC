@@ -167,7 +167,7 @@ router.post('/organigrama/subir', requireRole('admin', 'rrhh'), upload.single('o
         [
           req.session.user.id, 
           'actualizó el organigrama', // Texto solicitado
-          'Organigrama', 
+          '', 
           '/personas/organigrama'
         ]
       );
