@@ -58,11 +58,22 @@
   }
 
   .news-slide { display: none; width: 100%; height: 100%; }
-  .news-slide.active { display: block; animation: fadeNews 0.5s; }
-  @keyframes fadeNews { from {opacity: .6} to {opacity: 1} }
+  
+  /* ANIMACIÓN SUAVE MEJORADA */
+  .news-slide.active { 
+    display: block; 
+    animation: fadeNews 1.5s ease-in-out; /* Más lento y fluido */
+  }
+  
+  @keyframes fadeNews { 
+    from {opacity: 0; transform: scale(1.02);} /* Empieza invisible y un poco grande */
+    to {opacity: 1; transform: scale(1);} 
+  }
 
   .news-slide a { display: block; width: 100%; height: 100%; text-decoration: none; position: relative; }
   .news-slide img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+  
+  /* Efecto hover sutil */
   .news-slide:hover img { transform: scale(1.03); }
 
   /* ESTILO A: NOTICIA */
@@ -324,28 +335,41 @@
     setTimeout(showSlides, 5000); 
   }
 
-  // --- 3. Carrusel Mixto (Manual + Dots + Auto) ---
+  // --- 3. Carrusel Mixto (Manual + Dots + Auto + Reiniciable) ---
   let newsIndex = 1;
+  let autoSlideTimer; // Variable para el temporizador
   const newsSlides = document.getElementsByClassName("news-slide");
   const newsDots = document.getElementsByClassName("news-dot");
 
+  // Función para iniciar el temporizador
+  function startAutoSlide() {
+    autoSlideTimer = setInterval(() => {
+      plusNews(1, false); // false = no es manual, no resetea (aunque plusNews llama showNews que no resetea timer, lo manejamos aquí)
+    }, 10000); // 10 SEGUNDOS
+  }
+
+  // Función para reiniciar el temporizador (cuando hay interacción manual)
+  function resetAutoSlide() {
+    clearInterval(autoSlideTimer);
+    startAutoSlide();
+  }
+
+  // Inicializar
   if (newsSlides.length > 0) {
     showNews(newsIndex);
-    
-    // --- AUTOPLAY CADA 5 SEGUNDOS ---
-    setInterval(() => {
-      plusNews(1);
-    }, 5000);
+    startAutoSlide(); // Arrancar automático al cargar
   }
 
   // Control Flechas
-  function plusNews(n) {
+  function plusNews(n, manual = true) {
     showNews(newsIndex += n);
+    if (manual) resetAutoSlide(); // Si fue click manual, reseteamos los 10s
   }
 
   // Control Puntos (Dots)
   function currentNews(n) {
     showNews(newsIndex = n);
+    resetAutoSlide(); // Si fue click manual, reseteamos los 10s
   }
 
   function showNews(n) {
