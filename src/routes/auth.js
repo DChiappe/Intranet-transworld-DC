@@ -22,7 +22,10 @@ function safeEqualHex(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
-// GET /login
+// ==========================================
+// LOGIN & REGISTRO
+// ==========================================
+
 router.get('/login', (req, res) => {
   if (req.session && req.session.user) return res.redirect('/');
 
@@ -30,26 +33,28 @@ router.get('/login', (req, res) => {
     req.query.registered === '1'
       ? 'Registro creado. Revisa tu correo para confirmar la cuenta.'
       : req.query.confirmed === '1'
-      ? 'Correo confirmado. Cuando se te asigne un rol podrás iniciar sesión.'
+      ? 'Correo confirmado. Ya puedes iniciar sesión.'
       : req.query.exists === '1'
       ? 'Ese correo ya está registrado. Inicia sesión.'
+      : req.query.reset === '1'
+      ? 'Se ha enviado una nueva contraseña a tu correo.'
+      : req.query.changed === '1'
+      ? 'Contraseña actualizada correctamente.'
       : null;
 
   res.render('login', {
     titulo: 'Iniciar sesión',
     error: null,
     info,
-    layout: false // <--- ESTO DESACTIVA EL LAYOUT
+    layout: false 
   });
 });
 
-// POST /login
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   const validUser = process.env.AUTH_USER || 'admin';
   const validPass = process.env.AUTH_PASS || '1234';
 
-  // Login de respaldo (hardcoded)
   if (username === validUser && password === validPass) {
     req.session.user = { id: 0, username: validUser, role: 'admin', email: null };
     return res.redirect('/');
@@ -67,7 +72,7 @@ router.post('/login', async (req, res) => {
         titulo: 'Iniciar sesión',
         error: 'Usuario o contraseña incorrectos',
         info: null,
-        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+        layout: false
       });
     }
 
@@ -78,7 +83,7 @@ router.post('/login', async (req, res) => {
         titulo: 'Iniciar sesión',
         error: 'Tu cuenta está registrada, pero aún no tiene un rol asignado. Contacta al administrador para habilitar el acceso.',
         info: null,
-        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+        layout: false
       });
     }
 
@@ -88,7 +93,7 @@ router.post('/login', async (req, res) => {
         titulo: 'Iniciar sesión',
         error: 'Usuario o contraseña incorrectos',
         info: null,
-        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+        layout: false
       });
     }
 
@@ -106,22 +111,20 @@ router.post('/login', async (req, res) => {
       titulo: 'Iniciar sesión',
       error: 'Error interno. Intenta nuevamente.',
       info: null,
-      layout: false // <--- ESTO DESACTIVA EL LAYOUT
+      layout: false
     });
   }
 });
 
-// GET /register
 router.get('/register', (req, res) => {
   if (req.session && req.session.user) return res.redirect('/');
   res.render('register', { 
     titulo: 'Registro', 
     error: null,
-    layout: false // <--- ESTO DESACTIVA EL LAYOUT
+    layout: false 
   });
 });
 
-// POST /register
 router.post('/register', async (req, res) => {
   try {
     const firstName = String(req.body.first_name || '').trim();
@@ -134,7 +137,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).render('register', { 
         titulo: 'Registro', 
         error: 'Todos los campos son obligatorios.',
-        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+        layout: false
       });
     }
 
@@ -142,7 +145,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).render('register', { 
         titulo: 'Registro', 
         error: 'La contraseña debe tener al menos 6 caracteres.',
-        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+        layout: false
       });
     }
 
@@ -150,7 +153,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).render('register', { 
         titulo: 'Registro', 
         error: 'Las contraseñas no coinciden.',
-        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+        layout: false
       });
     }
 
@@ -173,7 +176,6 @@ router.post('/register', async (req, res) => {
 
     const confirmUrl = `${getBaseUrl(req)}/confirm?token=${token}`;
 
-    // Enviar correo de confirmación
     await sendMail({
       to: email,
       subject: 'Confirma tu correo - Intranet Transworld',
@@ -194,12 +196,11 @@ router.post('/register', async (req, res) => {
     return res.status(500).render('register', { 
       titulo: 'Registro', 
       error: 'Error interno al registrar. Intenta nuevamente.',
-      layout: false // <--- ESTO DESACTIVA EL LAYOUT
+      layout: false
     });
   }
 });
 
-// GET /confirm?token=...
 router.get('/confirm', async (req, res) => {
   try {
     const token = String(req.query.token || '').trim();
@@ -208,7 +209,7 @@ router.get('/confirm', async (req, res) => {
         titulo: 'Confirmación', 
         ok: false, 
         message: 'Token inválido.',
-        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+        layout: false
       });
     }
 
@@ -222,7 +223,7 @@ router.get('/confirm', async (req, res) => {
         titulo: 'Confirmación', 
         ok: false, 
         message: 'Token inválido o expirado.',
-        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+        layout: false 
       });
     }
 
@@ -232,7 +233,7 @@ router.get('/confirm', async (req, res) => {
         titulo: 'Confirmación', 
         ok: true, 
         message: 'Tu correo ya estaba confirmado. Ya puedes iniciar sesión.',
-        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+        layout: false 
       });
     }
 
@@ -242,7 +243,7 @@ router.get('/confirm', async (req, res) => {
         titulo: 'Confirmación', 
         ok: false, 
         message: 'Este enlace expiró. Regístrate nuevamente para recibir otro.',
-        layout: false // <--- ESTO DESACTIVA EL LAYOUT
+        layout: false 
       });
     }
 
@@ -255,7 +256,7 @@ router.get('/confirm', async (req, res) => {
       titulo: 'Confirmación', 
       ok: true, 
       message: 'Correo confirmado correctamente. Ya puedes iniciar sesión.',
-      layout: false // <--- ESTO DESACTIVA EL LAYOUT
+      layout: false 
     });
   } catch (err) {
     console.error('Confirm error:', err);
@@ -263,7 +264,139 @@ router.get('/confirm', async (req, res) => {
       titulo: 'Confirmación', 
       ok: false, 
       message: 'Error interno al confirmar. Intenta nuevamente.',
-      layout: false // <--- ESTO DESACTIVA EL LAYOUT
+      layout: false 
+    });
+  }
+});
+
+// ==========================================
+// RECUPERAR CONTRASEÑA (Forgot Password)
+// ==========================================
+
+router.get('/forgot-password', (req, res) => {
+  res.render('forgot_password', { 
+    titulo: 'Recuperar contraseña',
+    error: null,
+    layout: false 
+  });
+});
+
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    
+    // Verificar si el usuario existe
+    const [rows] = await pool.query('SELECT id, first_name FROM users WHERE email = ?', [cleanEmail]);
+    
+    if (!rows.length) {
+      // Por seguridad, no decimos si el correo existe o no, pero redirigimos como si hubiera funcionado
+      return res.redirect('/login?reset=1');
+    }
+
+    const user = rows[0];
+
+    // Generar nueva contraseña aleatoria (8 caracteres)
+    const newPassword = crypto.randomBytes(4).toString('hex');
+    const saltHex = crypto.randomBytes(16).toString('hex');
+    const hashHex = pbkdf2Hash(newPassword, saltHex);
+
+    // Guardar nueva contraseña en BD
+    await pool.query(
+      'UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?',
+      [hashHex, saltHex, user.id]
+    );
+
+    // Enviar correo con la nueva contraseña
+    await sendMail({
+      to: cleanEmail,
+      subject: 'Recuperación de contraseña - Intranet Transworld',
+      text: `Hola ${user.first_name},\n\nSe ha solicitado restablecer tu contraseña. Tu nueva contraseña temporal es:\n\n${newPassword}\n\nPor favor inicia sesión y cámbiala lo antes posible.\n\nSaludos,\nEquipo Transworld`
+    });
+
+    res.redirect('/login?reset=1');
+
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).render('forgot_password', {
+      titulo: 'Recuperar contraseña',
+      error: 'Error interno. Intenta nuevamente.',
+      layout: false
+    });
+  }
+});
+
+// ==========================================
+// CAMBIAR CONTRASEÑA (Change Password)
+// ==========================================
+
+router.get('/change-password', (req, res) => {
+  // Verificar sesión (aunque auth.js sea público, esta ruta requiere login)
+  if (!req.session || !req.session.user) {
+    return res.redirect('/login');
+  }
+  res.render('change_password', {
+    titulo: 'Cambiar contraseña',
+    error: null
+  });
+});
+
+router.post('/change-password', async (req, res) => {
+  if (!req.session || !req.session.user) {
+    return res.redirect('/login');
+  }
+
+  const { old_password, new_password, confirm_password } = req.body;
+  const userId = req.session.user.id;
+
+  try {
+    if (new_password !== confirm_password) {
+      return res.render('change_password', {
+        titulo: 'Cambiar contraseña',
+        error: 'Las nuevas contraseñas no coinciden.'
+      });
+    }
+
+    if (new_password.length < 6) {
+      return res.render('change_password', {
+        titulo: 'Cambiar contraseña',
+        error: 'La nueva contraseña debe tener al menos 6 caracteres.'
+      });
+    }
+
+    // Obtener contraseña actual de la BD
+    const [rows] = await pool.query('SELECT password_hash, password_salt FROM users WHERE id = ?', [userId]);
+    if (!rows.length) return res.redirect('/login');
+
+    const u = rows[0];
+
+    // Verificar contraseña antigua
+    const computed = pbkdf2Hash(old_password, u.password_salt);
+    if (!safeEqualHex(computed, u.password_hash)) {
+      return res.render('change_password', {
+        titulo: 'Cambiar contraseña',
+        error: 'La contraseña actual es incorrecta.'
+      });
+    }
+
+    // Generar nuevo hash
+    const newSalt = crypto.randomBytes(16).toString('hex');
+    const newHash = pbkdf2Hash(new_password, newSalt);
+
+    // Actualizar BD
+    await pool.query(
+      'UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?',
+      [newHash, newSalt, userId]
+    );
+
+    res.redirect('/login?changed=1');
+
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).render('change_password', {
+      titulo: 'Cambiar contraseña',
+      error: 'Error interno al actualizar la contraseña.'
     });
   }
 });
