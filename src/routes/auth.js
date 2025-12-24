@@ -141,6 +141,16 @@ router.post('/register', async (req, res) => {
       });
     }
 
+    // --- NUEVA VALIDACIÓN: DOMINIO @TRANSWORLD.CL ---
+    if (!email.endsWith('@transworld.cl')) {
+      return res.status(400).render('register', { 
+        titulo: 'Registro', 
+        error: 'El registro solo está permitido para correos @transworld.cl',
+        layout: false
+      });
+    }
+    // ------------------------------------------------
+
     if (password.length < 6) {
       return res.status(400).render('register', { 
         titulo: 'Registro', 
