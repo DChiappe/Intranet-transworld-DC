@@ -1,7 +1,6 @@
-// src/routes/procesos.js
 const express = require('express');
 const router = express.Router();
-const db = require('../db'); // <--- IMPORTANTE: Se agregó la conexión a BD
+const db = require('../db'); 
 const multer = require('multer');
 const cloudinary = require('../services/cloudinary');
 const requireRole = require('../middlewares/requireRole');
@@ -13,28 +12,29 @@ const SECTION_CONFIG = {
   reglamento: { title: 'Reglamento interno', writeRoles: ['admin', 'teresa'] },
 };
 
-// Configuración Multer (Memoria)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// GET /procesos
+// --- Helper limpieza ---
+async function limpiarHistorial() {
+  try {
+    const sql = `DELETE FROM historial_cambios WHERE id NOT IN (SELECT id FROM (SELECT id FROM historial_cambios ORDER BY fecha DESC LIMIT 5) as t)`;
+    await db.query(sql);
+  } catch (e) { console.error(e); }
+}
+
 router.get('/', (req, res) => {
   res.render('procesos/index', { titulo: 'Procesos y Documentos' });
 });
 
-// Helper para listar archivos de Cloudinary (Raw + Images)
 async function listarArchivosCloudinary(section) {
   const prefix = `docs/${section}/`;
   try {
-    // Solicitamos imágenes y archivos raw (PDF, DOC, XLS) por separado
     const [images, raws] = await Promise.all([
       cloudinary.api.resources({ type: 'upload', prefix, resource_type: 'image', max_results: 100 }),
       cloudinary.api.resources({ type: 'upload', prefix, resource_type: 'raw', max_results: 100 })
     ]);
-
     const all = [...(images.resources || []), ...(raws.resources || [])];
-
-    // Mapeamos para que la vista tenga datos fáciles de usar
     return all.map(res => ({
       name: res.public_id.split('/').pop(),
       public_id: res.public_id,
@@ -42,33 +42,23 @@ async function listarArchivosCloudinary(section) {
       format: res.format,
       resource_type: res.resource_type
     })).sort((a, b) => a.name.localeCompare(b.name));
-
   } catch (err) {
-    console.error(`Nota: No se encontraron archivos para ${section} o error API:`, err.message);
+    console.error(`Nota: No se encontraron archivos para ${section}`, err.message);
     return [];
   }
 }
 
-// Helper para renderizar sección
 function renderSection(section, viewPath) {
   return async (req, res) => {
     const archivos = await listarArchivosCloudinary(section);
-    
-    res.render(viewPath, {
-      titulo: SECTION_CONFIG[section].title,
-      archivos,
-    });
+    res.render(viewPath, { titulo: SECTION_CONFIG[section].title, archivos });
   };
 }
 
-// Vistas por sección
 router.get('/procedimientos', renderSection('procedimientos', 'procesos/procedimientos'));
 router.get('/protocolos', renderSection('protocolos', 'procesos/protocolos'));
 router.get('/reglamento', renderSection('reglamento', 'procesos/reglamento'));
 
-/**
- * POST /procesos/:section/subir
- */
 router.post('/:section/subir', (req, res, next) => {
   const section = String(req.params.section || '');
   if (!SECTION_CONFIG[section]) return res.status(404).send('Sección no encontrada');
@@ -81,33 +71,21 @@ router.post('/:section/subir', (req, res, next) => {
       try {
         await new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
-            { 
-              folder: `docs/${section}`, 
-              resource_type: 'auto', // Auto-detecta PDF, IMG, DOC, etc.
-              use_filename: true,    // Intenta mantener el nombre original
-              unique_filename: true 
-            },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
+            { folder: `docs/${section}`, resource_type: 'auto', use_filename: true, unique_filename: true },
+            (error, result) => { if (error) reject(error); else resolve(result); }
           );
           stream.end(req.file.buffer);
         });
 
-        // --- INICIO DE BLOQUE DE HISTORIAL ---
+        // --- GUARDAR EN HISTORIAL Y LIMPIAR ---
         if (req.session.user && req.session.user.id) {
           await db.query(
             'INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
-            [
-              req.session.user.id, 
-              'subió un archivo', 
-              SECTION_CONFIG[section].title, // Ej: "Procedimientos"
-              `/procesos/${section}`
-            ]
+            [req.session.user.id, 'subió un archivo', SECTION_CONFIG[section].title, `/procesos/${section}`]
           );
+          await limpiarHistorial();
         }
-        // --- FIN DE BLOQUE DE HISTORIAL ---
+        // --------------------------------------
 
         res.redirect(`/procesos/${section}`);
       } catch (cloudErr) {
@@ -118,15 +96,11 @@ router.post('/:section/subir', (req, res, next) => {
   });
 });
 
-/**
- * POST /procesos/:section/:filename/eliminar
- */
 router.post('/:section/:filename/eliminar', async (req, res) => {
   const section = String(req.params.section || '');
   if (!SECTION_CONFIG[section]) return res.status(404).send('Sección no encontrada');
   
   let public_id = req.body.public_id;
-  
   if (!public_id) {
     const filename = req.params.filename; 
     public_id = `docs/${section}/${filename.split('.')[0]}`; 
@@ -135,11 +109,8 @@ router.post('/:section/:filename/eliminar', async (req, res) => {
   const gate = requireRole(...SECTION_CONFIG[section].writeRoles);
   gate(req, res, async () => {
     try {
-      // Intentamos borrar como imagen
       await cloudinary.uploader.destroy(public_id, { resource_type: 'image' });
-      // Intentamos borrar como raw
       await cloudinary.uploader.destroy(public_id, { resource_type: 'raw' });
-      
       res.redirect(`/procesos/${section}`);
     } catch (err) {
       console.error('Error eliminando:', err);

@@ -50,7 +50,6 @@ router.get('/', async (req, res) => {
     const [noticiasRows] = await db.query(sqlNoticias);
 
     // B. Obtener Historial de Cambios (Últimos 5)
-    // Unimos con la tabla 'users' para obtener el nombre real
     const sqlHistorial = `
       SELECT h.id, h.accion, h.seccion, h.enlace, h.fecha, 
              u.first_name, u.last_name, 'historial' as tipo
@@ -70,32 +69,39 @@ router.get('/', async (req, res) => {
         tipo: 'noticia',
         titulo: n.titulo,
         subtitulo: n.subtitulo,
-        imagen: n.imagen, // Foto real de la noticia
+        imagen: n.imagen,
         link: `/noticias/${n.id}`,
         fecha: new Date(n.fecha_creacion)
       });
     });
 
-    // Procesar Historial (Aquí armamos el texto solicitado)
+    // Procesar Historial
     historialRows.forEach(h => {
       const nombreUsuario = `${h.first_name} ${h.last_name}`;
       
-      // Texto: "(Nombre) (accion) a (seccion)"
-      // Ej: "Juan Perez subió una foto a Galería de Eventos"
-      const textoGenerado = `${nombreUsuario} ${h.accion} a ${h.seccion}`;
+      let textoGenerado = '';
+
+      // --- LOGICA DE TEXTO PERSONALIZADO ---
+      if (h.seccion === 'Organigrama') {
+         // Caso Organigrama: "(Nombre) actualizó el organigrama"
+         textoGenerado = `${nombreUsuario} actualizó el organigrama`;
+      } else {
+         // Caso General: "(Nombre) subió una foto a Galería"
+         textoGenerado = `${nombreUsuario} ${h.accion} a ${h.seccion}`;
+      }
 
       mixedFeed.push({
         id: h.id,
         tipo: 'historial',
-        titulo: textoGenerado, // Este texto saldrá grande y centrado
+        titulo: textoGenerado,
         subtitulo: 'Actividad reciente',
-        imagen: '/img/fondo-cambio-hecho.png', // IMAGEN FIJA SOLICITADA
+        imagen: '/img/fondo-cambio-hecho.png',
         link: h.enlace || '#', 
         fecha: new Date(h.fecha)
       });
     });
 
-    // D. Ordenar por fecha (Más reciente primero) y limitar a 10
+    // D. Ordenar por fecha (Más reciente primero) y limitar a 10 total
     mixedFeed.sort((a, b) => b.fecha - a.fecha);
     mixedFeed = mixedFeed.slice(0, 10);
 
@@ -108,7 +114,7 @@ router.get('/', async (req, res) => {
       diaHoy,
       cumpleaniosMes: resultsMes,
       eventosCarousel: eventosRows,
-      mixedCarousel: mixedFeed, // <--- Lista mezclada
+      mixedCarousel: mixedFeed,
       user: req.session.user
     });
 
@@ -118,16 +124,12 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ==========================================
-// RUTA: PERFIL DE USUARIO
-// ==========================================
 router.get('/perfil', async (req, res) => {
   try {
     if (!req.session.user) return res.redirect('/login');
     const id = req.session.user.id;
     const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
     if (rows.length === 0) return res.redirect('/');
-
     res.render('perfil', { titulo: 'Mi Perfil', usuario: rows[0] });
   } catch (err) {
     console.error('Error cargando perfil:', err);

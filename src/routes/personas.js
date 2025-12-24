@@ -8,26 +8,30 @@ const requireRole = require('../middlewares/requireRole');
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// --- Funciones Auxiliares ---
+// --- Helper para limpiar historial (Dejar solo los últimos 5) ---
+async function limpiarHistorial() {
+  try {
+    // Borra todos los registros cuyo ID NO esté en los últimos 5 ordenados por fecha
+    const sql = `
+      DELETE FROM historial_cambios 
+      WHERE id NOT IN (
+        SELECT id FROM (
+          SELECT id FROM historial_cambios ORDER BY fecha DESC LIMIT 5
+        ) as top_five
+      )
+    `;
+    await db.query(sql);
+  } catch (error) {
+    console.error('Error limpiando historial:', error);
+  }
+}
 
+// --- Funciones Auxiliares ---
 async function getOrganigramaUrl() {
   try {
-    const result = await cloudinary.api.resources({
-      type: 'upload',
-      prefix: 'organigrama/',
-      max_results: 10,
-      direction: 'desc',
-      resource_type: 'image'
-    });
-
+    const result = await cloudinary.api.resources({ type: 'upload', prefix: 'organigrama/', max_results: 10, direction: 'desc', resource_type: 'image' });
     if (!result.resources || result.resources.length === 0) {
-      const resultRaw = await cloudinary.api.resources({
-        type: 'upload',
-        prefix: 'organigrama/',
-        max_results: 10,
-        direction: 'desc',
-        resource_type: 'raw'
-      });
+      const resultRaw = await cloudinary.api.resources({ type: 'upload', prefix: 'organigrama/', max_results: 10, direction: 'desc', resource_type: 'raw' });
       if (resultRaw.resources.length > 0) return resultRaw.resources[0].secure_url;
       return null;
     }
@@ -42,46 +46,26 @@ function formatNombre(nombreCompleto) {
   if (!nombreCompleto) return '';
   const parts = nombreCompleto.trim().split(/\s+/);
   const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-
-  if (parts.length === 2) {
-    return `${capitalize(parts[1])} ${capitalize(parts[0])}`;
-  } else if (parts.length === 3) {
-    return `${capitalize(parts[2])} ${capitalize(parts[0])} ${capitalize(parts[1])}`;
-  } else if (parts.length >= 4) {
-    return `${capitalize(parts[2])} ${capitalize(parts[0])} ${capitalize(parts[1])}`;
-  }
+  if (parts.length === 2) return `${capitalize(parts[1])} ${capitalize(parts[0])}`;
+  else if (parts.length === 3) return `${capitalize(parts[2])} ${capitalize(parts[0])} ${capitalize(parts[1])}`;
+  else if (parts.length >= 4) return `${capitalize(parts[2])} ${capitalize(parts[0])} ${capitalize(parts[1])}`;
   return parts.map(capitalize).join(' ');
 }
 
 // --- Rutas Principales ---
-
 router.get('/', async (req, res) => {
-  const sql = `
-    SELECT id, nombre, area, fecha_nacimiento
-    FROM cumpleanios
-    ORDER BY MONTH(fecha_nacimiento), DAY(fecha_nacimiento)
-  `;
-
+  const sql = `SELECT id, nombre, area, fecha_nacimiento FROM cumpleanios ORDER BY MONTH(fecha_nacimiento), DAY(fecha_nacimiento)`;
   try {
     const [results] = await db.query(sql);
-    const personasFormateadas = results.map(p => ({
-      ...p,
-      nombre: formatNombre(p.nombre)
-    }));
-
-    res.render('personas/index', {
-      titulo: 'Personas',
-      personas: personasFormateadas,
-      user: req.session.user
-    });
+    const personasFormateadas = results.map(p => ({ ...p, nombre: formatNombre(p.nombre) }));
+    res.render('personas/index', { titulo: 'Personas', personas: personasFormateadas, user: req.session.user });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error consultando personas');
   }
 });
 
-// --- Rutas de CRUD (Crear, Editar, Eliminar) ---
-
+// --- CRUD Personas ---
 router.get('/crear', requireRole('admin', 'rrhh'), (req, res) => {
   res.render('personas/persona_crear', { titulo: 'Agregar Persona' });
 });
@@ -89,8 +73,7 @@ router.get('/crear', requireRole('admin', 'rrhh'), (req, res) => {
 router.post('/crear', requireRole('admin', 'rrhh'), async (req, res) => {
   const { nombre, area, fecha_nacimiento } = req.body;
   try {
-    await db.query('INSERT INTO cumpleanios (nombre, area, fecha_nacimiento) VALUES (?, ?, ?)', 
-      [nombre, area, fecha_nacimiento]);
+    await db.query('INSERT INTO cumpleanios (nombre, area, fecha_nacimiento) VALUES (?, ?, ?)', [nombre, area, fecha_nacimiento]);
     res.redirect('/personas');
   } catch (err) {
     console.error(err);
@@ -103,11 +86,7 @@ router.get('/editar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM cumpleanios WHERE id = ?', [id]);
     if (rows.length === 0) return res.status(404).send('Persona no encontrada');
-    
-    res.render('personas/persona_editar', {
-      titulo: 'Editar Persona',
-      persona: rows[0]
-    });
+    res.render('personas/persona_editar', { titulo: 'Editar Persona', persona: rows[0] });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error cargando formulario de edición');
@@ -118,8 +97,7 @@ router.post('/editar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
   const { id } = req.params;
   const { nombre, area, fecha_nacimiento } = req.body;
   try {
-    await db.query('UPDATE cumpleanios SET nombre = ?, area = ?, fecha_nacimiento = ? WHERE id = ?', 
-      [nombre, area, fecha_nacimiento, id]);
+    await db.query('UPDATE cumpleanios SET nombre = ?, area = ?, fecha_nacimiento = ? WHERE id = ?', [nombre, area, fecha_nacimiento, id]);
     res.redirect('/personas');
   } catch (err) {
     console.error(err);
@@ -138,15 +116,10 @@ router.post('/eliminar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
   }
 });
 
-// --- Rutas de Organigrama ---
-
+// --- Organigrama ---
 router.get('/organigrama', async (req, res) => {
   const organigramaUrl = await getOrganigramaUrl();
-  res.render('personas/organigrama', {
-    titulo: 'Organigrama',
-    organigramaUrl,
-    user: req.session.user
-  });
+  res.render('personas/organigrama', { titulo: 'Organigrama', organigramaUrl, user: req.session.user });
 });
 
 router.post('/organigrama/subir', requireRole('admin', 'rrhh'), upload.single('organigrama'), async (req, res) => {
@@ -160,19 +133,15 @@ router.post('/organigrama/subir', requireRole('admin', 'rrhh'), upload.single('o
       stream.end(req.file.buffer);
     });
 
-    // --- AQUÍ INSERTAMOS EL HISTORIAL ---
+    // --- GUARDAR EN HISTORIAL Y LIMPIAR ---
     if (req.session.user && req.session.user.id) {
       await db.query(
         'INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
-        [
-          req.session.user.id, 
-          'actualizó el organigrama', // Texto solicitado
-          '', 
-          '/personas/organigrama'
-        ]
+        [req.session.user.id, 'actualizó', 'Organigrama', '/personas/organigrama']
       );
+      await limpiarHistorial(); // Borra los antiguos
     }
-    // ------------------------------------
+    // --------------------------------------
 
     res.redirect('/personas/organigrama');
   } catch (err) {
