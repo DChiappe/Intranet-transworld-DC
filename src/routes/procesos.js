@@ -69,7 +69,6 @@ function renderSection(section, viewPath) {
 // Vistas por sección
 router.get('/procedimientos', renderSection('procedimientos', 'procesos/procedimientos'));
 router.get('/protocolos', renderSection('protocolos', 'procesos/protocolos'));
-router.get('/achs', renderSection('achs', 'procesos/achs'));
 router.get('/reglamento', renderSection('reglamento', 'procesos/reglamento'));
 
 /**
@@ -111,11 +110,6 @@ router.post('/:section/subir', (req, res, next) => {
 
 /**
  * POST /procesos/:section/:filename/eliminar
- * NOTA: Para eliminar con precisión en Cloudinary se recomienda usar public_id.
- * Sin embargo, para mantener compatibilidad con tus vistas actuales, intentaremos
- * deducir el public_id o recibirlo.
- * * Lo ideal es actualizar tu vista EJS para que el form envíe un hidden input "public_id".
- * Si no, intentaremos borrar asumiendo la ruta.
  */
 router.post('/:section/:filename/eliminar', async (req, res) => {
   const section = String(req.params.section || '');
