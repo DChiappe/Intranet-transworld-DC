@@ -63,7 +63,14 @@
 
     <% if (typeof usuario !== 'undefined' && usuario) { %>
       <div class="nav-user">
-        <a href="/perfil" title="Ir a mi perfil" class="user-name"><strong><%= usuario.username %></strong></a>
+        <a href="/perfil" title="Ir a mi perfil" class="user-name" style="display: flex; align-items: center; gap: 8px;">
+          
+          <% if (usuario.foto) { %>
+            <img src="<%= usuario.foto %>" alt="Foto" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #fff;">
+          <% } %>
+
+          <strong><%= usuario.username %></strong>
+        </a>
       </div>
     <% } %>
 

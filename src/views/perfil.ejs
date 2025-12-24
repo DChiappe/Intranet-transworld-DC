@@ -1,22 +1,73 @@
 <style>
-  /* ... (Tus estilos existentes se mantienen igual) ... */
-  /* Solo asegúrate de copiar todo el estilo que ya tenías */
-  
+  /* ... (Tus estilos anteriores se mantienen) ... */
   .perfil-wrapper { display: flex; justify-content: center; margin-top: 40px; }
-  .card-perfil { background: #fff; width: 100%; max-width: 500px; border-radius: 12px; border: 1px solid #dde3ec; box-shadow: 0 4px 20px rgba(0, 58, 112, 0.08); overflow: hidden; text-align: center; }
+  .card-perfil { background: #fff; width: 100%; max-width: 500px; border-radius: 12px; border: 1px solid #dde3ec; box-shadow: 0 4px 20px rgba(0, 58, 112, 0.08); overflow: visible; /* IMPORTANTE: visible para los botones flotantes si salen */ text-align: center; }
   .perfil-header { background: linear-gradient(135deg, #003a70 0%, #0059b3 100%); height: 120px; position: relative; margin-bottom: 60px; }
-  .perfil-avatar { width: 110px; height: 110px; background: #fff; border-radius: 50%; position: absolute; bottom: -55px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #003a70; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  
+  .perfil-avatar { 
+    width: 110px; height: 110px; 
+    background: #fff; border-radius: 50%; 
+    position: absolute; bottom: -55px; left: 50%; transform: translateX(-50%); 
+    display: flex; align-items: center; justify-content: center; 
+    font-size: 3rem; color: #003a70; border: 4px solid #fff; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+    overflow: hidden; /* Para recortar la imagen redonda */
+  }
+  
+  .perfil-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* --- CONTROLES DE FOTO (A la derecha del avatar) --- */
+  .perfil-foto-controles {
+    position: absolute;
+    bottom: -45px; /* Alineado con el avatar en la zona blanca */
+    left: 50%;
+    margin-left: 70px; /* Desplazado a la derecha del avatar (55px mitad + margen) */
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: flex-start;
+  }
+
+  .btn-foto-cambiar {
+    background-color: #007bff; /* Azul */
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  
+  .btn-foto-eliminar {
+    background-color: #dc3545; /* Rojo */
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  /* Input file oculto */
+  #inputFotoPerfil { display: none; }
+
+  /* Resto de estilos... */
   .perfil-body { padding: 0 30px 40px; }
   .perfil-nombre { margin: 0; font-size: 1.8rem; color: #003a70; font-weight: 700; }
   .perfil-rol { display: inline-block; background: #e7f3ff; color: #0059b3; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-top: 8px; margin-bottom: 20px; }
   .perfil-info-grid { display: grid; grid-template-columns: 1fr; gap: 15px; text-align: left; margin-top: 20px; background: #f9fbff; padding: 20px; border-radius: 8px; border: 1px solid #eef3f9; }
   .info-item label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
   .info-item span { font-size: 1.1rem; color: #333; font-weight: 500; }
+  .link-cambiar-pass { display: inline-block; margin-top: 8px; font-size: 0.9rem; color: #003a70; text-decoration: underline; cursor: pointer; }
   .btn-logout-card { display: block; margin-top: 25px; padding: 15px; background-color: #ffebee; color: #c62828; border: 1px solid #ffcdd2; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
   .btn-logout-card:hover { background-color: #ffcdd2; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-  
-  /* NUEVO: Enlace de cambiar contraseña */
-  .link-cambiar-pass { display: inline-block; margin-top: 8px; font-size: 0.9rem; color: #003a70; text-decoration: underline; cursor: pointer; }
 </style>
 
 <div class="contenedor">
@@ -28,9 +79,28 @@
     <div class="card-perfil">
       
       <div class="perfil-header">
+        
         <div class="perfil-avatar">
-          <%= (usuario.first_name || usuario.nombre || 'U').charAt(0).toUpperCase() %>
+          <% if (usuario.foto) { %>
+            <img src="<%= usuario.foto %>" alt="Foto perfil">
+          <% } else { %>
+            <%= (usuario.first_name || usuario.nombre || 'U').charAt(0).toUpperCase() %>
+          <% } %>
         </div>
+
+        <div class="perfil-foto-controles">
+          <form action="/perfil/foto" method="POST" enctype="multipart/form-data" id="formFoto">
+            <label for="inputFotoPerfil" class="btn-foto-cambiar">Cambiar foto</label>
+            <input type="file" name="foto_perfil" id="inputFotoPerfil" accept="image/*" onchange="document.getElementById('formFoto').submit()">
+          </form>
+
+          <% if (usuario.foto) { %>
+            <form action="/perfil/foto/eliminar" method="POST" onsubmit="return confirm('¿Borrar foto de perfil?');">
+              <button type="submit" class="btn-foto-eliminar">Eliminar foto</button>
+            </form>
+          <% } %>
+        </div>
+
       </div>
 
       <div class="perfil-body">

@@ -145,7 +145,7 @@ router.post('/register', async (req, res) => {
     if (!email.endsWith('@transworld.cl')) {
       return res.status(400).render('register', { 
         titulo: 'Registro', 
-        error: 'El registro solo está permitido para correos @transworld.cl',
+        error: 'El registro solo está permitido para correos de Transworld',
         layout: false
       });
     }
