@@ -1,4 +1,3 @@
-// src/routes/personas.js
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -56,7 +55,6 @@ function formatNombre(nombreCompleto) {
 
 // --- Rutas Principales ---
 
-// GET /personas: Listado
 router.get('/', async (req, res) => {
   const sql = `
     SELECT id, nombre, area, fecha_nacimiento
@@ -71,8 +69,6 @@ router.get('/', async (req, res) => {
       nombre: formatNombre(p.nombre)
     }));
 
-    // ExpressLayouts hace disponible res.locals.can automáticamente en la vista,
-    // pero pasamos 'user' explícitamente por si acaso se usa en otro lado.
     res.render('personas/index', {
       titulo: 'Personas',
       personas: personasFormateadas,
@@ -85,16 +81,11 @@ router.get('/', async (req, res) => {
 });
 
 // --- Rutas de CRUD (Crear, Editar, Eliminar) ---
-// Solo RRHH y Admin
 
-// GET /personas/crear (Formulario)
 router.get('/crear', requireRole('admin', 'rrhh'), (req, res) => {
-  res.render('personas/persona_crear', {
-    titulo: 'Agregar Persona'
-  });
+  res.render('personas/persona_crear', { titulo: 'Agregar Persona' });
 });
 
-// POST /personas/crear (Guardar)
 router.post('/crear', requireRole('admin', 'rrhh'), async (req, res) => {
   const { nombre, area, fecha_nacimiento } = req.body;
   try {
@@ -107,7 +98,6 @@ router.post('/crear', requireRole('admin', 'rrhh'), async (req, res) => {
   }
 });
 
-// GET /personas/editar/:id (Formulario)
 router.get('/editar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
   const { id } = req.params;
   try {
@@ -124,7 +114,6 @@ router.get('/editar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
   }
 });
 
-// POST /personas/editar/:id (Actualizar)
 router.post('/editar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
   const { id } = req.params;
   const { nombre, area, fecha_nacimiento } = req.body;
@@ -138,7 +127,6 @@ router.post('/editar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
   }
 });
 
-// POST /personas/eliminar/:id (Eliminar)
 router.post('/eliminar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
   const { id } = req.params;
   try {
@@ -171,6 +159,21 @@ router.post('/organigrama/subir', requireRole('admin', 'rrhh'), upload.single('o
       );
       stream.end(req.file.buffer);
     });
+
+    // --- AQUÍ INSERTAMOS EL HISTORIAL ---
+    if (req.session.user && req.session.user.id) {
+      await db.query(
+        'INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
+        [
+          req.session.user.id, 
+          'actualizó el organigrama', // Texto solicitado
+          'Organigrama', 
+          '/personas/organigrama'
+        ]
+      );
+    }
+    // ------------------------------------
+
     res.redirect('/personas/organigrama');
   } catch (err) {
     console.error(err);

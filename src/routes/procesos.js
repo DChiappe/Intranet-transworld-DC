@@ -1,6 +1,7 @@
 // src/routes/procesos.js
 const express = require('express');
 const router = express.Router();
+const db = require('../db'); // <--- IMPORTANTE: Se agregó la conexión a BD
 const multer = require('multer');
 const cloudinary = require('../services/cloudinary');
 const requireRole = require('../middlewares/requireRole');
@@ -26,7 +27,6 @@ async function listarArchivosCloudinary(section) {
   const prefix = `docs/${section}/`;
   try {
     // Solicitamos imágenes y archivos raw (PDF, DOC, XLS) por separado
-    // ya que la API los lista en endpoints distintos.
     const [images, raws] = await Promise.all([
       cloudinary.api.resources({ type: 'upload', prefix, resource_type: 'image', max_results: 100 }),
       cloudinary.api.resources({ type: 'upload', prefix, resource_type: 'raw', max_results: 100 })
@@ -36,7 +36,7 @@ async function listarArchivosCloudinary(section) {
 
     // Mapeamos para que la vista tenga datos fáciles de usar
     return all.map(res => ({
-      name: res.public_id.split('/').pop(), // Extrae el nombre del archivo sin la carpeta
+      name: res.public_id.split('/').pop(),
       public_id: res.public_id,
       url: res.secure_url,
       format: res.format,
@@ -44,7 +44,6 @@ async function listarArchivosCloudinary(section) {
     })).sort((a, b) => a.name.localeCompare(b.name));
 
   } catch (err) {
-    // Si la carpeta no existe, devuelve vacío en lugar de error
     console.error(`Nota: No se encontraron archivos para ${section} o error API:`, err.message);
     return [];
   }
@@ -54,10 +53,6 @@ async function listarArchivosCloudinary(section) {
 function renderSection(section, viewPath) {
   return async (req, res) => {
     const archivos = await listarArchivosCloudinary(section);
-    
-    // IMPORTANTE: 'archivos' ahora es un array de objetos, no de strings.
-    // Si tu vista usa <%= archivo %>, deberás cambiarlo a <%= archivo.name %> 
-    // y el link a <%= archivo.url %> o /docs/<%= section %>/<%= archivo.name %>
     
     res.render(viewPath, {
       titulo: SECTION_CONFIG[section].title,
@@ -99,6 +94,21 @@ router.post('/:section/subir', (req, res, next) => {
           );
           stream.end(req.file.buffer);
         });
+
+        // --- INICIO DE BLOQUE DE HISTORIAL ---
+        if (req.session.user && req.session.user.id) {
+          await db.query(
+            'INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
+            [
+              req.session.user.id, 
+              'subió un archivo', 
+              SECTION_CONFIG[section].title, // Ej: "Procedimientos"
+              `/procesos/${section}`
+            ]
+          );
+        }
+        // --- FIN DE BLOQUE DE HISTORIAL ---
+
         res.redirect(`/procesos/${section}`);
       } catch (cloudErr) {
         console.error(cloudErr);
@@ -115,16 +125,10 @@ router.post('/:section/:filename/eliminar', async (req, res) => {
   const section = String(req.params.section || '');
   if (!SECTION_CONFIG[section]) return res.status(404).send('Sección no encontrada');
   
-  // Si tu vista envía public_id en el body (Recomendado actualices el EJS)
   let public_id = req.body.public_id;
   
-  // Fallback: intentar construirlo (menos seguro si hay timestamps aleatorios)
   if (!public_id) {
-    // Esto asume que el filename en la URL es el nombre real en Cloudinary
-    // Ojo: Cloudinary suele agregar caracteres al azar si unique_filename: true
     const filename = req.params.filename; 
-    // Quitamos extensión para el public_id si es imagen, pero para raw a veces se necesita.
-    // Es complejo adivinarlo. SE RECOMIENDA USAR req.body.public_id
     public_id = `docs/${section}/${filename.split('.')[0]}`; 
   }
 
@@ -133,7 +137,7 @@ router.post('/:section/:filename/eliminar', async (req, res) => {
     try {
       // Intentamos borrar como imagen
       await cloudinary.uploader.destroy(public_id, { resource_type: 'image' });
-      // Intentamos borrar como raw (por si es doc/pdf)
+      // Intentamos borrar como raw
       await cloudinary.uploader.destroy(public_id, { resource_type: 'raw' });
       
       res.redirect(`/procesos/${section}`);

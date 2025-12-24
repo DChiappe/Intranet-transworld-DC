@@ -25,8 +25,6 @@ router.get('/', (req, res) => res.redirect('/marketing/eventos'));
 
 router.get('/eventos', async (req, res) => {
   try {
-    // Obtenemos eventos. Nota: Ya no usamos la columna 'imagen' de la tabla eventos principal
-    // para la portada, pero podrías hacer un LEFT JOIN si quisieras.
     const [rows] = await db.query('SELECT * FROM eventos ORDER BY fecha_creacion DESC');
     res.render('marketing/eventos', { titulo: 'Eventos', eventos: rows });
   } catch (err) {
@@ -60,18 +58,24 @@ router.post('/eventos/nuevo', requireRole(...WRITE_ROLES), async (req, res) => {
 router.get('/eventos/:slug', async (req, res) => {
   const { slug } = req.params;
   try {
-    // 1. Obtener datos del evento
-    const [eventos] = await db.query('SELECT * FROM eventos WHERE slug = ?', [slug]);
-    if (eventos.length === 0) return res.status(404).send('Evento no encontrado');
-    const evento = eventos[0];
+    const [rows] = await db.query('SELECT * FROM eventos WHERE slug = ?', [slug]);
+    if (rows.length === 0) return res.status(404).send('Evento no encontrado');
 
-    // 2. Obtener fotos desde NUESTRA base de datos (Mucho más rápido que Cloudinary API)
-    const [fotos] = await db.query('SELECT * FROM eventos_fotos WHERE evento_id = ? ORDER BY id DESC', [evento.id]);
+    const result = await cloudinary.api.resources({
+      type: 'upload',
+      prefix: `eventos/${slug}/`,
+      max_results: 100
+    });
+
+    const imagenes = result.resources.map(res => ({
+      url: res.secure_url,
+      public_id: res.public_id
+    }));
 
     res.render('marketing/evento_detalle', {
-      titulo: evento.nombre,
-      evento: evento,
-      imagenes: fotos // La vista espera un array con objetos que tengan .url y .public_id
+      titulo: rows[0].nombre,
+      evento: rows[0],
+      imagenes
     });
   } catch (err) {
     console.error(err);
@@ -87,12 +91,6 @@ router.post('/eventos/:slug/fotos', requireRole(...WRITE_ROLES), upload.array('f
   }
 
   try {
-    // 1. Obtener ID del evento
-    const [eventos] = await db.query('SELECT id FROM eventos WHERE slug = ?', [slug]);
-    if (eventos.length === 0) return res.status(404).send('Evento no encontrado');
-    const eventoId = eventos[0].id;
-
-    // 2. Subir a Cloudinary
     const promises = req.files.map(file => {
       return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -105,19 +103,30 @@ router.post('/eventos/:slug/fotos', requireRole(...WRITE_ROLES), upload.array('f
 
     const uploadedImages = await Promise.all(promises);
 
-    // 3. Guardar en Base de Datos (Tabla eventos_fotos)
-    // Insertamos cada foto generada
-    for (const img of uploadedImages) {
-        await db.query(
-            'INSERT INTO eventos_fotos (evento_id, url, public_id) VALUES (?, ?, ?)',
-            [eventoId, img.secure_url, img.public_id]
-        );
-    }
-
-    // (Opcional) Actualizar la columna 'imagen' antigua del evento para mantener compatibilidad 
-    // con la vista de lista de carpetas, usando la última foto subida como portada.
+    // Si se subió algo y el evento NO tiene portada, ponemos la primera foto como portada
     if (uploadedImages.length > 0) {
-        await db.query('UPDATE eventos SET imagen = ? WHERE id = ?', [uploadedImages[0].secure_url, eventoId]);
+      const portadaUrl = uploadedImages[0].secure_url;
+      const sqlUpdate = `
+        UPDATE eventos 
+        SET imagen = ? 
+        WHERE slug = ? AND (imagen IS NULL OR imagen = '')
+      `;
+      await db.query(sqlUpdate, [portadaUrl, slug]);
+
+      // --- AQUÍ INSERTAMOS EL HISTORIAL ---
+      // Registramos que el usuario subió fotos
+      if (req.session.user && req.session.user.id) {
+        await db.query(
+          'INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
+          [
+            req.session.user.id, 
+            'subió una foto', // Texto solicitado
+            'Galería de Eventos', 
+            `/marketing/eventos/${slug}`
+          ]
+        );
+      }
+      // ------------------------------------
     }
 
     res.redirect(`/marketing/eventos/${slug}`);
@@ -134,8 +143,13 @@ router.post('/eventos/:slug/fotos/eliminar', requireRole(...WRITE_ROLES), async 
     // 1. Borrar de Cloudinary
     await cloudinary.uploader.destroy(public_id);
 
-    // 2. Borrar de la tabla eventos_fotos
-    await db.query('DELETE FROM eventos_fotos WHERE public_id = ?', [public_id]);
+    // 2. Obtener la portada actual de la BD
+    const [rows] = await db.query('SELECT imagen FROM eventos WHERE slug = ?', [slug]);
+    
+    // 3. Si la portada actual contiene el public_id borrado, la reseteamos a NULL
+    if (rows.length > 0 && rows[0].imagen && rows[0].imagen.includes(public_id)) {
+        await db.query('UPDATE eventos SET imagen = NULL WHERE slug = ?', [slug]);
+    }
     
     res.redirect(`/marketing/eventos/${slug}`);
   } catch (err) {
@@ -148,7 +162,6 @@ router.post('/eventos/:slug/eliminar', requireRole(...WRITE_ROLES), async (req, 
   const { slug } = req.params;
   try {
     await cloudinary.api.delete_resources_by_prefix(`eventos/${slug}/`);
-    // Al borrar el evento, la restricción ON DELETE CASCADE de SQL borrará solas las fotos en eventos_fotos
     await db.query('DELETE FROM eventos WHERE slug = ?', [slug]);
     res.redirect('/marketing/eventos');
   } catch (err) {
