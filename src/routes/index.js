@@ -3,109 +3,50 @@ const router = express.Router();
 const db = require('../db');
 const { getUsdHoy } = require('../services/usdService');
 
-// ==========================================
-// RUTA: HOME (INICIO)
-// ==========================================
 router.get('/', async (req, res) => {
   try {
-    // 1. Obtener datos del dólar
     const { valor: usdHoy, historico } = await getUsdHoy();
 
-    // 2. Calcular fechas y cumpleaños
     const hoy = new Date();
     const mes = hoy.getMonth() + 1;
     const diaHoy = hoy.getDate();
-
     const mesNombreRaw = new Intl.DateTimeFormat('es-CL', { month: 'long' }).format(hoy);
     const mesNombre = mesNombreRaw.charAt(0).toUpperCase() + mesNombreRaw.slice(1);
 
-    const sqlMes = `
-      SELECT nombre, area, DAY(fecha_nacimiento) AS dia
-      FROM cumpleanios
-      WHERE MONTH(fecha_nacimiento) = ?
-      ORDER BY dia ASC, nombre ASC
-    `;
+    const sqlMes = `SELECT nombre, area, DAY(fecha_nacimiento) AS dia FROM cumpleanios WHERE MONTH(fecha_nacimiento) = ? ORDER BY dia ASC, nombre ASC`;
     const [resultsMes] = await db.query(sqlMes, [mes]);
 
-    // 3. CARRUSEL DE FONDO (Pantalla completa - Fotos aleatorias)
-    const sqlEventos = `
-      SELECT ef.url as imagen, e.nombre
-      FROM eventos_fotos ef
-      JOIN eventos e ON ef.evento_id = e.id
-      ORDER BY RAND() LIMIT 30
+    // 1. OBTENER PORTADAS DE EVENTOS (Para las tarjetas pequeñas)
+    // Buscamos eventos que tengan 'imagen' definida
+    const sqlEventosPortada = `
+      SELECT nombre, slug, imagen 
+      FROM eventos 
+      WHERE imagen IS NOT NULL AND imagen != '' 
+      ORDER BY fecha_creacion DESC 
+      LIMIT 8
     `;
-    const [eventosRows] = await db.query(sqlEventos);
+    const [eventosPortadas] = await db.query(sqlEventosPortada);
 
-    // =========================================================
-    // 4. CARRUSEL MIXTO (Noticias + Historial de Cambios)
-    // =========================================================
-
-    // A. Obtener Noticias (Últimas 5)
-    const sqlNoticias = `
-      SELECT id, titulo, subtitulo, imagen, fecha_creacion, 'noticia' as tipo 
-      FROM noticias 
-      WHERE imagen IS NOT NULL AND imagen != ''
-      ORDER BY fecha_creacion DESC LIMIT 5
-    `;
+    // 2. MIXED CAROUSEL (Noticias + Historial)
+    const sqlNoticias = `SELECT id, titulo, subtitulo, imagen, fecha_creacion, 'noticia' as tipo FROM noticias WHERE imagen IS NOT NULL AND imagen != '' ORDER BY fecha_creacion DESC LIMIT 5`;
     const [noticiasRows] = await db.query(sqlNoticias);
 
-    // B. Obtener Historial de Cambios (Últimos 5)
-    const sqlHistorial = `
-      SELECT h.id, h.accion, h.seccion, h.enlace, h.fecha, 
-             u.first_name, u.last_name, 'historial' as tipo
-      FROM historial_cambios h
-      JOIN users u ON h.usuario_id = u.id
-      ORDER BY h.fecha DESC LIMIT 5
-    `;
+    const sqlHistorial = `SELECT h.id, h.accion, h.seccion, h.enlace, h.fecha, u.first_name, u.last_name, 'historial' as tipo FROM historial_cambios h JOIN users u ON h.usuario_id = u.id ORDER BY h.fecha DESC LIMIT 5`;
     const [historialRows] = await db.query(sqlHistorial);
 
-    // C. Mezclar y normalizar datos
     let mixedFeed = [];
-
-    // Procesar Noticias
     noticiasRows.forEach(n => {
-      mixedFeed.push({
-        id: n.id,
-        tipo: 'noticia',
-        titulo: n.titulo,
-        subtitulo: n.subtitulo,
-        imagen: n.imagen,
-        link: `/noticias/${n.id}`,
-        fecha: new Date(n.fecha_creacion)
-      });
+      mixedFeed.push({ id: n.id, tipo: 'noticia', titulo: n.titulo, subtitulo: n.subtitulo, imagen: n.imagen, link: `/noticias/${n.id}`, fecha: new Date(n.fecha_creacion) });
     });
-
-    // Procesar Historial
     historialRows.forEach(h => {
       const nombreUsuario = `${h.first_name} ${h.last_name}`;
-      
-      let textoGenerado = '';
-
-      // --- LOGICA DE TEXTO PERSONALIZADO ---
-      if (h.seccion === 'Organigrama') {
-         // Caso Organigrama: "(Nombre) actualizó el organigrama"
-         textoGenerado = `${nombreUsuario} actualizó el organigrama`;
-      } else {
-         // Caso General: "(Nombre) subió una foto a Galería"
-         textoGenerado = `${nombreUsuario} ${h.accion} a ${h.seccion}`;
-      }
-
-      mixedFeed.push({
-        id: h.id,
-        tipo: 'historial',
-        titulo: textoGenerado,
-        subtitulo: 'Actividad reciente',
-        imagen: '/img/fondo-cambio-hecho.png',
-        link: h.enlace || '#', 
-        fecha: new Date(h.fecha)
-      });
+      let textoGenerado = (h.seccion === 'Organigrama') ? `${nombreUsuario} actualizó el organigrama` : `${nombreUsuario} ${h.accion} a ${h.seccion}`;
+      mixedFeed.push({ id: h.id, tipo: 'historial', titulo: textoGenerado, subtitulo: 'Actividad reciente', imagen: '/img/fondo-cambio-hecho.png', link: h.enlace || '#', fecha: new Date(h.fecha) });
     });
 
-    // D. Ordenar por fecha (Más reciente primero) y limitar a 10 total
     mixedFeed.sort((a, b) => b.fecha - a.fecha);
     mixedFeed = mixedFeed.slice(0, 10);
 
-    // 5. Renderizar vista
     res.render('home', {
       titulo: 'Inicio',
       usdHoy,
@@ -113,7 +54,7 @@ router.get('/', async (req, res) => {
       mesNombre,
       diaHoy,
       cumpleaniosMes: resultsMes,
-      eventosCarousel: eventosRows,
+      eventosPortadas: eventosPortadas, // <--- Pasamos las portadas a la vista
       mixedCarousel: mixedFeed,
       user: req.session.user
     });
@@ -132,8 +73,8 @@ router.get('/perfil', async (req, res) => {
     if (rows.length === 0) return res.redirect('/');
     res.render('perfil', { titulo: 'Mi Perfil', usuario: rows[0] });
   } catch (err) {
-    console.error('Error cargando perfil:', err);
-    res.status(500).send('Error al cargar perfil');
+    console.error('Error perfil:', err);
+    res.status(500).send('Error');
   }
 });
 

@@ -1,33 +1,19 @@
 <%
-  // 1. Funciones y lógica previa
   function titleCase(s) {
     if (!s) return '';
     const palabras = String(s).toLowerCase().trim().split(/\s+/);
     if (palabras.length >= 3) {
-      const apellido1 = palabras[0];
-      const apellido2 = palabras[1];
-      const nombres = palabras.slice(2); 
-      const nombreFormateado = nombres.map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
-      const ap1Formateado = apellido1.charAt(0).toUpperCase() + apellido1.slice(1);
-      const ap2Formateado = apellido2.charAt(0).toUpperCase() + apellido2.slice(1);
-      return `${nombreFormateado} ${ap1Formateado} ${ap2Formateado}`;
-    } else if (palabras.length === 2) {
-      const apellido = palabras[0];
-      const nombre = palabras[1];
-      return `${nombre.charAt(0).toUpperCase() + nombre.slice(1)} ${apellido.charAt(0).toUpperCase() + apellido.slice(1)}`;
+      const n = palabras.slice(2).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      return `${n} ${palabras[0].charAt(0).toUpperCase() + palabras[0].slice(1)} ${palabras[1].charAt(0).toUpperCase() + palabras[1].slice(1)}`;
     }
     return palabras.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   }
-
   const mesNum = new Date().getMonth() + 1;
-
-  // 2. Ordenar cumpleaños
   let cumpleaniosOrdenados = [];
   if (typeof cumpleaniosMes !== 'undefined' && cumpleaniosMes) {
     cumpleaniosOrdenados = [...cumpleaniosMes].sort((a, b) => {
       const dHoy = (typeof diaHoy !== 'undefined') ? diaHoy : new Date().getDate(); 
-      const aPasado = a.dia < dHoy;
-      const bPasado = b.dia < dHoy;
+      const aPasado = a.dia < dHoy; const bPasado = b.dia < dHoy;
       if (aPasado !== bPasado) return aPasado ? 1 : -1;
       return a.dia - b.dia;
     });
@@ -35,48 +21,28 @@
 %>
 
 <style>
-  /* Estilos específicos para componentes del Home */
-  body, main { background: transparent !important; }
-  .fullscreen-carousel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
-  .bg-slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; }
-  .bg-slide img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.6); }
-  .fade-bg { animation-name: fadeBg; animation-duration: 2s; }
-  @keyframes fadeBg { from {opacity: 0.4} to {opacity: 1} }
-  
+  /* --- FONDO ESTÁTICO HOME --- */
+  body {
+    background: url('/img/fondo-home.png') no-repeat center center fixed !important;
+    background-size: cover !important;
+  }
+  main { background: transparent !important; }
+
   .home-title { color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.6); margin-top: 0; margin-bottom: 20px; }
 
-  /* Contenedor Carrusel Mixto */
+  /* Carrusel Noticias/Mix */
   .news-carousel-container {
-    position: relative;
-    width: 100%;
-    height: 320px;
-    border-radius: 12px;
-    overflow: hidden;
+    position: relative; width: 100%; height: 320px;
+    border-radius: 12px; overflow: hidden;
     box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-    background: #000;
-    border: 1px solid #dde3ec;
+    background: #000; border: 1px solid #dde3ec;
   }
-
   .news-slide { display: none; width: 100%; height: 100%; }
-  
-  /* ANIMACIÓN SUAVE MEJORADA */
-  .news-slide.active { 
-    display: block; 
-    animation: fadeNews 1.5s ease-in-out; /* Más lento y fluido */
-  }
-  
-  @keyframes fadeNews { 
-    from {opacity: 0; transform: scale(1.02);} /* Empieza invisible y un poco grande */
-    to {opacity: 1; transform: scale(1);} 
-  }
-
+  .news-slide.active { display: block; animation: fadeNews 1.5s ease-in-out; }
+  @keyframes fadeNews { from {opacity: 0; transform: scale(1.02);} to {opacity: 1; transform: scale(1);} }
   .news-slide a { display: block; width: 100%; height: 100%; text-decoration: none; position: relative; }
   .news-slide img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
-  
-  /* Efecto hover sutil */
   .news-slide:hover img { transform: scale(1.03); }
-
-  /* ESTILO A: NOTICIA */
   .news-caption {
     position: absolute; bottom: 0; width: 100%;
     background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0) 100%);
@@ -84,29 +50,13 @@
     font-size: 1.3rem; font-weight: bold; text-align: left;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
   }
-  
-  /* ESTILO B: HISTORIAL */
   .history-overlay {
-    position: absolute; 
-    top: 0; left: 0; width: 100%; height: 100%;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
-    text-align: center;
-    padding: 30px;
-    background: rgba(0, 58, 112, 0.3);
+    text-align: center; padding: 30px; background: rgba(0, 58, 112, 0.3);
   }
-
-  .history-text {
-    color: #fff;
-    font-size: 1.6rem;
-    font-weight: 800;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.9);
-    line-height: 1.4;
-    text-transform: uppercase;
-  }
-
+  .history-text { color: #fff; font-size: 1.6rem; font-weight: 800; text-shadow: 0 2px 10px rgba(0,0,0,0.9); line-height: 1.4; text-transform: uppercase; }
   .news-subcaption { font-size: 0.95rem; font-weight: normal; margin-top: 5px; opacity: 0.9; color: #ddd; }
-
-  /* Flechas */
   .news-ctrl {
     position: absolute; top: 50%; transform: translateY(-50%);
     background: rgba(0, 0, 0, 0.3); color: white; border: none;
@@ -116,63 +66,52 @@
   .news-ctrl:hover { background: rgba(0, 0, 0, 0.7); }
   .news-prev { left: 0; border-radius: 0 8px 8px 0; }
   .news-next { right: 0; border-radius: 8px 0 0 8px; }
-
-  /* PUNTOS DE NAVEGACIÓN */
   .news-dots-container {
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 8px;
-    z-index: 15;
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 15;
   }
+  .news-dot { height: 10px; width: 10px; background-color: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; transition: background-color 0.3s, transform 0.2s; }
+  .news-dot:hover { background-color: rgba(255, 255, 255, 0.8); transform: scale(1.1); }
+  .news-dot.active { background-color: #fff; transform: scale(1.2); box-shadow: 0 0 4px rgba(0,0,0,0.3); }
+  .section-title-destacados { color: #003a70; margin: 25px 0 10px 0; font-size: 1.4rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 1px 1px 0px rgba(255,255,255,0.5); }
 
-  .news-dot {
-    height: 10px;
-    width: 10px;
-    background-color: rgba(255, 255, 255, 0.5);
-    border-radius: 50%;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
+  /* --- NUEVO ESTILO: GRID DE EVENTOS PORTADA --- */
+  .eventos-portada-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
   }
-
-  .news-dot:hover {
-    background-color: rgba(255, 255, 255, 0.8);
-    transform: scale(1.1);
+  .card-evento-mini {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #dde3ec;
   }
-
-  .news-dot.active {
-    background-color: #fff;
-    transform: scale(1.2);
-    box-shadow: 0 0 4px rgba(0,0,0,0.3);
+  .card-evento-mini:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+  
+  .evento-mini-img-container {
+    width: 100%;
+    height: 120px; /* Cuadrado pequeño */
+    overflow: hidden;
   }
-
-  .section-title-destacados {
+  .evento-mini-img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .evento-mini-nombre {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
     color: #003a70;
-    margin: 25px 0 10px 0;
-    font-size: 1.4rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-shadow: 1px 1px 0px rgba(255,255,255,0.5);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>
-
-<% if (typeof eventosCarousel !== 'undefined' && eventosCarousel && eventosCarousel.length > 0) { %>
-  <div class="fullscreen-carousel">
-    <% for (let i = 0; i < eventosCarousel.length; i++) { 
-         let evento = eventosCarousel[i];
-         let displayStyle = (i === 0) ? 'display:block;' : 'display:none;';
-    %>
-      <div class="bg-slide fade-bg" style="<%= displayStyle %>">
-        <img src="<%= evento.imagen %>" alt="Fondo Evento">
-      </div>
-    <% } %>
-  </div>
-<% } else { %>
-  <div class="fullscreen-carousel" style="background: #003a70;"></div>
-<% } %>
 
 <h2 class="home-title">Bienvenida/o a la intranet de Transworld</h2>
 
@@ -187,67 +126,62 @@
     </a>
 
     <h3 class="section-title-destacados">Destacados de la semana</h3>
-
     <% if (typeof mixedCarousel !== 'undefined' && mixedCarousel && mixedCarousel.length > 0) { %>
       <div class="news-carousel-container">
-        
         <button class="news-ctrl news-prev" onclick="plusNews(-1)">&#10094;</button>
         <button class="news-ctrl news-next" onclick="plusNews(1)">&#10095;</button>
-
         <% mixedCarousel.forEach((item, index) => { %>
           <div class="news-slide <%= index === 0 ? 'active' : '' %>">
             <a href="<%= item.link %>" title="Ver detalle">
-              
-              <img src="<%= item.imagen %>" alt="Imagen destacados">
-
+              <img src="<%= item.imagen %>" alt="Destacado">
               <% if (item.tipo === 'historial') { %>
-                <div class="history-overlay">
-                  <div class="history-text">
-                    <%= item.titulo %>
-                  </div>
-                </div>
+                <div class="history-overlay"><div class="history-text"><%= item.titulo %></div></div>
               <% } else { %>
-                <div class="news-caption">
-                  <%= item.titulo %>
-                  <% if(item.subtitulo) { %>
-                    <div class="news-subcaption"><%= item.subtitulo %></div>
-                  <% } %>
-                </div>
+                <div class="news-caption"><%= item.titulo %><% if(item.subtitulo) { %><div class="news-subcaption"><%= item.subtitulo %></div><% } %></div>
               <% } %>
-
             </a>
           </div>
         <% }); %>
-
         <div class="news-dots-container">
           <% mixedCarousel.forEach((_, i) => { %>
             <span class="news-dot <%= i === 0 ? 'active' : '' %>" onclick="currentNews(<%= i + 1 %>)"></span>
           <% }); %>
         </div>
-
       </div>
     <% } else { %>
-      <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px; margin-top: 10px;">
-        <p>No hay destacados recientes.</p>
+      <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px;"><p>No hay destacados.</p></div>
+    <% } %>
+
+    <h3 class="section-title-destacados" style="margin-top: 30px;">Galería de Eventos</h3>
+    <% if (typeof eventosPortadas !== 'undefined' && eventosPortadas.length > 0) { %>
+      <div class="eventos-portada-grid">
+        <% eventosPortadas.forEach(ev => { %>
+          <a href="/marketing/eventos/<%= ev.slug %>" class="card-evento-mini" title="<%= ev.nombre %>">
+            <div class="evento-mini-img-container">
+              <img src="<%= ev.imagen %>" alt="<%= ev.nombre %>" class="evento-mini-img">
+            </div>
+            <div class="evento-mini-nombre">
+              <%= ev.nombre %>
+            </div>
+          </a>
+        <% }); %>
       </div>
+    <% } else { %>
+      <p style="color:white; text-shadow: 1px 1px 2px black;">No hay eventos con portada definida.</p>
     <% } %>
 
   </div>
 
   <div class="home-right">
-    
     <div class="tarjeta tarjeta-usd">
       <div class="usd-label">Dólar Observado</div>
       <p class="usd-valor">$<%= (typeof usdHoy !== 'undefined') ? usdHoy : '---' %></p>
-      <div class="chart-box">
-        <canvas id="usdChart"></canvas>
-      </div>
+      <div class="chart-box"><canvas id="usdChart"></canvas></div>
     </div>
-
     <div class="tarjeta">
       <h3>Cumpleaños de <%= (typeof mesNombre !== 'undefined') ? mesNombre : 'Mes Actual' %></h3>
       <% if (!cumpleaniosOrdenados || cumpleaniosOrdenados.length === 0) { %>
-        <p>No hay cumpleaños registrados para este mes.</p>
+        <p>No hay cumpleaños registrados.</p>
       <% } else { %>
         <div class="cumple-cards">
           <% const dHoy = (typeof diaHoy !== 'undefined') ? diaHoy : new Date().getDate(); %>
@@ -255,9 +189,7 @@
             let estadoClase = (p.dia < dHoy) ? 'cumple-pasado' : (p.dia === dHoy ? 'cumple-hoy' : 'cumple-futuro');
           %>
             <div class="cumple-card <%= estadoClase %>">
-              <div class="cumple-fecha">
-                <span class="cumple-dia"><%= p.dia %>/<%= mesNum %></span>
-              </div>
+              <div class="cumple-fecha"><span class="cumple-dia"><%= p.dia %>/<%= mesNum %></span></div>
               <div class="cumple-info">
                 <div class="cumple-nombre"><%= titleCase(p.nombre) %></div>
                 <div class="cumple-area"><%= titleCase(p.area) %></div>
@@ -267,135 +199,65 @@
         </div>
       <% } %>
     </div>
-
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-  // --- 1. Gráfico USD ---
+  // Gráfico USD
   const rawData = '<%- (typeof usdHistorico !== "undefined") ? JSON.stringify(usdHistorico) : "[]" %>';
   const datosHistoricos = JSON.parse(rawData);
-
   const ctx = document.getElementById('usdChart').getContext('2d');
-  
   if (datosHistoricos.length > 0) {
     new Chart(ctx, {
       type: 'line',
       data: {
         labels: datosHistoricos.map(d => new Date(d.fecha).getDate()),
-        datasets: [{
-          label: 'USD',
-          data: datosHistoricos.map(d => d.valor),
-          borderColor: '#4caf50',
-          backgroundColor: 'rgba(76, 175, 80, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          pointRadius: 2,
-          tension: 0.3
-        }]
+        datasets: [{ label: 'USD', data: datosHistoricos.map(d => d.valor), borderColor: '#4caf50', backgroundColor: 'rgba(76, 175, 80, 0.1)', borderWidth: 2, fill: true, pointRadius: 2, tension: 0.3 }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { enabled: true } },
-        scales: {
-          x: { display: false },
-          y: { 
-            display: false,
-            suggestedMin: Math.min(...datosHistoricos.map(d => d.valor)) - 5,
-            suggestedMax: Math.max(...datosHistoricos.map(d => d.valor)) + 5
-          }
-        }
-      }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: true } }, scales: { x: { display: false }, y: { display: false, suggestedMin: Math.min(...datosHistoricos.map(d => d.valor)) - 5, suggestedMax: Math.max(...datosHistoricos.map(d => d.valor)) + 5 } } }
     });
   }
 
-  // --- 2. Carrusel de Fondo ---
-  let slideIndex = 0;
-  const slides = document.getElementsByClassName("bg-slide");
-
-  if (slides.length > 0) {
-    showSlides(); 
-  }
-
-  function showSlides() {
-    for (let i = 0; i < slides.length; i++) {
-      slides[i].style.display = "none";  
-    }
-    
-    slideIndex++;
-    if (slideIndex > slides.length) { slideIndex = 1; }    
-    
-    if (slides[slideIndex-1]) {
-      slides[slideIndex-1].style.display = "block";  
-    }
-
-    setTimeout(showSlides, 5000); 
-  }
-
-  // --- 3. Carrusel Mixto (Manual + Dots + Auto + Reiniciable) ---
+  // Carrusel Mixto (Manual + Dots + Auto + Reiniciable)
   let newsIndex = 1;
-  let autoSlideTimer; // Variable para el temporizador
+  let autoSlideTimer;
   const newsSlides = document.getElementsByClassName("news-slide");
   const newsDots = document.getElementsByClassName("news-dot");
 
-  // Función para iniciar el temporizador
   function startAutoSlide() {
-    autoSlideTimer = setInterval(() => {
-      plusNews(1, false); // false = no es manual, no resetea (aunque plusNews llama showNews que no resetea timer, lo manejamos aquí)
-    }, 10000); // 10 SEGUNDOS
+    autoSlideTimer = setInterval(() => { plusNews(1, false); }, 10000);
   }
-
-  // Función para reiniciar el temporizador (cuando hay interacción manual)
   function resetAutoSlide() {
     clearInterval(autoSlideTimer);
     startAutoSlide();
   }
-
-  // Inicializar
   if (newsSlides.length > 0) {
     showNews(newsIndex);
-    startAutoSlide(); // Arrancar automático al cargar
+    startAutoSlide();
   }
-
-  // Control Flechas
   function plusNews(n, manual = true) {
     showNews(newsIndex += n);
-    if (manual) resetAutoSlide(); // Si fue click manual, reseteamos los 10s
+    if (manual) resetAutoSlide();
   }
-
-  // Control Puntos (Dots)
   function currentNews(n) {
     showNews(newsIndex = n);
-    resetAutoSlide(); // Si fue click manual, reseteamos los 10s
+    resetAutoSlide();
   }
-
   function showNews(n) {
     let i;
     if (newsSlides.length === 0) return;
-
     if (n > newsSlides.length) {newsIndex = 1}    
     if (n < 1) {newsIndex = newsSlides.length}
-    
-    // Ocultar Slides
     for (i = 0; i < newsSlides.length; i++) {
       newsSlides[i].style.display = "none";
       newsSlides[i].classList.remove("active");
     }
-
-    // Resetear Dots
     for (i = 0; i < newsDots.length; i++) {
       newsDots[i].classList.remove("active");
     }
-    
-    // Mostrar Activo (Slide y Dot)
     newsSlides[newsIndex-1].style.display = "block";  
     newsSlides[newsIndex-1].classList.add("active");
-    
-    if (newsDots.length > 0) {
-      newsDots[newsIndex-1].classList.add("active");
-    }
+    if (newsDots.length > 0) newsDots[newsIndex-1].classList.add("active");
   }
 </script>

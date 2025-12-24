@@ -53,19 +53,66 @@
   <div class="modal-imagen-contenido">
     <span class="modal-cerrar">&times;</span>
     <img id="modalImagenGrande" src="" alt="Vista previa">
+    
+    <% if (can.eventos_write) { %>
+      <form action="/marketing/eventos/<%= evento.slug %>/portada" method="POST" class="form-portada">
+        <input type="hidden" name="url_imagen" id="inputPortadaUrl" value="">
+        <button type="submit" class="btn-portada">Seleccionar como portada de evento</button>
+      </form>
+    <% } %>
+
   </div>
 </div>
+
+<style>
+  /* Estilo del botón verde en el modal */
+  .form-portada {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 2010;
+  }
+  .btn-portada {
+    background-color: #28a745; /* Verde */
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transition: background 0.2s;
+  }
+  .btn-portada:hover {
+    background-color: #218838;
+  }
+  .modal-imagen-contenido {
+    /* Aseguramos que sea relativo para posicionar el botón */
+    position: relative; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
 
 <script>
   (function () {
     const modal = document.getElementById('modalImagen');
     const modalImg = document.getElementById('modalImagenGrande');
+    const inputUrl = document.getElementById('inputPortadaUrl'); // Input oculto
     const cerrar = document.querySelector('.modal-cerrar');
     const thumbs = document.querySelectorAll('.galeria-thumb');
 
     thumbs.forEach(thumb => {
       thumb.addEventListener('click', function () {
-        modalImg.src = this.getAttribute('data-full');
+        const fullUrl = this.getAttribute('data-full');
+        
+        // 1. Mostrar imagen
+        modalImg.src = fullUrl;
+        
+        // 2. Cargar URL en el formulario de portada
+        if(inputUrl) inputUrl.value = fullUrl;
+
         modal.style.display = 'flex';
       });
     });
