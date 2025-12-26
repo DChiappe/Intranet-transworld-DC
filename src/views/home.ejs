@@ -39,8 +39,8 @@
   .banner-info {
     flex: 1;
     padding: 15px 20px;
-    border-radius: 8px; /* Bordes menos redondeados según imagen */
-    color: #003a70; /* Azul oscuro para texto */
+    border-radius: 8px;
+    color: #003a70;
     font-weight: 700;
     font-size: 1.2rem;
     display: flex;
@@ -52,47 +52,35 @@
     transition: transform 0.2s;
   }
   
-  /* Banner Dólar */
-  .banner-dolar.alcista {
-    background-color: #88c543; /* Verde lima */
-  }
-  .banner-dolar.bajista {
-    background-color: #e57373; /* Rojo suave */
-    color: white;
-  }
+  .banner-dolar.alcista { background-color: #88c543; }
+  .banner-dolar.bajista { background-color: #e57373; color: white; }
   .trend-arrow { font-size: 1.5rem; margin-left: 10px; }
 
-  /* Banner Soporte */
-  .banner-soporte {
-    background-color: #88c543; /* Verde lima */
-    cursor: pointer;
-  }
-  .banner-soporte:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-  }
+  .banner-soporte { background-color: #88c543; cursor: pointer; }
+  .banner-soporte:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
   .icon-click { font-size: 1.4rem; margin-left: 10px; }
-
 
   /* --- TITULOS --- */
   .section-title-destacados { 
     color: #003a70; 
-    margin: 0 0 10px 0; /* Más cerca del carrusel */
-    font-size: 1.6rem; /* Letra más ancha/grande */
-    font-weight: 900; /* Negrita fuerte */
+    /* Margen inferior reducido para pegar texto al carrusel */
+    margin: 0 0 5px 0; 
+    font-size: 1.8rem; /* Letra más ancha */
+    font-weight: 900; 
     text-transform: uppercase; 
     letter-spacing: 0.5px; 
     text-shadow: 1px 1px 0px rgba(255,255,255,0.5); 
   }
 
-  /* --- CARRUSEL --- */
+  /* --- CARRUSEL FULL WIDTH --- */
   .news-carousel-container {
     position: relative; width: 100%; height: 350px;
-    border-radius: 0; /* Cuadrado según imagen */
+    border-radius: 0; 
     overflow: hidden;
     box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-    background: #003a70; /* Fondo azul oscuro por si carga */
+    background: #003a70;
     border: none;
+    margin-bottom: 40px; /* Separación con lo de abajo */
   }
   .news-slide { display: none; width: 100%; height: 100%; }
   .news-slide.active { display: block; animation: fadeNews 1.5s ease-in-out; }
@@ -101,12 +89,11 @@
   .news-slide a { display: block; width: 100%; height: 100%; text-decoration: none; position: relative; }
   .news-slide img { width: 100%; height: 100%; object-fit: cover; }
   
-  /* Textos dentro del carrusel */
   .history-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     text-align: center; padding: 40px; 
-    background: rgba(0, 58, 112, 0.4); /* Filtro azul sobre la imagen de fondo */
+    background: rgba(0, 58, 112, 0.4);
   }
   .history-text { color: #fff; font-size: 2rem; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8); line-height: 1.3; text-transform: uppercase; }
   
@@ -118,28 +105,32 @@
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
   }
 
-  /* FLECHAS VERDES TRIANGULARES */
+  /* FLECHAS VERDES TRIANGULARES - CORRECCIÓN HOVER */
   .news-ctrl {
     position: absolute; top: 50%; transform: translateY(-50%);
-    background: transparent; border: none; cursor: pointer; z-index: 10; padding: 0;
+    background: transparent !important; /* Importante para quitar fondo negro */
+    border: none; cursor: pointer; z-index: 10; padding: 0;
     width: 0; height: 0; 
     transition: transform 0.2s;
+    outline: none;
   }
   .news-prev { 
     left: 20px; 
     border-top: 20px solid transparent;
     border-bottom: 20px solid transparent; 
-    border-right: 30px solid #88c543; /* Verde */
+    border-right: 30px solid #88c543; 
   }
   .news-next { 
     right: 20px; 
     border-top: 20px solid transparent;
     border-bottom: 20px solid transparent;
-    border-left: 30px solid #88c543; /* Verde */
+    border-left: 30px solid #88c543; 
   }
-  .news-ctrl:hover { transform: translateY(-50%) scale(1.1); }
+  .news-ctrl:hover { 
+    transform: translateY(-50%) scale(1.1); 
+    background: transparent !important; /* Asegurar que no aparezca fondo negro */
+  }
 
-  /* PUNTOS VERDES */
   .news-dots-container {
     position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 15;
   }
@@ -147,16 +138,12 @@
   .news-dot:hover { background-color: #88c543; }
   .news-dot.active { background-color: #88c543; transform: scale(1.2); }
 
-  /* --- GRID DE EVENTOS (AGRANDADOS) --- */
-  .eventos-header-wrapper {
-    margin-top: 40px; /* Separación del carrusel */
-    margin-bottom: 10px; /* Pegado a las tarjetas */
-  }
+  /* --- GRID DE EVENTOS (AGRANDADOS AÚN MÁS) --- */
   .eventos-portada-grid {
     display: grid;
-    /* Tarjetas mucho más grandes: min 250px */
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
+    /* Aumentado minmax de 250px a 300px para tarjetas más grandes */
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
   }
   .card-evento-mini {
     background: #fff;
@@ -174,7 +161,8 @@
   
   .evento-mini-img-container {
     width: 100%;
-    height: 180px; /* Altura aumentada */
+    /* Aumentada altura de 180px a 220px */
+    height: 220px; 
     overflow: hidden;
   }
   .evento-mini-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
@@ -182,38 +170,42 @@
 
   .evento-mini-nombre {
     padding: 15px;
-    font-size: 1rem;
+    font-size: 1.1rem; /* Texto un poco más grande */
     font-weight: 700;
     color: #444;
     text-align: left;
     border-top: 1px solid #eee;
   }
 
-  /* --- LAYOUT GENERAL --- */
+  /* --- LAYOUT INFERIOR --- */
   .home-layout {
     display: flex; gap: 30px; align-items: flex-start;
   }
-  .home-left { flex: 1; } /* Ocupa todo el espacio posible */
+  .home-left { flex: 1; }
   
   .home-right { 
-    flex: 0 0 320px; /* Ancho fijo sidebar */
-    margin-top: 0; /* Alineado arriba por defecto */
+    flex: 0 0 320px;
+    margin-top: 0; 
   }
   
-  /* Ajuste para alinear título cumpleaños con título galería */
-  /* Galería tiene margin-top 40px + titulo margin. Cumpleaños necesita bajar para alinear */
-  .spacer-cumple { height: 420px; } /* Espacio para bajar los cumpleaños bajo el nivel del carrusel aprox */
+  /* Alineación de títulos Galería y Cumpleaños */
+  .titulo-seccion-inferior {
+    color: #003a70;
+    margin: 0 0 20px 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 0px rgba(255,255,255,0.5);
+  }
 
   @media (max-width: 900px) {
     .home-layout { flex-direction: column; }
     .home-right { width: 100%; margin-top: 30px; }
-    .spacer-cumple { display: none; }
     .home-top-banners { flex-direction: column; }
   }
 </style>
 
 <div class="home-top-banners">
-  
   <% if (typeof usdTrend !== 'undefined' && usdTrend === 'bajista') { %>
     <div class="banner-info banner-dolar bajista">
       Dólar actual observado: <%= typeof usdHoy !== 'undefined' ? usdHoy : '---' %>
@@ -230,52 +222,48 @@
     Necesitas asistencia? Envía un ticket a soporte
     <span class="icon-click">👆</span>
   </a>
-
 </div>
+
+<h3 class="section-title-destacados">Destacados de la semana</h3>
+
+<% if (typeof mixedCarousel !== 'undefined' && mixedCarousel && mixedCarousel.length > 0) { %>
+  <div class="news-carousel-container">
+    
+    <button class="news-ctrl news-prev" onclick="plusNews(-1)"></button>
+    <button class="news-ctrl news-next" onclick="plusNews(1)"></button>
+
+    <% mixedCarousel.forEach((item, index) => { %>
+      <div class="news-slide <%= index === 0 ? 'active' : '' %>">
+        <a href="<%= item.link %>" title="Ver detalle">
+          <img src="<%= item.imagen %>" alt="Destacado">
+          <% if (item.tipo === 'historial') { %>
+            <div class="history-overlay">
+              <div class="history-text"><%= item.titulo %></div>
+            </div>
+          <% } else { %>
+            <div class="news-caption">
+              <%= item.titulo %>
+            </div>
+          <% } %>
+        </a>
+      </div>
+    <% }); %>
+
+    <div class="news-dots-container">
+      <% mixedCarousel.forEach((_, i) => { %>
+        <span class="news-dot <%= i === 0 ? 'active' : '' %>" onclick="currentNews(<%= i + 1 %>)"></span>
+      <% }); %>
+    </div>
+  </div>
+<% } else { %>
+  <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px; margin-bottom: 40px;"><p>No hay destacados.</p></div>
+<% } %>
+
 
 <div class="home-layout">
   
   <div class="home-left">
-    
-    <h3 class="section-title-destacados">Destacados de la semana</h3>
-
-    <% if (typeof mixedCarousel !== 'undefined' && mixedCarousel && mixedCarousel.length > 0) { %>
-      <div class="news-carousel-container">
-        
-        <button class="news-ctrl news-prev" onclick="plusNews(-1)"></button>
-        <button class="news-ctrl news-next" onclick="plusNews(1)"></button>
-
-        <% mixedCarousel.forEach((item, index) => { %>
-          <div class="news-slide <%= index === 0 ? 'active' : '' %>">
-            <a href="<%= item.link %>" title="Ver detalle">
-              <img src="<%= item.imagen %>" alt="Destacado">
-              
-              <% if (item.tipo === 'historial') { %>
-                <div class="history-overlay">
-                  <div class="history-text"><%= item.titulo %></div>
-                </div>
-              <% } else { %>
-                <div class="news-caption">
-                  <%= item.titulo %>
-                </div>
-              <% } %>
-            </a>
-          </div>
-        <% }); %>
-
-        <div class="news-dots-container">
-          <% mixedCarousel.forEach((_, i) => { %>
-            <span class="news-dot <%= i === 0 ? 'active' : '' %>" onclick="currentNews(<%= i + 1 %>)"></span>
-          <% }); %>
-        </div>
-      </div>
-    <% } else { %>
-      <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px;"><p>No hay destacados.</p></div>
-    <% } %>
-
-    <div class="eventos-header-wrapper">
-      <h3 class="section-title-destacados">Galería de Eventos</h3>
-    </div>
+    <h3 class="titulo-seccion-inferior">Galería de Eventos</h3>
 
     <% if (typeof eventosPortadas !== 'undefined' && eventosPortadas.length > 0) { %>
       <div class="eventos-portada-grid">
@@ -293,16 +281,12 @@
     <% } else { %>
       <p style="color:white; text-shadow: 1px 1px 2px black;">No hay eventos con portada definida.</p>
     <% } %>
-
   </div>
 
   <div class="home-right">
+    <h3 class="titulo-seccion-inferior" style="color: #000; text-shadow: none;">Cumpleaños de <%= (typeof mesNombre !== 'undefined') ? mesNombre : 'Mes Actual' %></h3>
     
-    <div class="spacer-cumple"></div> 
-
-    <div class="tarjeta" style="border: 1px solid #dde3ec;">
-      <h3 style="margin-top:0; color:#003a70;">Cumpleaños de <%= (typeof mesNombre !== 'undefined') ? mesNombre : 'Mes Actual' %></h3>
-      
+    <div class="tarjeta" style="border: 1px solid #dde3ec; margin-top: 0;">
       <% if (!cumpleaniosOrdenados || cumpleaniosOrdenados.length === 0) { %>
         <p>No hay cumpleaños registrados.</p>
       <% } else { %>
