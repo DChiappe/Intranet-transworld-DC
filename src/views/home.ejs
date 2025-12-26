@@ -26,60 +26,137 @@
     background: url('/img/fondo-home.png') no-repeat center center fixed !important;
     background-size: cover !important;
   }
-  main { background: transparent !important; }
+  main { background: transparent !important; padding-top: 20px; }
 
-  .home-title { color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.6); margin-top: 0; margin-bottom: 20px; }
+  /* --- BANNERS SUPERIORES --- */
+  .home-top-banners {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    justify-content: space-between;
+  }
 
-  /* Carrusel Noticias/Mix */
+  .banner-info {
+    flex: 1;
+    padding: 15px 20px;
+    border-radius: 8px; /* Bordes menos redondeados según imagen */
+    color: #003a70; /* Azul oscuro para texto */
+    font-weight: 700;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-decoration: none;
+    transition: transform 0.2s;
+  }
+  
+  /* Banner Dólar */
+  .banner-dolar.alcista {
+    background-color: #88c543; /* Verde lima */
+  }
+  .banner-dolar.bajista {
+    background-color: #e57373; /* Rojo suave */
+    color: white;
+  }
+  .trend-arrow { font-size: 1.5rem; margin-left: 10px; }
+
+  /* Banner Soporte */
+  .banner-soporte {
+    background-color: #88c543; /* Verde lima */
+    cursor: pointer;
+  }
+  .banner-soporte:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  }
+  .icon-click { font-size: 1.4rem; margin-left: 10px; }
+
+
+  /* --- TITULOS --- */
+  .section-title-destacados { 
+    color: #003a70; 
+    margin: 0 0 10px 0; /* Más cerca del carrusel */
+    font-size: 1.6rem; /* Letra más ancha/grande */
+    font-weight: 900; /* Negrita fuerte */
+    text-transform: uppercase; 
+    letter-spacing: 0.5px; 
+    text-shadow: 1px 1px 0px rgba(255,255,255,0.5); 
+  }
+
+  /* --- CARRUSEL --- */
   .news-carousel-container {
-    position: relative; width: 100%; height: 320px;
-    border-radius: 12px; overflow: hidden;
+    position: relative; width: 100%; height: 350px;
+    border-radius: 0; /* Cuadrado según imagen */
+    overflow: hidden;
     box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-    background: #000; border: 1px solid #dde3ec;
+    background: #003a70; /* Fondo azul oscuro por si carga */
+    border: none;
   }
   .news-slide { display: none; width: 100%; height: 100%; }
   .news-slide.active { display: block; animation: fadeNews 1.5s ease-in-out; }
-  @keyframes fadeNews { from {opacity: 0; transform: scale(1.02);} to {opacity: 1; transform: scale(1);} }
+  @keyframes fadeNews { from {opacity: 0;} to {opacity: 1;} }
+  
   .news-slide a { display: block; width: 100%; height: 100%; text-decoration: none; position: relative; }
-  .news-slide img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
-  .news-slide:hover img { transform: scale(1.03); }
-  .news-caption {
-    position: absolute; bottom: 0; width: 100%;
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0) 100%);
-    color: #fff; padding: 30px 20px 30px;
-    font-size: 1.3rem; font-weight: bold; text-align: left;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-  }
+  .news-slide img { width: 100%; height: 100%; object-fit: cover; }
+  
+  /* Textos dentro del carrusel */
   .history-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
-    text-align: center; padding: 30px; background: rgba(0, 58, 112, 0.3);
+    text-align: center; padding: 40px; 
+    background: rgba(0, 58, 112, 0.4); /* Filtro azul sobre la imagen de fondo */
   }
-  .history-text { color: #fff; font-size: 1.6rem; font-weight: 800; text-shadow: 0 2px 10px rgba(0,0,0,0.9); line-height: 1.4; text-transform: uppercase; }
-  .news-subcaption { font-size: 0.95rem; font-weight: normal; margin-top: 5px; opacity: 0.9; color: #ddd; }
+  .history-text { color: #fff; font-size: 2rem; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8); line-height: 1.3; text-transform: uppercase; }
+  
+  .news-caption {
+    position: absolute; bottom: 0; width: 100%;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+    color: #fff; padding: 30px 20px;
+    font-size: 1.5rem; font-weight: bold; text-align: center;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  }
+
+  /* FLECHAS VERDES TRIANGULARES */
   .news-ctrl {
     position: absolute; top: 50%; transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.3); color: white; border: none;
-    font-size: 2rem; padding: 15px 15px; cursor: pointer;
-    z-index: 10; transition: background 0.3s; user-select: none;
+    background: transparent; border: none; cursor: pointer; z-index: 10; padding: 0;
+    width: 0; height: 0; 
+    transition: transform 0.2s;
   }
-  .news-ctrl:hover { background: rgba(0, 0, 0, 0.7); }
-  .news-prev { left: 0; border-radius: 0 8px 8px 0; }
-  .news-next { right: 0; border-radius: 8px 0 0 8px; }
-  .news-dots-container {
-    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 15;
+  .news-prev { 
+    left: 20px; 
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent; 
+    border-right: 30px solid #88c543; /* Verde */
   }
-  .news-dot { height: 10px; width: 10px; background-color: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; transition: background-color 0.3s, transform 0.2s; }
-  .news-dot:hover { background-color: rgba(255, 255, 255, 0.8); transform: scale(1.1); }
-  .news-dot.active { background-color: #fff; transform: scale(1.2); box-shadow: 0 0 4px rgba(0,0,0,0.3); }
-  .section-title-destacados { color: #003a70; margin: 25px 0 10px 0; font-size: 1.4rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 1px 1px 0px rgba(255,255,255,0.5); }
+  .news-next { 
+    right: 20px; 
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent;
+    border-left: 30px solid #88c543; /* Verde */
+  }
+  .news-ctrl:hover { transform: translateY(-50%) scale(1.1); }
 
-  /* --- NUEVO ESTILO: GRID DE EVENTOS PORTADA --- */
+  /* PUNTOS VERDES */
+  .news-dots-container {
+    position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 15;
+  }
+  .news-dot { height: 12px; width: 12px; background-color: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
+  .news-dot:hover { background-color: #88c543; }
+  .news-dot.active { background-color: #88c543; transform: scale(1.2); }
+
+  /* --- GRID DE EVENTOS (AGRANDADOS) --- */
+  .eventos-header-wrapper {
+    margin-top: 40px; /* Separación del carrusel */
+    margin-bottom: 10px; /* Pegado a las tarjetas */
+  }
   .eventos-portada-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 15px;
-    margin-top: 15px;
+    /* Tarjetas mucho más grandes: min 250px */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
   }
   .card-evento-mini {
     background: #fff;
@@ -90,58 +167,102 @@
     text-decoration: none;
     color: inherit;
     border: 1px solid #dde3ec;
+    display: flex;
+    flex-direction: column;
   }
-  .card-evento-mini:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+  .card-evento-mini:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.15); }
   
   .evento-mini-img-container {
     width: 100%;
-    height: 120px; /* Cuadrado pequeño */
+    height: 180px; /* Altura aumentada */
     overflow: hidden;
   }
-  .evento-mini-img {
-    width: 100%; height: 100%; object-fit: cover;
-  }
+  .evento-mini-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+  .card-evento-mini:hover .evento-mini-img { transform: scale(1.05); }
+
   .evento-mini-nombre {
-    padding: 8px 10px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #003a70;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding: 15px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #444;
+    text-align: left;
+    border-top: 1px solid #eee;
+  }
+
+  /* --- LAYOUT GENERAL --- */
+  .home-layout {
+    display: flex; gap: 30px; align-items: flex-start;
+  }
+  .home-left { flex: 1; } /* Ocupa todo el espacio posible */
+  
+  .home-right { 
+    flex: 0 0 320px; /* Ancho fijo sidebar */
+    margin-top: 0; /* Alineado arriba por defecto */
+  }
+  
+  /* Ajuste para alinear título cumpleaños con título galería */
+  /* Galería tiene margin-top 40px + titulo margin. Cumpleaños necesita bajar para alinear */
+  .spacer-cumple { height: 420px; } /* Espacio para bajar los cumpleaños bajo el nivel del carrusel aprox */
+
+  @media (max-width: 900px) {
+    .home-layout { flex-direction: column; }
+    .home-right { width: 100%; margin-top: 30px; }
+    .spacer-cumple { display: none; }
+    .home-top-banners { flex-direction: column; }
   }
 </style>
 
-<h2 class="home-title">Bienvenida/o a la intranet de Transworld</h2>
+<div class="home-top-banners">
+  
+  <% if (typeof usdTrend !== 'undefined' && usdTrend === 'bajista') { %>
+    <div class="banner-info banner-dolar bajista">
+      Dólar actual observado: <%= typeof usdHoy !== 'undefined' ? usdHoy : '---' %>
+      <span class="trend-arrow">⬇</span>
+    </div>
+  <% } else { %>
+    <div class="banner-info banner-dolar alcista">
+      Dólar actual observado: <%= typeof usdHoy !== 'undefined' ? usdHoy : '---' %>
+      <span class="trend-arrow">⬆</span>
+    </div>
+  <% } %>
+
+  <a href="/sistemas/tickets" class="banner-info banner-soporte" title="Ir a soporte">
+    Necesitas asistencia? Envía un ticket a soporte
+    <span class="icon-click">👆</span>
+  </a>
+
+</div>
 
 <div class="home-layout">
   
   <div class="home-left">
     
-    <a href="/sistemas/tickets" class="home-ti-link" title="Ir a Tickets">
-      <div class="home-ti-card">
-        <img src="/img/Img%20Servicios%20TI.png" alt="Servicios TI" class="home-ti-img" />
-      </div>
-    </a>
-
     <h3 class="section-title-destacados">Destacados de la semana</h3>
+
     <% if (typeof mixedCarousel !== 'undefined' && mixedCarousel && mixedCarousel.length > 0) { %>
       <div class="news-carousel-container">
-        <button class="news-ctrl news-prev" onclick="plusNews(-1)">&#10094;</button>
-        <button class="news-ctrl news-next" onclick="plusNews(1)">&#10095;</button>
+        
+        <button class="news-ctrl news-prev" onclick="plusNews(-1)"></button>
+        <button class="news-ctrl news-next" onclick="plusNews(1)"></button>
+
         <% mixedCarousel.forEach((item, index) => { %>
           <div class="news-slide <%= index === 0 ? 'active' : '' %>">
             <a href="<%= item.link %>" title="Ver detalle">
               <img src="<%= item.imagen %>" alt="Destacado">
+              
               <% if (item.tipo === 'historial') { %>
-                <div class="history-overlay"><div class="history-text"><%= item.titulo %></div></div>
+                <div class="history-overlay">
+                  <div class="history-text"><%= item.titulo %></div>
+                </div>
               <% } else { %>
-                <div class="news-caption"><%= item.titulo %><% if(item.subtitulo) { %><div class="news-subcaption"><%= item.subtitulo %></div><% } %></div>
+                <div class="news-caption">
+                  <%= item.titulo %>
+                </div>
               <% } %>
             </a>
           </div>
         <% }); %>
+
         <div class="news-dots-container">
           <% mixedCarousel.forEach((_, i) => { %>
             <span class="news-dot <%= i === 0 ? 'active' : '' %>" onclick="currentNews(<%= i + 1 %>)"></span>
@@ -152,7 +273,10 @@
       <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px;"><p>No hay destacados.</p></div>
     <% } %>
 
-    <h3 class="section-title-destacados" style="margin-top: 30px;">Galería de Eventos</h3>
+    <div class="eventos-header-wrapper">
+      <h3 class="section-title-destacados">Galería de Eventos</h3>
+    </div>
+
     <% if (typeof eventosPortadas !== 'undefined' && eventosPortadas.length > 0) { %>
       <div class="eventos-portada-grid">
         <% eventosPortadas.forEach(ev => { %>
@@ -173,13 +297,12 @@
   </div>
 
   <div class="home-right">
-    <div class="tarjeta tarjeta-usd">
-      <div class="usd-label">Dólar Observado</div>
-      <p class="usd-valor">$<%= (typeof usdHoy !== 'undefined') ? usdHoy : '---' %></p>
-      <div class="chart-box"><canvas id="usdChart"></canvas></div>
-    </div>
-    <div class="tarjeta">
-      <h3>Cumpleaños de <%= (typeof mesNombre !== 'undefined') ? mesNombre : 'Mes Actual' %></h3>
+    
+    <div class="spacer-cumple"></div> 
+
+    <div class="tarjeta" style="border: 1px solid #dde3ec;">
+      <h3 style="margin-top:0; color:#003a70;">Cumpleaños de <%= (typeof mesNombre !== 'undefined') ? mesNombre : 'Mes Actual' %></h3>
+      
       <% if (!cumpleaniosOrdenados || cumpleaniosOrdenados.length === 0) { %>
         <p>No hay cumpleaños registrados.</p>
       <% } else { %>
@@ -200,25 +323,10 @@
       <% } %>
     </div>
   </div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Gráfico USD
-  const rawData = '<%- (typeof usdHistorico !== "undefined") ? JSON.stringify(usdHistorico) : "[]" %>';
-  const datosHistoricos = JSON.parse(rawData);
-  const ctx = document.getElementById('usdChart').getContext('2d');
-  if (datosHistoricos.length > 0) {
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: datosHistoricos.map(d => new Date(d.fecha).getDate()),
-        datasets: [{ label: 'USD', data: datosHistoricos.map(d => d.valor), borderColor: '#4caf50', backgroundColor: 'rgba(76, 175, 80, 0.1)', borderWidth: 2, fill: true, pointRadius: 2, tension: 0.3 }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: true } }, scales: { x: { display: false }, y: { display: false, suggestedMin: Math.min(...datosHistoricos.map(d => d.valor)) - 5, suggestedMax: Math.max(...datosHistoricos.map(d => d.valor)) + 5 } } }
-    });
-  }
-
   // Carrusel Mixto (Manual + Dots + Auto + Reiniciable)
   let newsIndex = 1;
   let autoSlideTimer;
