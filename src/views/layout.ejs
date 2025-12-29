@@ -4,25 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= titulo || "Intranet" %></title>
-
     <link rel="stylesheet" href="/css/intranet.css">
-
+    
     <style>
-      /* FONDO GLOBAL PARA TODAS LAS VISTAS */
       body {
         background: url('/img/fondo-home.png') no-repeat center center fixed !important;
         background-size: cover !important;
       }
-      
-      /* Asegura que el contenedor principal sea transparente para ver el fondo */
       main { 
         background: transparent !important; 
-        min-height: 80vh; /* Opcional: para que ocupe buen alto */
+        min-height: 80vh; 
       }
     </style>
 </head>
 
 <body>
+
+<% 
+  // Lógica para detectar usuario sea cual sea el nombre de la variable
+  const currentUser = (typeof usuario !== 'undefined' && usuario) ? usuario : ((typeof user !== 'undefined' && user) ? user : null);
+%>
 
 <header>
   <div class="header-inner">
@@ -34,13 +35,8 @@
     </div>
 
     <nav class="main-nav">      
-      <div class="nav-item">
-        <a href="/">Inicio</a>
-      </div>
-      
-      <div class="nav-item">
-        <a href="/noticias">Noticias</a>
-      </div>
+      <div class="nav-item"><a href="/">Inicio</a></div>
+      <div class="nav-item"><a href="/noticias">Noticias</a></div>
 
       <div class="nav-item">
         <a href="/procesos">Procesos y Documentos</a>
@@ -58,9 +54,7 @@
         </div>
       </div>
 
-      <div class="nav-item">
-        <a href="/sistemas/tickets">Ticketera</a>
-      </div>
+      <div class="nav-item"><a href="/sistemas/tickets">Ticketera</a></div>
 
       <div class="nav-item">
         <a href="/marketing">Marketing y Eventos</a>
@@ -69,21 +63,24 @@
         </div>
       </div>
       
-      <% if (typeof usuario !== 'undefined' && usuario && usuario.role === 'admin') { %>
+      <% if (currentUser && currentUser.role === 'admin') { %>
         <a href="/roles">Roles</a>
       <% } %>
-      
     </nav>
 
-    <% if (typeof usuario !== 'undefined' && usuario) { %>
+    <% if (currentUser) { %>
       <div class="nav-user">
         <a href="/perfil" title="Ir a mi perfil" class="user-name" style="display: flex; align-items: center; gap: 8px;">
           
-          <% if (usuario.foto) { %>
-            <img src="<%= usuario.foto %>" alt="Foto" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #fff;">
+          <% if (currentUser.foto) { %>
+            <img src="<%= currentUser.foto %>" alt="Foto" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #fff;">
+          <% } else { %>
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.5);">
+              <%= currentUser.username.charAt(0).toUpperCase() %>
+            </div>
           <% } %>
 
-          <strong><%= usuario.username %></strong>
+          <strong><%= currentUser.username %></strong>
         </a>
       </div>
     <% } %>
