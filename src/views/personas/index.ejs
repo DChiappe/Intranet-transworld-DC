@@ -23,7 +23,6 @@
   <table class="tabla-simple">
     <thead>
       <tr>
-        <th>Foto</th>
         <th>Nombre</th>
         <th>Área</th>
         <th>Cumpleaños</th>
@@ -36,16 +35,19 @@
       <% personas.forEach(p => { %>
         <tr>
           <td>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <% if (p.foto) { %>
+            <div>
+               <% if (p.foto) { %>
                 <img src="<%= p.foto %>" alt="Foto" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              <span><%= p.nombre %></span>
-            
               <% } else { %>
                 <div style="width: 40px; height: 40px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #999;">
                   <%= p.nombre.charAt(0) %>
                 </div>
               <% } %>
+            </div>
+          </td>      
+          <td>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span><%= p.nombre %></span>
             </div>
           </td>
 
