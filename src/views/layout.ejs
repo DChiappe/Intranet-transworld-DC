@@ -21,8 +21,23 @@
 <body>
 
 <% 
-  // Lógica para detectar usuario sea cual sea el nombre de la variable
+  // 1. Detectar usuario disponible (Sesión o BD)
   const currentUser = (typeof usuario !== 'undefined' && usuario) ? usuario : ((typeof user !== 'undefined' && user) ? user : null);
+
+  // 2. Determinar el nombre a mostrar con seguridad
+  let displayName = 'Usuario';
+  if (currentUser) {
+    if (currentUser.username) {
+      // Caso: Objeto de sesión (auth.js)
+      displayName = currentUser.username;
+    } else if (currentUser.first_name) {
+      // Caso: Objeto de base de datos (users table)
+      displayName = currentUser.first_name + (currentUser.last_name ? ' ' + currentUser.last_name : '');
+    } else if (currentUser.nombre) {
+      // Caso: Otras tablas (ej. personas)
+      displayName = currentUser.nombre;
+    }
+  }
 %>
 
 <header>
@@ -76,11 +91,11 @@
             <img src="<%= currentUser.foto %>" alt="Foto" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #fff;">
           <% } else { %>
             <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.5);">
-              <%= currentUser.username.charAt(0).toUpperCase() %>
+              <%= displayName.charAt(0).toUpperCase() %>
             </div>
           <% } %>
 
-          <strong><%= currentUser.username %></strong>
+          <strong><%= displayName %></strong>
         </a>
       </div>
     <% } %>
