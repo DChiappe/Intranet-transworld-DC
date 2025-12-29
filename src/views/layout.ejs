@@ -6,6 +6,20 @@
     <title><%= titulo || "Intranet" %></title>
 
     <link rel="stylesheet" href="/css/intranet.css">
+
+    <style>
+      /* FONDO GLOBAL PARA TODAS LAS VISTAS */
+      body {
+        background: url('/img/fondo-home.png') no-repeat center center fixed !important;
+        background-size: cover !important;
+      }
+      
+      /* Asegura que el contenedor principal sea transparente para ver el fondo */
+      main { 
+        background: transparent !important; 
+        min-height: 80vh; /* Opcional: para que ocupe buen alto */
+      }
+    </style>
 </head>
 
 <body>
