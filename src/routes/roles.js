@@ -8,7 +8,7 @@ function requireAdmin(req, res, next) {
   return res.status(403).send('Acceso denegado');
 }
 
-// GET /roles
+// GET /roles - Listado principal
 router.get('/', requireAdmin, async (req, res) => {
   try {
     const [users] = await pool.query(
@@ -18,7 +18,7 @@ router.get('/', requireAdmin, async (req, res) => {
     res.render('roles', {
       titulo: 'Roles',
       users,
-      ok: req.query.ok === '1' ? 'Rol actualizado correctamente.' : null,
+      ok: req.query.ok === '1' ? 'Usuario actualizado correctamente.' : null,
       error: null
     });
   } catch (err) {
@@ -32,26 +32,58 @@ router.get('/', requireAdmin, async (req, res) => {
   }
 });
 
-// POST /roles/:id
+// GET /roles/editar/:id - Formulario de edición
+router.get('/editar/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
+    if (rows.length === 0) return res.redirect('/roles');
+
+    res.render('user_editar', {
+      titulo: 'Editar Usuario',
+      user: rows[0]
+    });
+  } catch (err) {
+    console.error('Error cargando usuario:', err);
+    res.redirect('/roles');
+  }
+});
+
+// POST /roles/editar/:id - Procesar actualización
+router.post('/editar/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { first_name, last_name, role } = req.body;
+
+  try {
+    // Validar roles permitidos (opcional, pero recomendado)
+    const allowed = new Set([
+      '', 'admin', 'marketing', 'rrhh', 'teresa',
+      'control_y_seguridad', 'usuario', 'noticias'
+    ]);
+    
+    const roleToSave = allowed.has(role) ? role : null;
+
+    await pool.query(
+      'UPDATE users SET first_name = ?, last_name = ?, role = ? WHERE id = ?',
+      [first_name, last_name, roleToSave, id]
+    );
+
+    res.redirect('/roles?ok=1');
+  } catch (err) {
+    console.error('Error actualizando usuario:', err);
+    res.render('user_editar', {
+      titulo: 'Editar Usuario',
+      user: { id, first_name, last_name, role }, // Datos para no perder lo escrito
+      error: 'Error al actualizar usuario.'
+    });
+  }
+});
+
+// POST /roles/:id (Ruta antigua rápida, la mantenemos por compatibilidad si la usabas)
 router.post('/:id', requireAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id);
     const role = String(req.body.role || '').trim();
-    const allowed = new Set([
-      '', // sin asignar
-      'admin',
-      'marketing',
-      'rrhh',
-      'teresa',
-      'control_y_seguridad',
-      'usuario',
-      'noticias'
-    ]);
-
-    if (!allowed.has(role)) {
-      return res.redirect('/roles');
-    }
-
     await pool.query('UPDATE users SET role = ? WHERE id = ?', [role || null, id]);
     return res.redirect('/roles?ok=1');
   } catch (err) {

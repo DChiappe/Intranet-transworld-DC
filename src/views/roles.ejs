@@ -1,50 +1,48 @@
 <div class="contenedor">
-  <h1>Asignación de Roles</h1>
+  <h2 class="page-title">Gestión de Usuarios y Roles</h2>
+  <p class="page-description">Administra los accesos y roles de los usuarios registrados.</p>
 
   <% if (ok) { %>
-    <p class="mensaje-exito"><%= ok %></p>
+    <div class="mensaje-exito" style="margin-bottom: 20px;"><%= ok %></div>
   <% } %>
-
+  
   <% if (error) { %>
-    <p class="mensaje-error"><%= error %></p>
+    <div class="mensaje-error" style="margin-bottom: 20px;"><%= error %></div>
   <% } %>
 
-  <table class="tabla-simple">
+  <table class="tabla tabla-roles">
     <thead>
       <tr>
-        <th>ID</th>
         <th>Nombre</th>
         <th>Email</th>
+        <th>Rol Actual</th>
         <th>Confirmado</th>
-        <th>Rol</th>
-        <th>Acción</th>
-      </tr>
+        <th style="text-align: center;">Acciones</th> </tr>
     </thead>
     <tbody>
       <% users.forEach(u => { %>
         <tr>
-          <td><%= u.id %></td>
           <td><%= u.first_name %> <%= u.last_name %></td>
           <td><%= u.email %></td>
-          <td><%= u.email_confirmed ? 'Sí' : 'No' %></td>
           <td>
-            <form action="/roles/<%= u.id %>" method="POST" style="display:flex; gap:8px; align-items:center;">
-              <select name="role">
-                <option value="" <%= !u.role ? 'selected' : '' %>>Sin asignar</option>
-                <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>Admin</option>
-                <option value="marketing" <%= u.role === 'marketing' ? 'selected' : '' %>>Marketing</option>
-                <option value="rrhh" <%= u.role === 'rrhh' ? 'selected' : '' %>>RRHH</option>
-                <option value="teresa" <%= u.role === 'teresa' ? 'selected' : '' %>>Teresa</option>
-                <option value="control_y_seguridad" <%= u.role === 'control_y_seguridad' ? 'selected' : '' %>>Control y seguridad</option>
-                <option value="usuario" <%= u.role === 'usuario' ? 'selected' : '' %>>usuario</option>
-                <option value="noticias" <%= u.role === 'noticias' ? 'selected' : '' %>>noticias</option>
-              </select>
+            <% if (u.role) { %>
+              <span class="badge badge-rol"><%= u.role %></span>
+            <% } else { %>
+              <span class="badge badge-sin-rol">Sin asignar</span>
+            <% } %>
           </td>
           <td>
-              <button type="submit">Guardar</button>
-            </form>
+            <%= u.email_confirmed ? '✅ Sí' : '❌ No' %>
           </td>
+          
+          <td style="text-align: center;">
+            <a href="/roles/editar/<%= u.id %>" class="btn-icon" title="Editar Usuario" style="text-decoration: none; font-size: 1.2rem;">
+              ✏️
+            </a>
+          </td>
+
         </tr>
       <% }) %>
     </tbody>
   </table>
+</div>

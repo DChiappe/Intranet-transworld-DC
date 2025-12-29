@@ -1,0 +1,49 @@
+<div class="contenedor" style="max-width: 600px; margin: 0 auto;">
+  <div style="margin-bottom: 20px;">
+    <a href="/roles" class="link-volver" style="text-decoration: none; color: #555;">← Volver al listado de roles</a>
+  </div>
+
+  <h2 class="page-title">Editar Usuario</h2>
+
+  <div class="panel">
+    <form action="/roles/editar/<%= user.id %>" method="POST" class="form-general">
+      
+      <div class="campo" style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Nombre</label>
+        <input type="text" name="first_name" value="<%= user.first_name %>" required 
+               style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+      </div>
+
+      <div class="campo" style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Apellido</label>
+        <input type="text" name="last_name" value="<%= user.last_name %>" required 
+               style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+      </div>
+
+      <div class="campo" style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Email (No editable)</label>
+        <input type="text" value="<%= user.email %>" disabled 
+               style="width: 100%; padding: 8px; border: 1px solid #eee; background-color: #f9f9f9; border-radius: 4px; color: #777;">
+      </div>
+
+      <div class="campo" style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Asignar Rol</label>
+        <select name="role" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+          <option value="" <%= !user.role ? 'selected' : '' %>>-- Sin asignar --</option>
+          <option value="usuario" <%= user.role === 'usuario' ? 'selected' : '' %>>Usuario</option>
+          <option value="admin" <%= user.role === 'admin' ? 'selected' : '' %>>Admin</option>
+          <option value="marketing" <%= user.role === 'marketing' ? 'selected' : '' %>>Marketing</option>
+          <option value="rrhh" <%= user.role === 'rrhh' ? 'selected' : '' %>>RRHH</option>
+          <option value="teresa" <%= user.role === 'teresa' ? 'selected' : '' %>>Teresa</option>
+          <option value="control_y_seguridad" <%= user.role === 'control_y_seguridad' ? 'selected' : '' %>>Control y Seguridad</option>
+          <option value="noticias" <%= user.role === 'noticias' ? 'selected' : '' %>>Noticias</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primario" 
+              style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
+        Guardar Cambios
+      </button>
+    </form>
+  </div>
+</div>
