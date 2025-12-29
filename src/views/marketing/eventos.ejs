@@ -1,3 +1,105 @@
+<style>
+  /* ESTILOS TIPO HOME PARA EVENTOS */
+  .eventos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 25px;
+  }
+
+  .card-evento-modern {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #dde3ec;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .card-evento-modern:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+  }
+
+  .evento-link {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Ocupa el espacio disponible */
+  }
+
+  .evento-img-container {
+    width: 100%;
+    height: 180px; /* Misma altura que en home */
+    background-color: #f4f6f9;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #eee;
+  }
+
+  .evento-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+  }
+
+  .card-evento-modern:hover .evento-img {
+    transform: scale(1.05);
+  }
+
+  .folder-icon-placeholder {
+    font-size: 3.5rem;
+    color: #cbd5e0;
+  }
+
+  .evento-info {
+    padding: 15px;
+    background: #fff;
+  }
+
+  .evento-titulo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #444;
+    margin-bottom: 5px;
+    line-height: 1.3;
+  }
+
+  .evento-desc {
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: 5px;
+  }
+
+  /* Footer de la tarjeta para botón eliminar */
+  .evento-actions {
+    padding: 10px 15px;
+    background-color: #f9f9f9;
+    border-top: 1px solid #eee;
+    text-align: right;
+  }
+
+  .btn-delete {
+    background: none;
+    border: none;
+    color: #dc3545;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+  }
+  .btn-delete:hover {
+    text-decoration: underline;
+  }
+</style>
+
 <div class="contenedor">
   <h2 class="page-title">Eventos y Galerías</h2>
   <p class="page-description">Selecciona un evento para ver su galería de fotos.</p>
@@ -14,39 +116,41 @@
   <% if (!eventos || eventos.length === 0) { %>
     <p class="no-data">No hay eventos creados por el momento.</p>
   <% } else { %>
-    <div class="grid-eventos">
+    
+    <div class="eventos-grid">
       <% eventos.forEach(function(ev) { %>
-        <div class="card-evento" style="overflow: hidden;"> <% if (ev.imagen) { %>
-            <div class="evento-thumb-container" style="width: 100%; height: 140px; background-color: #eee;">
-              <img src="<%= ev.imagen %>" alt="Portada <%= ev.nombre %>" style="width: 100%; height: 100%; object-fit: cover;">
+        <div class="card-evento-modern">
+          
+          <a href="/marketing/eventos/<%= ev.slug %>" class="evento-link" title="Ver galería de <%= ev.nombre %>">
+            <div class="evento-img-container">
+              <% if (ev.imagen) { %>
+                <img src="<%= ev.imagen %>" alt="<%= ev.nombre %>" class="evento-img">
+              <% } else { %>
+                <div class="folder-icon-placeholder">📁</div>
+              <% } %>
             </div>
-          <% } else { %>
-            <div class="icono-carpeta" style="margin-top: 20px;"> <div class="carpeta-tapa"></div>
-              <div class="carpeta-cuerpo"></div>
+            
+            <div class="evento-info">
+              <div class="evento-titulo"><%= ev.nombre %></div>
+              <% if (ev.descripcion) { %>
+                <div class="evento-desc">
+                  <%= ev.descripcion.length > 60 ? ev.descripcion.substring(0, 60) + '...' : ev.descripcion %>
+                </div>
+              <% } %>
+            </div>
+          </a>
+
+          <% if (can.eventos_write) { %>
+            <div class="evento-actions">
+              <form action="/marketing/eventos/<%= ev.slug %>/eliminar" method="POST" onsubmit="return confirm('¿Estás seguro? Se eliminará el evento y TODAS sus fotos.');" style="margin:0;">
+                <button type="submit" class="btn-delete">Eliminar evento</button>
+              </form>
             </div>
           <% } %>
 
-          <div class="card-evento-texto">
-            <h3><%= ev.nombre %></h3>
-            
-            <% if (ev.descripcion) { %>
-              <p class="small-text" style="margin-bottom: 10px; color: #666;">
-                <%= ev.descripcion.length > 60 ? ev.descripcion.substring(0, 60) + '...' : ev.descripcion %>
-              </p>
-            <% } %>
-
-            <div class="acciones-evento">
-              <a href="/marketing/eventos/<%= ev.slug %>">Ver fotos</a>
-              
-              <% if (can.eventos_write) { %>
-                <form action="/marketing/eventos/<%= ev.slug %>/eliminar" method="POST" onsubmit="return confirm('¿Estás seguro? Se eliminará el evento y TODAS sus fotos.');" style="display:inline; margin-left: 10px;">
-                  <button type="submit" class="btn-borrar-evento" style="background: none; border: none; color: #d9534f; cursor: pointer; text-decoration: underline; font-size: 0.9rem;">Eliminar</button>
-                </form>
-              <% } %>
-            </div>
-          </div>
         </div>
       <% }) %>
     </div>
+
   <% } %>
 </div>
