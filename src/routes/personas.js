@@ -40,16 +40,15 @@ function formatNombre(nombreCompleto) {
 // --- Rutas Principales ---
 
 router.get('/', async (req, res, next) => {
-  // Se añade 'foto' a la consulta
+  // CAMBIO AQUÍ: Ordenamos por nombre alfabéticamente
   const sql = `
     SELECT id, nombre, area, fecha_nacimiento, foto
     FROM cumpleanios
-    ORDER BY MONTH(fecha_nacimiento), DAY(fecha_nacimiento)
+    ORDER BY nombre ASC
   `;
 
   try {
     const [results] = await db.query(sql);
-    // Formateamos nombre pero mantenemos el objeto original con la foto
     const personasFormateadas = results.map(p => ({
       ...p,
       nombre: formatNombre(p.nombre)
@@ -58,7 +57,7 @@ router.get('/', async (req, res, next) => {
     res.render('personas/index', {
       titulo: 'Personas y Cultura',
       personas: personasFormateadas,
-      user: req.session.user // Importante pasar el usuario para los permisos en la vista
+      user: req.session.user
     });
   } catch (err) {
     console.error('Error consultando personas:', err);
@@ -72,14 +71,12 @@ router.get('/crear', requireRole('admin', 'rrhh'), (req, res) => {
   res.render('personas/persona_crear', { titulo: 'Agregar Persona' });
 });
 
-// MODIFICADO: Soporte para subida de foto
 router.post('/crear', requireRole('admin', 'rrhh'), upload.single('foto'), async (req, res) => {
   const { nombre, area, fecha_nacimiento } = req.body;
   let fotoUrl = null;
   let fotoPublicId = null;
 
   try {
-    // Si se subió un archivo
     if (req.file) {
       const result = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -121,21 +118,17 @@ router.get('/editar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
   }
 });
 
-// MODIFICADO: Soporte para editar foto
 router.post('/editar/:id', requireRole('admin', 'rrhh'), upload.single('foto'), async (req, res) => {
   const { id } = req.params;
   const { nombre, area, fecha_nacimiento } = req.body;
 
   try {
-    // Si hay nueva foto, reemplazamos la anterior
     if (req.file) {
-      // 1. Buscar foto anterior para borrarla
       const [prev] = await db.query('SELECT foto_public_id FROM cumpleanios WHERE id = ?', [id]);
       if (prev.length > 0 && prev[0].foto_public_id) {
         await cloudinary.uploader.destroy(prev[0].foto_public_id);
       }
 
-      // 2. Subir nueva
       const result = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           { 
@@ -147,12 +140,10 @@ router.post('/editar/:id', requireRole('admin', 'rrhh'), upload.single('foto'), 
         stream.end(req.file.buffer);
       });
 
-      // 3. Actualizar BD con foto nueva
       await db.query('UPDATE cumpleanios SET nombre=?, area=?, fecha_nacimiento=?, foto=?, foto_public_id=? WHERE id=?', 
         [nombre, area, fecha_nacimiento, result.secure_url, result.public_id, id]);
 
     } else {
-      // 4. Actualizar solo textos
       await db.query('UPDATE cumpleanios SET nombre=?, area=?, fecha_nacimiento=? WHERE id=?', 
         [nombre, area, fecha_nacimiento, id]);
     }
@@ -164,17 +155,14 @@ router.post('/editar/:id', requireRole('admin', 'rrhh'), upload.single('foto'), 
   }
 });
 
-// MODIFICADO: Borrar foto de Cloudinary al eliminar
 router.post('/eliminar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
   const { id } = req.params;
   try {
-    // 1. Buscar foto para borrarla
     const [rows] = await db.query('SELECT foto_public_id FROM cumpleanios WHERE id = ?', [id]);
     if (rows.length > 0 && rows[0].foto_public_id) {
       await cloudinary.uploader.destroy(rows[0].foto_public_id);
     }
 
-    // 2. Borrar registro
     await db.query('DELETE FROM cumpleanios WHERE id = ?', [id]);
     res.redirect('/personas');
   } catch (err) {
@@ -205,10 +193,11 @@ router.post('/organigrama/subir', requireRole('admin', 'rrhh'), upload.single('o
       stream.end(req.file.buffer);
     });
 
-    // Guardar historial si existe la tabla y el usuario
     if (req.session.user && req.session.user.id) {
-      // Asumimos que tienes la tabla historial_cambios creada
-      // await db.query(...)
+      await db.query(
+        'INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
+        [req.session.user.id, 'actualizó', 'Organigrama', '/personas/organigrama']
+      );
     }
 
     res.redirect('/personas/organigrama');
