@@ -3,7 +3,6 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { sendMail } = require('../services/mailer');
-// Faltaba importar esto para proteger las rutas de admin
 const requireRole = require('../middlewares/requireRole'); 
 
 // ======================================================================
@@ -11,24 +10,46 @@ const requireRole = require('../middlewares/requireRole');
 // ======================================================================
 router.get('/', (req, res) => {
   res.render('sistemas/index', {
-    titulo: 'Sistemas'
+    titulo: 'Sistemas',
+    user: req.session.user
   });
 });
 
 // ======================================================================
-//  Listado de tickets
+//  Listado de tickets (MODIFICADO)
 // ======================================================================
 router.get('/tickets', async (req, res) => {
-  const sql = `
-    SELECT id, titulo, categoria, prioridad, estado, solicitante_nombre, solicitante_email, fecha_creacion
-    FROM tickets
-    ORDER BY fecha_creacion DESC
-  `;
+  const user = req.session.user;
+
+  // Seguridad: si no está logueado, redirigir
+  if (!user) return res.redirect('/login');
+
+  let sql = '';
+  let params = [];
+
+  // Lógica: Si es admin ve todo, si no, filtra por su email
+  if (user.role === 'admin') {
+    sql = `
+      SELECT id, titulo, categoria, prioridad, estado, solicitante_nombre, solicitante_email, fecha_creacion
+      FROM tickets
+      ORDER BY fecha_creacion DESC
+    `;
+  } else {
+    sql = `
+      SELECT id, titulo, categoria, prioridad, estado, solicitante_nombre, solicitante_email, fecha_creacion
+      FROM tickets
+      WHERE solicitante_email = ?
+      ORDER BY fecha_creacion DESC
+    `;
+    params = [user.email];
+  }
+
   try {
-    const [results] = await db.query(sql);
+    const [results] = await db.query(sql, params);
     res.render('sistemas/tickets', {
       titulo: 'Ticketera',
-      tickets: results
+      tickets: results,
+      user: user // Pasamos el usuario para el layout
     });
   } catch (err) {
     console.error('Error consultando tickets:', err);
@@ -41,7 +62,8 @@ router.get('/tickets', async (req, res) => {
 // ======================================================================
 router.get('/tickets/nuevo', (req, res) => {
   res.render('sistemas/ticket_nuevo', {
-    titulo: 'Abrir Nuevo Ticket'
+    titulo: 'Abrir Nuevo Ticket',
+    user: req.session.user
   });
 });
 
@@ -50,6 +72,9 @@ router.get('/tickets/nuevo', (req, res) => {
 // ======================================================================
 router.post('/tickets/crear', async (req, res) => {
   const { titulo, descripcion, categoria, prioridad } = req.body;
+  
+  if (!req.session.user) return res.redirect('/login');
+
   const solicitante_nombre = req.session.user.username;
   const solicitante_email = req.session.user.email;
 
@@ -133,7 +158,7 @@ router.post('/tickets/:id/responder', requireRole('admin'), async (req, res) => 
 
     await db.query(sqlRespuesta, [id, mensaje_respuesta]);
 
-    // Envío de correo vía API de Brevo
+    // Envío de correo vía API
     sendMail({
       to: solicitante_email,
       subject: subject,
@@ -154,6 +179,8 @@ router.post('/tickets/:id/responder', requireRole('admin'), async (req, res) => 
 // ======================================================================
 router.get('/tickets/:id', async (req, res) => {
   const { id } = req.params;
+  const user = req.session.user; // Obtener usuario para verificar permisos si quisieras
+
   const sqlTicket = `SELECT id, descripcion, categoria, prioridad, estado, solicitante_nombre, solicitante_email, fecha_creacion, fecha_actualizacion FROM tickets WHERE id = ?`;
   const sqlRespuestas = `SELECT id, mensaje, remitente, fecha FROM ticket_respuestas WHERE ticket_id = ? ORDER BY fecha ASC`;
 
@@ -161,11 +188,17 @@ router.get('/tickets/:id', async (req, res) => {
     const [ticketResults] = await db.query(sqlTicket, [id]);
     if (ticketResults.length === 0) return res.status(404).render('404', { titulo: 'No encontrado' });
 
+    // Opcional: Validar que el usuario sea dueño del ticket o admin para verlo
+    if (user.role !== 'admin' && ticketResults[0].solicitante_email !== user.email) {
+       return res.status(403).send('No tienes permisos para ver este ticket.');
+    }
+
     const [respuestasResults] = await db.query(sqlRespuestas, [id]);
     res.render('sistemas/tickets_detalle', {
       titulo: `Ticket #${id}`,
       ticket: ticketResults[0],
-      respuestas: respuestasResults
+      respuestas: respuestasResults,
+      user: user
     });
   } catch (err) {
     console.error('Error:', err);

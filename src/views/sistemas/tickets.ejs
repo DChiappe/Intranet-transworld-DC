@@ -8,18 +8,23 @@
 
 <body class="intranet-body">
 
-  <div class="contenedor pagina-tickets">x
+  <div class="contenedor pagina-tickets">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+      
       <div>
-        <h2 class="page-title" style="margin: 0;">Ticketera</h2>
-        <p class="page-description" style="margin: 0;">Listado de tickets recibidos por soporte. </p>
+        <% if (typeof user !== 'undefined' && user.role === 'admin') { %>
+          <h2 class="page-title" style="margin: 0;">Ticketera</h2>
+          <p class="page-description" style="margin: 0;">Listado de tickets recibidos por soporte.</p>
+        <% } else { %>
+          <h2 class="page-title" style="margin: 0;">Tus tickets</h2>
+          <p class="page-description" style="margin: 0;">Historial de tus requerimientos enviados.</p>
+        <% } %>
       </div>
       
       <a href="/sistemas/tickets/nuevo" class="btn btn-primario" style="margin-top: 0; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: 600; text-decoration: none;">
         <span style="font-size: 1.2rem; line-height: 1;">+</span> Abrir Nuevo Ticket
       </a>
     </div>
-
 
     <% if (!tickets || tickets.length === 0) { %>
       <p class="no-data">No hay tickets registrados.</p>
