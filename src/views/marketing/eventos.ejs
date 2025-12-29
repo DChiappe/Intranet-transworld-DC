@@ -16,11 +16,16 @@
   <% } else { %>
     <div class="grid-eventos">
       <% eventos.forEach(function(ev) { %>
-        <div class="card-evento">
-          <div class="icono-carpeta">
-            <div class="carpeta-tapa"></div>
-            <div class="carpeta-cuerpo"></div>
-          </div>
+        <div class="card-evento" style="overflow: hidden;"> <% if (ev.imagen) { %>
+            <div class="evento-thumb-container" style="width: 100%; height: 140px; background-color: #eee;">
+              <img src="<%= ev.imagen %>" alt="Portada <%= ev.nombre %>" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+          <% } else { %>
+            <div class="icono-carpeta" style="margin-top: 20px;"> <div class="carpeta-tapa"></div>
+              <div class="carpeta-cuerpo"></div>
+            </div>
+          <% } %>
+
           <div class="card-evento-texto">
             <h3><%= ev.nombre %></h3>
             
