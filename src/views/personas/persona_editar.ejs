@@ -5,7 +5,7 @@
 
   <h2>Editar Persona</h2>
 
-  <form action="/personas/editar/<%= persona.id %>" method="POST" class="form-general">
+  <form action="/personas/editar/<%= persona.id %>" method="POST" class="form-general" enctype="multipart/form-data">
     <div class="campo" style="margin-bottom: 15px;">
       <label for="nombre" style="display: block; margin-bottom: 5px; font-weight: bold;">Nombre Completo:</label>
       <input type="text" id="nombre" name="nombre" required 
@@ -24,6 +24,21 @@
       <label for="fecha_nacimiento" style="display: block; margin-bottom: 5px; font-weight: bold;">Fecha de Nacimiento:</label>
       <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required 
              value="<%= new Date(persona.fecha_nacimiento).toISOString().split('T')[0] %>"
+             style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
+    <div class="campo" style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold;">Foto Actual:</label>
+      <% if (persona.foto) { %>
+        <img src="<%= persona.foto %>" alt="Foto actual" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc;">
+      <% } else { %>
+        <p style="color: #999; font-style: italic;">Sin foto asignada</p>
+      <% } %>
+    </div>
+
+    <div class="campo" style="margin-bottom: 20px;">
+      <label for="foto" style="display: block; margin-bottom: 5px; font-weight: bold;">Cambiar Foto:</label>
+      <input type="file" id="foto" name="foto" accept="image/*"
              style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
     </div>
 

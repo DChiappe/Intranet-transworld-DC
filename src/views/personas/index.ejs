@@ -1,4 +1,4 @@
-<h2>Personas</h2>
+<h2>Personas y Cultura</h2>
 <p>Conoce la estructura organizacional, la cultura de la empresa y los cumpleaños del equipo.</p>
 
 <div class="grid-opciones" style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-start;">
@@ -34,7 +34,20 @@
     <tbody>
       <% personas.forEach(p => { %>
         <tr>
-          <td><%= p.nombre %></td>
+          <td>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span><%= p.nombre %></span>
+              
+              <% if (p.foto) { %>
+                <img src="<%= p.foto %>" alt="Foto" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <% } else { %>
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #999;">
+                  <%= p.nombre.charAt(0) %>
+                </div>
+              <% } %>
+            </div>
+          </td>
+
           <td><%= p.area %></td>
           <td>
             <%= new Date(p.fecha_nacimiento).toLocaleDateString('es-CL', {

@@ -6,7 +6,7 @@
   <h2>Agregar Nueva Persona</h2>
   <p style="margin-bottom: 20px; color: #666;">Ingresa los datos del nuevo colaborador.</p>
 
-  <form action="/personas/crear" method="POST" class="form-general">
+  <form action="/personas/crear" method="POST" class="form-general" enctype="multipart/form-data">
     <div class="campo" style="margin-bottom: 15px;">
       <label for="nombre" style="display: block; margin-bottom: 5px; font-weight: bold;">Nombre Completo:</label>
       <input type="text" id="nombre" name="nombre" required 
@@ -25,6 +25,12 @@
     <div class="campo" style="margin-bottom: 20px;">
       <label for="fecha_nacimiento" style="display: block; margin-bottom: 5px; font-weight: bold;">Fecha de Nacimiento:</label>
       <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required 
+             style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
+    <div class="campo" style="margin-bottom: 20px;">
+      <label for="foto" style="display: block; margin-bottom: 5px; font-weight: bold;">Foto (Opcional):</label>
+      <input type="file" id="foto" name="foto" accept="image/*"
              style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
     </div>
 
