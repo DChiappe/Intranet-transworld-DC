@@ -21,7 +21,9 @@ function safeEqualHex(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
-// GET /login
+// ==========================================
+// LOGIN
+// ==========================================
 router.get('/login', (req, res) => {
   if (req.session && req.session.user) return res.redirect('/');
 
@@ -46,7 +48,6 @@ router.get('/login', (req, res) => {
   });
 });
 
-// POST /login
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   const validUser = process.env.AUTH_USER || 'admin';
@@ -60,7 +61,7 @@ router.post('/login', async (req, res) => {
   try {
     const email = String(username || '').trim().toLowerCase();
     
-    // --- CAMBIO AQUÍ: Agregamos 'foto' a la consulta ---
+    // Incluimos 'foto' en la consulta
     const [rows] = await pool.query(
       'SELECT id, first_name, last_name, email, role, email_confirmed, password_hash, password_salt, foto FROM users WHERE email = ? LIMIT 1',
       [email]
@@ -96,13 +97,13 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // --- CAMBIO AQUÍ: Guardamos la foto en la sesión ---
+    // Guardamos usuario Y FOTO en sesión
     req.session.user = {
       id: u.id,
       username: `${u.first_name} ${u.last_name}`.trim(),
       email: u.email,
       role: u.role || null,
-      foto: u.foto // <--- IMPORTANTE
+      foto: u.foto 
     };
 
     return res.redirect('/');
@@ -117,7 +118,9 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// GET /register
+// ==========================================
+// REGISTRO
+// ==========================================
 router.get('/register', (req, res) => {
   if (req.session && req.session.user) return res.redirect('/');
   res.render('register', { 
@@ -127,7 +130,6 @@ router.get('/register', (req, res) => {
   });
 });
 
-// POST /register
 router.post('/register', async (req, res) => {
   try {
     const firstName = String(req.body.first_name || '').trim();
@@ -144,6 +146,7 @@ router.post('/register', async (req, res) => {
       });
     }
 
+    // Validación dominio
     if (!email.endsWith('@transworld.cl')) {
       return res.status(400).render('register', { 
         titulo: 'Registro', 
@@ -234,10 +237,107 @@ router.get('/confirm', async (req, res) => {
   }
 });
 
-// Rutas Forgot Password y Change Password se mantienen igual que tu versión anterior...
-// (Las omito aquí para brevedad, pero asegúrate de mantenerlas en tu archivo final)
-// ...
+// ==========================================
+// RECUPERAR CONTRASEÑA (Forgot Password)
+// ==========================================
 
+router.get('/forgot-password', (req, res) => {
+  res.render('forgot_password', { 
+    titulo: 'Recuperar contraseña',
+    error: null,
+    layout: false 
+  });
+});
+
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    
+    const [rows] = await pool.query('SELECT id, first_name FROM users WHERE email = ?', [cleanEmail]);
+    
+    if (!rows.length) {
+      return res.redirect('/login?reset=1');
+    }
+
+    const user = rows[0];
+
+    // Generar nueva contraseña aleatoria
+    const newPassword = crypto.randomBytes(4).toString('hex');
+    const saltHex = crypto.randomBytes(16).toString('hex');
+    const hashHex = pbkdf2Hash(newPassword, saltHex);
+
+    await pool.query(
+      'UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?',
+      [hashHex, saltHex, user.id]
+    );
+
+    await sendMail({
+      to: cleanEmail,
+      subject: 'Recuperación de contraseña - Intranet Transworld',
+      text: `Hola ${user.first_name},\n\nSe ha solicitado restablecer tu contraseña. Tu nueva contraseña temporal es:\n\n${newPassword}\n\nPor favor inicia sesión y cámbiala lo antes posible.\n`
+    });
+
+    res.redirect('/login?reset=1');
+
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).render('forgot_password', {
+      titulo: 'Recuperar contraseña',
+      error: 'Error interno. Intenta nuevamente.',
+      layout: false
+    });
+  }
+});
+
+// ==========================================
+// CAMBIAR CONTRASEÑA (Change Password)
+// ==========================================
+
+router.get('/change-password', (req, res) => {
+  if (!req.session || !req.session.user) return res.redirect('/login');
+  res.render('change_password', { titulo: 'Cambiar contraseña', error: null });
+});
+
+router.post('/change-password', async (req, res) => {
+  if (!req.session || !req.session.user) return res.redirect('/login');
+
+  const { old_password, new_password, confirm_password } = req.body;
+  const userId = req.session.user.id;
+
+  try {
+    if (new_password !== confirm_password) {
+      return res.render('change_password', { titulo: 'Cambiar contraseña', error: 'Las nuevas contraseñas no coinciden.' });
+    }
+    if (new_password.length < 6) {
+      return res.render('change_password', { titulo: 'Cambiar contraseña', error: 'La nueva contraseña debe tener al menos 6 caracteres.' });
+    }
+
+    const [rows] = await pool.query('SELECT password_hash, password_salt FROM users WHERE id = ?', [userId]);
+    if (!rows.length) return res.redirect('/login');
+
+    const u = rows[0];
+    const computed = pbkdf2Hash(old_password, u.password_salt);
+    if (!safeEqualHex(computed, u.password_hash)) {
+      return res.render('change_password', { titulo: 'Cambiar contraseña', error: 'La contraseña actual es incorrecta.' });
+    }
+
+    const newSalt = crypto.randomBytes(16).toString('hex');
+    const newHash = pbkdf2Hash(new_password, newSalt);
+
+    await pool.query('UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?', [newHash, newSalt, userId]);
+
+    res.redirect('/login?changed=1');
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).render('change_password', { titulo: 'Cambiar contraseña', error: 'Error interno.' });
+  }
+});
+
+// ==========================================
+// LOGOUT
+// ==========================================
 router.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
 });
