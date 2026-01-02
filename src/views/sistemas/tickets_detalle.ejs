@@ -13,90 +13,54 @@
     <h2 class="page-title">Ticket #<%= ticket.id %></h2>
 
     <dl class="ticket-detalle">
-      <dt>Título</dt>
-      <dd><%= ticket.titulo %></dd>
-
-      <dt>Descripción</dt>
-      <dd>
-        <pre class="ticket-descripcion"><%= ticket.descripcion %></pre>
-      </dd>
-
-      <dt>Solicitante</dt>
-      <dd><%= ticket.solicitante_nombre || '-' %> &lt;<%= ticket.solicitante_email %>&gt;</dd>
-
-      <dt>Área (categoría)</dt>
-      <dd><%= ticket.categoria || '-' %></dd>
-
-      <dt>Importancia (prioridad)</dt>
+      <dt>Título</dt> <dd><%= ticket.titulo %></dd>
+      <dt>Descripción</dt> <dd><pre class="ticket-descripcion"><%= ticket.descripcion %></pre></dd>
+      <dt>Solicitante</dt> <dd><%= ticket.solicitante_nombre || '-' %> &lt;<%= ticket.solicitante_email %>&gt;</dd>
+      <dt>Área</dt> <dd><%= ticket.categoria || '-' %></dd>
+      
+      <dt>Importancia</dt>
       <dd>
         <% 
           let clasePrioridad = 'badge-verde';
           if (ticket.prioridad === 'Alta') clasePrioridad = 'badge-roja';
           else if (ticket.prioridad === 'Media') clasePrioridad = 'badge-amarilla';
         %>
-        <span class="badge <%= clasePrioridad %>">
-          <%= ticket.prioridad || 'Media' %>
-        </span>
+        <span class="badge <%= clasePrioridad %>"><%= ticket.prioridad || 'Media' %></span>
       </dd>
 
       <dt>Estado</dt>
       <dd>
         <% 
-          let claseEstado = ticket.estado === 'Cerrado'
-            ? 'badge-estado-cerrado'
-            : 'badge-estado-abierto';
+          let claseEstado = 'badge-estado-abierto'; // Default rojo
+          let textoEstado = ticket.estado || 'Abierto';
+          
+          if (textoEstado === 'Cerrado') claseEstado = 'badge-estado-cerrado'; // Verde
+          else if (textoEstado === 'Resuelto') claseEstado = 'badge-amarilla'; // Amarillo (usando clase existente)
         %>
-        <span class="badge <%= claseEstado %>">
-          <%= ticket.estado || 'Abierto' %>
-        </span>
+        <span class="badge <%= claseEstado %>"><%= textoEstado %></span>
       </dd>
 
-      <dt>Fecha de creación</dt>
-      <dd class="small-text">
-        <% if (ticket.fecha_creacion && ticket.fecha_creacion.toLocaleString) { %>
-          <%= ticket.fecha_creacion.toLocaleString('es-CL') %>
-        <% } else { %>
-          <%= ticket.fecha_creacion %>
-        <% } %>
-      </dd>
-
-      <dt>Última actualización</dt>
-      <dd class="small-text">
-        <% if (ticket.fecha_actualizacion && ticket.fecha_actualizacion.toLocaleString) { %>
-          <%= ticket.fecha_actualizacion.toLocaleString('es-CL') %>
-        <% } else { %>
-          <%= ticket.fecha_actualizacion %>
-        <% } %>
-      </dd>
+      <dt>Creado</dt> 
+      <dd class="small-text"><%= ticket.fecha_creacion ? new Date(ticket.fecha_creacion).toLocaleString('es-CL') : '-' %></dd>
     </dl>
 
     <% 
-       // 1. Permiso de Admin/Soporte (definido en app.js)
-       const canReply = (typeof can !== 'undefined' && can.tickets_reply);
-
-       // 2. Verificación si es el Dueño del ticket
-       // 'usuario' está disponible en la vista gracias a res.locals.usuario en app.js
-       const currentUserEmail = (typeof usuario !== 'undefined' && usuario) ? usuario.email : '';
-       const isOwner = (ticket.solicitante_email === currentUserEmail);
-
-       // 3. Lógica combinada: Puede responder si es Admin O si es el Dueño
-       const showReplyForm = canReply || isOwner;
+       const canManage = (user.role === 'admin');
+       const isOwner = (ticket.solicitante_email === user.email);
     %>
 
-    <% if (canReply) { %>
+    <% if (canManage) { %>
       <div class="panel panel-actualizar-ticket">
-        <h3 class="panel-title">Actualizar área / importancia / estado</h3>
-        <form action="/tickets/<%= ticket.id %>/actualizar" method="POST" class="form-actualizar-ticket">
-          <label for="categoria">Área (categoría)</label>
+        <h3 class="panel-title">Gestionar Ticket</h3>
+        <form action="/sistemas/tickets/<%= ticket.id %>/actualizar" method="POST" class="form-actualizar-ticket">
+          
+          <label for="categoria">Categoría</label>
           <select id="categoria" name="categoria">
             <option value="Sistemas" <%= ticket.categoria === 'Sistemas' ? 'selected' : '' %>>Sistemas</option>
-            <option value="Personas" <%= ticket.categoria === 'Personas' ? 'selected' : '' %>>Personas</option>
-            <option value="Procesos" <%= ticket.categoria === 'Procesos' ? 'selected' : '' %>>Procesos</option>
-            <option value="Marketing" <%= ticket.categoria === 'Marketing' ? 'selected' : '' %>>Marketing</option>
             <option value="Otros" <%= ticket.categoria === 'Otros' ? 'selected' : '' %>>Otros</option>
-          </select>
+            </select>
 
-          <label for="prioridad">Importancia</label>
+          <label for="prioridad">Prioridad</label>
           <select id="prioridad" name="prioridad">
             <option value="Alta" <%= ticket.prioridad === 'Alta' ? 'selected' : '' %>>🔴 Alta</option>
             <option value="Media" <%= ticket.prioridad === 'Media' ? 'selected' : '' %>>🟡 Media</option>
@@ -106,68 +70,70 @@
           <label for="estado">Estado</label>
           <select id="estado" name="estado">
             <option value="Abierto" <%= ticket.estado === 'Abierto' ? 'selected' : '' %>>🔴 Abierto</option>
+            <option value="Resuelto" <%= ticket.estado === 'Resuelto' ? 'selected' : '' %>>🟡 Resuelto (Esperando confirmación)</option>
             <option value="Cerrado" <%= ticket.estado === 'Cerrado' ? 'selected' : '' %>>🟢 Cerrado</option>
           </select>
 
-          <button type="submit" class="btn btn-primario">Guardar cambios</button>
+          <button type="submit" class="btn btn-primario">Actualizar</button>
         </form>
-      </div>
-    <% } else { %>
-      <div class="panel panel-actualizar-ticket">
-        <h3 class="panel-title">Gestión del ticket</h3>
-        <p class="small-text">Solo el administrador puede cambiar el estado o prioridad.</p>
       </div>
     <% } %>
 
-    <% if (showReplyForm) { %>
+    <% if (isOwner && ticket.estado === 'Resuelto') { %>
+      <div class="panel" style="background-color: #fff3cd; border: 1px solid #ffeeba;">
+        <h3 class="panel-title" style="color: #856404;">💡 El soporte ha marcado este ticket como Resuelto</h3>
+        <p style="margin-bottom: 15px;">Por favor, confirma si el problema se solucionó o si persiste.</p>
+        
+        <div style="display: flex; gap: 10px;">
+          <form action="/sistemas/tickets/<%= ticket.id %>/confirmar" method="POST">
+            <button type="submit" class="btn btn-primario" style="background-color: #28a745; border: none;">
+              ✅ Sí, funciona (Cerrar Ticket)
+            </button>
+          </form>
+
+          <form action="/sistemas/tickets/<%= ticket.id %>/rechazar" method="POST">
+            <button type="submit" class="btn btn-primario" style="background-color: #dc3545; border: none;">
+              ❌ No, aún falla (Reabrir Ticket)
+            </button>
+          </form>
+        </div>
+      </div>
+    <% } %>
+
+    <% if ( (canManage || isOwner) && ticket.estado !== 'Cerrado' ) { %>
       <div class="panel panel-responder">
-        <h3 class="panel-title">Agregar una respuesta</h3>
-        <form action="/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
-          <label for="asunto_respuesta">Asunto</label>
-          <input
-            type="text"
-            id="asunto_respuesta"
-            name="asunto_respuesta"
-            placeholder="Opcional: si lo dejas vacío se genera uno por defecto"
-          />
+        <h3 class="panel-title">Agregar mensaje</h3>
+        <form action="/sistemas/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
+          <% if (canManage) { %>
+            <label for="asunto_respuesta">Asunto (Opcional)</label>
+            <input type="text" id="asunto_respuesta" name="asunto_respuesta" placeholder="Ej: Solicitud de más datos">
+          <% } %>
 
           <label for="mensaje_respuesta">Mensaje</label>
-          <textarea
-            id="mensaje_respuesta"
-            name="mensaje_respuesta"
-            rows="6"
-            required
-          ></textarea>
-
-          <button type="submit" class="btn btn-primario">Enviar respuesta</button>
+          <textarea id="mensaje_respuesta" name="mensaje_respuesta" rows="4" required></textarea>
+          <button type="submit" class="btn btn-primario">Enviar mensaje</button>
         </form>
       </div>
+    <% } else if (ticket.estado === 'Cerrado') { %>
+      <div class="mensaje-info">Este ticket está cerrado y no admite más respuestas.</div>
     <% } %>
 
-    <% if (showReplyForm) { %>
-      <div class="panel panel-historial">
-        <h3 class="panel-title">Historial de respuestas</h3>
-        <% if (respuestas && respuestas.length > 0) { %>
-          <% respuestas.forEach(r => { %>
-            <div class="respuesta-item">
-              <div class="respuesta-header">
-                <strong class="respuesta-remitente"><%= r.remitente %></strong>
-                <span class="small-text respuesta-fecha">
-                  <% if (r.fecha && r.fecha.toLocaleString) { %>
-                    - <%= r.fecha.toLocaleString('es-CL') %>
-                  <% } else { %>
-                    - <%= r.fecha %>
-                  <% } %>
-                </span>
-              </div>
-              <pre class="respuesta-mensaje"><%= r.mensaje %></pre>
+    <div class="panel panel-historial">
+      <h3 class="panel-title">Historial de comunicación</h3>
+      <% if (respuestas && respuestas.length > 0) { %>
+        <% respuestas.forEach(r => { %>
+          <div class="respuesta-item">
+            <div class="respuesta-header">
+              <strong class="respuesta-remitente"><%= r.remitente %></strong>
+              <span class="small-text"><%= r.fecha ? new Date(r.fecha).toLocaleString('es-CL') : '' %></span>
             </div>
-          <% }) %>
-        <% } else { %>
-          <p class="small-text">No hay respuestas registradas aún.</p>
-        <% } %>
-      </div>
-    <% } %>
+            <pre class="respuesta-mensaje"><%= r.mensaje %></pre>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p class="small-text">No hay mensajes.</p>
+      <% } %>
+    </div>
 
   </div>
 </body>

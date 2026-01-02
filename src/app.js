@@ -9,6 +9,9 @@ const path = require('path');
 const session = require('express-session');
 const expressLayouts = require('express-ejs-layouts');
 
+// IMPORTANTE: Requerimos la DB para la tarea automática
+const db = require('./db'); 
+
 // ================================
 // Importación de Rutas
 // ================================
@@ -17,7 +20,7 @@ const indexRoutes = require('./routes/index');
 const procesosRoutes = require('./routes/procesos');
 const personasRoutes = require('./routes/personas');
 const sistemasRoutes = require('./routes/sistemas'); // Listados y Vistas
-const ticketsRoutes = require('./routes/tickets');   // Acciones (Crear, Responder, Editar) <--- AGREGADO
+const ticketsRoutes = require('./routes/tickets');   // Acciones (Crear, Responder, Editar)
 const marketingRoutes = require('./routes/marketing');
 const rolesRoutes = require('./routes/roles');
 const docsRoutes = require('./routes/docs');
@@ -103,8 +106,8 @@ app.use('/', authRoutes);
 app.use('/', requireAuth, indexRoutes);
 app.use('/procesos', requireAuth, procesosRoutes);
 app.use('/personas', requireAuth, personasRoutes);
-app.use('/sistemas', requireAuth, sistemasRoutes); // Maneja /sistemas/tickets (Vistas)
-app.use('/tickets', requireAuth, ticketsRoutes);   // Maneja /tickets/... (Acciones) <--- AGREGADO
+app.use('/sistemas', requireAuth, sistemasRoutes); 
+app.use('/tickets', requireAuth, ticketsRoutes);   
 app.use('/marketing', requireAuth, marketingRoutes);
 app.use('/roles', requireAuth, rolesRoutes);
 app.use('/docs', requireAuth, docsRoutes);
@@ -116,6 +119,35 @@ app.use('/noticias', requireAuth, noticiasRoutes);
 app.use((req, res) => {
   res.status(404).render('404', { titulo: 'Página no encontrada' });
 });
+
+// ==========================================
+// TAREA AUTOMÁTICA: CERRAR TICKETS ANTIGUOS
+// ==========================================
+function iniciarTareaCierreTickets() {
+  // Se ejecuta cada 1 hora (3600000 ms)
+  setInterval(async () => {
+    try {
+      // Busca tickets 'Resueltos' cuya fecha de resolución sea mayor a 3 días atrás
+      const sql = `
+        UPDATE tickets 
+        SET estado = 'Cerrado', fecha_cierre = NOW(), cierre_automatico = 1
+        WHERE estado = 'Resuelto' 
+        AND fecha_resolucion < (NOW() - INTERVAL 3 DAY)
+      `;
+      
+      const [result] = await db.query(sql);
+      
+      if (result && result.affectedRows > 0) {
+        console.log(`[CRON] Se cerraron automáticamente ${result.affectedRows} tickets resueltos hace más de 3 días.`);
+      }
+    } catch (err) {
+      console.error('[CRON] Error en tarea automática de tickets:', err);
+    }
+  }, 3600000); 
+}
+
+// Iniciar el cron job
+iniciarTareaCierreTickets();
 
 // ================================
 // Iniciar servidor
