@@ -13,17 +13,15 @@ const upload = multer({ storage });
 // ==========================================
 async function renderDocView(req, res, tipo, vista, titulo) {
   try {
-    // Obtenemos los documentos de la BD en lugar de Cloudinary directo
     const sql = 'SELECT * FROM documentos WHERE tipo = ? ORDER BY fecha_creacion DESC';
     const [rows] = await db.query(sql, [tipo]);
 
-    // Mapeamos para que la vista reciba el formato esperado
     const archivos = rows.map(row => ({
-      id: row.id, // ID de MySQL para editar
+      id: row.id,
       url: row.url,
-      name: row.nombre, // Nombre personalizado de la BD
+      name: row.nombre,
       public_id: row.public_id,
-      format: row.url.split('.').pop() // Extraer formato simple
+      format: row.url.split('.').pop()
     }));
 
     res.render(vista, {
@@ -47,13 +45,12 @@ router.get('/protocolos', (req, res) => renderDocView(req, res, 'protocolo', 'pr
 router.get('/reglamento', (req, res) => renderDocView(req, res, 'reglamento', 'procesos/reglamento', 'Reglamento Interno'));
 
 // ==========================================
-// ACCIONES: SUBIR (Con nombre personalizado)
+// ACCIONES: SUBIR
 // ==========================================
 router.post('/:tipo/subir', requireRole('admin', 'control_y_seguridad', 'teresa'), upload.single('archivo'), async (req, res) => {
-  const { tipo } = req.params; // 'procedimientos', 'protocolos', 'reglamento'
-  const nombrePersonalizado = req.body.nombre_archivo || req.file.originalname; // Nombre del input o del archivo
+  const { tipo } = req.params;
+  const nombrePersonalizado = req.body.nombre_archivo || req.file.originalname;
 
-  // Mapear ruta URL a tipo ENUM de base de datos
   const tipoMap = {
     'procedimientos': 'procedimiento',
     'protocolos': 'protocolo',
@@ -73,17 +70,18 @@ router.post('/:tipo/subir', requireRole('admin', 'control_y_seguridad', 'teresa'
       stream.end(req.file.buffer);
     });
 
-    // 2. Guardar en MySQL con el nombre personalizado
+    // 2. Guardar en MySQL
     await db.query(
       'INSERT INTO documentos (nombre, tipo, url, public_id, usuario_id) VALUES (?, ?, ?, ?, ?)',
       [nombrePersonalizado, tipoDB, result.secure_url, result.public_id, req.session.user.id]
     );
 
-    // Historial
-    await db.query('INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
-      [req.session.user.id, `subió un archivo a ${tipo}`, 'Procesos', `/procesos/${tipo}`]);
+    // 3. REGISTRAR EN HISTORIAL (Subida)
+    if (req.session.user && req.session.user.id) {
+      await db.query('INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
+        [req.session.user.id, `subió un archivo a ${tipo}`, 'Procesos', `/procesos/${tipo}`]);
+    }
 
-    // Redirección con mensaje exitoso (?ok=...)
     res.redirect(`/procesos/${tipo}?ok=Documento subido exitosamente`);
 
   } catch (err) {
@@ -100,8 +98,6 @@ router.post('/documento/editar', requireRole('admin', 'control_y_seguridad', 'te
 
   try {
     await db.query('UPDATE documentos SET nombre = ? WHERE id = ?', [nuevo_nombre, id]);
-    
-    // Redirección con mensaje
     res.redirect(`${return_to}?ok=Nombre actualizado correctamente`);
   } catch (err) {
     console.error('Error editando:', err);
@@ -110,10 +106,10 @@ router.post('/documento/editar', requireRole('admin', 'control_y_seguridad', 'te
 });
 
 // ==========================================
-// ACCIONES: ELIMINAR
+// ACCIONES: ELIMINAR (MODIFICADO)
 // ==========================================
 router.post('/:tipo/eliminar', requireRole('admin', 'control_y_seguridad', 'teresa'), async (req, res) => {
-  const { public_id, db_id } = req.body; // Recibimos ID de BD y PublicID
+  const { public_id, db_id } = req.body;
   const { tipo } = req.params;
 
   try {
@@ -125,6 +121,18 @@ router.post('/:tipo/eliminar', requireRole('admin', 'control_y_seguridad', 'tere
     // 2. Borrar de MySQL
     if (db_id) {
         await db.query('DELETE FROM documentos WHERE id = ?', [db_id]);
+    }
+
+    // 3. REGISTRAR EN HISTORIAL (Eliminación) - NUEVO
+    if (req.session.user && req.session.user.id) {
+      await db.query('INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
+        [
+          req.session.user.id, 
+          `eliminó un archivo de ${tipo}`, // Acción: "eliminó un archivo de procedimientos"
+          'Procesos', 
+          `/procesos/${tipo}`
+        ]
+      );
     }
 
     res.redirect(`/procesos/${tipo}?ok=Documento eliminado correctamente`);

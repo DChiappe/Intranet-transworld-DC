@@ -145,10 +145,31 @@ function iniciarTareaCierreTickets() {
     }
   }, 3600000); 
 }
-
+// ==========================================
+// TAREA AUTOMÁTICA: LIMPIEZA DE HISTORIAL (5 DÍAS)
+// ==========================================
+function iniciarLimpiezaHistorial() {
+  // Se ejecuta una vez al día (86400000 ms = 24 horas)
+  setInterval(async () => {
+    try {
+      const sql = `
+        DELETE FROM historial_cambios 
+        WHERE fecha < (NOW() - INTERVAL 5 DAY)
+      `;
+      
+      const [result] = await db.query(sql);
+      
+      if (result && result.affectedRows > 0) {
+        console.log(`[CRON] Se eliminaron ${result.affectedRows} registros antiguos del historial.`);
+      }
+    } catch (err) {
+      console.error('[CRON] Error en tarea de limpieza de historial:', err);
+    }
+  }, 86400000); // 24 horas
+}
 // Iniciar el cron job
 iniciarTareaCierreTickets();
-
+iniciarLimpiezaHistorial();
 // ================================
 // Iniciar servidor
 // ================================
