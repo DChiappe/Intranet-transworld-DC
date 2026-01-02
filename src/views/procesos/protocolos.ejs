@@ -11,7 +11,13 @@
       <h3 class="panel-title">Subir nuevo protocolo</h3>
 
       <form action="/procesos/protocolos/subir" method="POST" enctype="multipart/form-data" class="form-ticket">
+        <label style="font-weight: bold; display: block; margin-bottom: 5px;">Nombre del documento</label>
+        <input type="text" name="nombre_archivo" placeholder="Ej: Protocolo de Seguridad en Obra" required 
+               style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+
+        <label style="font-weight: bold; display: block; margin-bottom: 5px;">Archivo</label>
         <input type="file" name="archivo" required style="margin-bottom: 10px;" accept=".pdf,.doc,.docx">
+        
         <button type="submit" class="btn btn-primario">Subir archivo</button>
       </form>
     </div>
@@ -29,11 +35,12 @@
           <% 
              let thumbUrl = archivo.url;
              if (archivo.format === 'pdf' || archivo.url.endsWith('.pdf')) {
-                if (archivo.resource_type === 'image') {
-                   thumbUrl = archivo.url.replace('.pdf', '.jpg');
-                } else {
-                   thumbUrl = archivo.url; 
+                // Truco Cloudinary: portada jpg de pdf
+                if (archivo.url.includes('/upload/')) {
+                    thumbUrl = archivo.url.replace(/\.pdf$/, '.jpg');
                 }
+             } else if (archivo.format === 'doc' || archivo.format === 'docx') {
+                thumbUrl = '/img/doc-placeholder.png'; 
              }
           %>
           
@@ -43,34 +50,35 @@
                 src="<%= thumbUrl %>" 
                 alt="Vista previa" 
                 class="preview-img"
-                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                onerror="this.src='https://via.placeholder.com/300x200?text=Documento'"
               >
-              <div class="icon-fallback" style="display: none;">
-                📄
-                <span>Ver Documento</span>
-              </div>
+              <div class="icon-fallback" style="display: none;">📄</div>
             </div>
 
             <div class="card-body">
               <h4 class="card-title" title="<%= archivo.name %>"><%= archivo.name %></h4>
               
-              <div class="card-actions">
+              <div class="card-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
                 <a href="<%= archivo.url %>" target="_blank" download class="btn-secundario" style="font-size: 0.8rem; padding: 4px 8px;">
                   ⬇ Descargar
                 </a>
 
                 <% if (canWrite) { %>
-                  <form
-                    action="/procesos/protocolos/<%= encodeURIComponent(archivo.name) %>/eliminar"
-                    method="POST"
-                    onsubmit="return confirm('¿Eliminar este archivo?');"
-                    style="margin:0;"
-                  >
-                    <input type="hidden" name="public_id" value="<%= archivo.public_id %>">
-                    <button type="submit" style="background:none; border:none; cursor:pointer; font-size:1.1rem;" title="Eliminar">
-                      🗑️
+                  <div style="display: flex; gap: 8px;">
+                    
+                    <button type="button" onclick="abrirModalEditar('<%= archivo.id %>', '<%= archivo.name %>')" 
+                            style="background:none; border:none; cursor:pointer; font-size:1.2rem;" title="Editar Nombre">
+                      ✏️
                     </button>
-                  </form>
+
+                    <form action="/procesos/protocolos/eliminar" method="POST" onsubmit="return confirm('¿Eliminar este archivo?');" style="margin:0;">
+                      <input type="hidden" name="public_id" value="<%= archivo.public_id %>">
+                      <input type="hidden" name="db_id" value="<%= archivo.id %>">
+                      <button type="submit" style="background:none; border:none; cursor:pointer; font-size:1.2rem;" title="Eliminar">
+                        🗑️
+                      </button>
+                    </form>
+                  </div>
                 <% } %>
               </div>
             </div>
@@ -98,12 +106,28 @@
   <div class="modal-content">
     <div class="modal-header">
       <h3 id="modalTitle" style="margin:0; font-size:1.1rem;">Visualizador</h3>
-      <div style="display: flex; gap: 15px; align-items: center;">
-        <a id="btnNewTab" href="#" target="_blank" style="font-size: 0.9rem; color: #007bff; text-decoration: none;">Abrir en nueva pestaña</a>
-        <span class="modal-close" onclick="cerrarModal()">&times;</span>
-      </div>
+      <span class="modal-close" onclick="cerrarModal()">&times;</span>
     </div>
     <iframe id="pdfFrame" class="pdf-frame" src=""></iframe>
+  </div>
+</div>
+
+<div id="editModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000;">
+  <div class="modal-content" style="max-width: 400px; margin: 100px auto; background: white; padding: 20px; border-radius: 8px;">
+    <h3 style="margin-top: 0;">Editar Nombre</h3>
+    
+    <form action="/procesos/documento/editar" method="POST">
+      <input type="hidden" name="return_to" value="/procesos/protocolos">
+      <input type="hidden" id="edit_id" name="id">
+      
+      <label style="display:block; margin-bottom: 5px;">Nuevo Nombre:</label>
+      <input type="text" id="edit_nombre" name="nuevo_nombre" required style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px;">
+      
+      <div style="text-align: right;">
+        <button type="button" onclick="document.getElementById('editModal').style.display='none'" style="padding: 8px 15px; background: #ccc; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">Cancelar</button>
+        <button type="submit" class="btn btn-primario" style="padding: 8px 15px;">Guardar</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -112,29 +136,19 @@
     const modal = document.getElementById('pdfModal');
     const iframe = document.getElementById('pdfFrame');
     const title = document.getElementById('modalTitle');
-    const btnNewTab = document.getElementById('btnNewTab');
-    
+    iframe.src = 'https://docs.google.com/gview?url=' + encodeURIComponent(url) + '&embedded=true';
     title.innerText = nombre || 'Documento';
-    btnNewTab.href = url;
-
-    // Usar Google Docs Viewer
-    const googleViewerUrl = 'https://docs.google.com/gview?url=' + encodeURIComponent(url) + '&embedded=true';
-    
-    iframe.src = googleViewerUrl;
     modal.style.display = 'block';
-    document.body.style.overflow = 'hidden';
   }
-
   function cerrarModal(event) {
     if (event && event.target !== document.getElementById('pdfModal') && event.target.className !== 'modal-close') return;
-    const modal = document.getElementById('pdfModal');
-    const iframe = document.getElementById('pdfFrame');
-    modal.style.display = 'none';
-    iframe.src = '';
-    document.body.style.overflow = 'auto';
+    document.getElementById('pdfModal').style.display = 'none';
+    document.getElementById('pdfFrame').src = '';
   }
-  
-  document.addEventListener('keydown', function(event) {
-    if (event.key === "Escape") cerrarModal();
-  });
+
+  function abrirModalEditar(id, nombreActual) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_nombre').value = nombreActual;
+    document.getElementById('editModal').style.display = 'block';
+  }
 </script>

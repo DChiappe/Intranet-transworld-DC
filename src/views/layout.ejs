@@ -11,38 +11,58 @@
         background: url('/img/fondo-home.png') no-repeat center center fixed !important;
         background-size: cover !important;
       }
-      main { 
-        background: transparent !important; 
-        min-height: 80vh; 
+      main { background: transparent !important; min-height: 80vh; }
+
+      /* --- TOAST NOTIFICATION (MENSAJE VERDE) --- */
+      #toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: none; /* Oculto por defecto */
+      }
+      
+      .toast-success {
+        background-color: #28a745;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+        animation: slideIn 0.5s ease-out;
+      }
+
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
       }
     </style>
 </head>
 
 <body>
 
-<% 
-  // 1. Detectar usuario disponible (Sesión o BD)
-  const currentUser = (typeof usuario !== 'undefined' && usuario) ? usuario : ((typeof user !== 'undefined' && user) ? user : null);
+  <div id="toast-container">
+    <div class="toast-success">
+      <span>✅</span>
+      <span id="toast-message">Operación exitosa</span>
+    </div>
+  </div>
 
-  // 2. Determinar el nombre a mostrar con seguridad
-  let displayName = 'Usuario';
-  if (currentUser) {
-    if (currentUser.username) {
-      // Caso: Objeto de sesión (auth.js)
-      displayName = currentUser.username;
-    } else if (currentUser.first_name) {
-      // Caso: Objeto de base de datos (users table)
-      displayName = currentUser.first_name + (currentUser.last_name ? ' ' + currentUser.last_name : '');
-    } else if (currentUser.nombre) {
-      // Caso: Otras tablas (ej. personas)
-      displayName = currentUser.nombre;
+  <% 
+    const currentUser = (typeof usuario !== 'undefined' && usuario) ? usuario : ((typeof user !== 'undefined' && user) ? user : null);
+    let displayName = 'Usuario';
+    if (currentUser) {
+      if (currentUser.username) displayName = currentUser.username;
+      else if (currentUser.first_name) displayName = currentUser.first_name + (currentUser.last_name ? ' ' + currentUser.last_name : '');
+      else if (currentUser.nombre) displayName = currentUser.nombre;
     }
-  }
-%>
+  %>
 
 <header>
   <div class="header-inner">
-    
     <div class="logo-container">
       <a href="/" title="Ir al Inicio">
         <img src="/img/PNG-LOGO-TW-2.png" alt="Transworld" class="logo-tw">
@@ -52,7 +72,6 @@
     <nav class="main-nav">      
       <div class="nav-item"><a href="/">Inicio</a></div>
       <div class="nav-item"><a href="/noticias">Noticias</a></div>
-
       <div class="nav-item">
         <a href="/procesos">Procesos y Documentos</a>
         <div class="dropdown-menu">
@@ -61,23 +80,19 @@
           <a href="/procesos/reglamento">Reglamento interno</a>
         </div>
       </div>
-
       <div class="nav-item">
         <a href="/personas">Personas</a>
         <div class="dropdown-menu">
           <a href="/personas/organigrama">Organigrama</a>
         </div>
       </div>
-
       <div class="nav-item"><a href="/sistemas/tickets">Ticketera</a></div>
-
       <div class="nav-item">
         <a href="/marketing">Marketing y Eventos</a>
         <div class="dropdown-menu">
           <a href="/marketing/eventos">Galería de eventos</a>
         </div>
       </div>
-      
       <% if (currentUser && currentUser.role === 'admin') { %>
         <a href="/roles">Roles</a>
       <% } %>
@@ -86,7 +101,6 @@
     <% if (currentUser) { %>
       <div class="nav-user">
         <a href="/perfil" title="Ir a mi perfil" class="user-name" style="display: flex; align-items: center; gap: 8px;">
-          
           <% if (currentUser.foto) { %>
             <img src="<%= currentUser.foto %>" alt="Foto" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #fff;">
           <% } else { %>
@@ -94,12 +108,10 @@
               <%= displayName.charAt(0).toUpperCase() %>
             </div>
           <% } %>
-
           <strong><%= displayName %></strong>
         </a>
       </div>
     <% } %>
-
   </div>
 </header>
 
@@ -112,29 +124,23 @@
     <div class="footer-icon">
       <a href="/" title="Ir al Inicio" style="text-decoration: none; color: inherit;">🏠</a>
     </div>
-    
     <div class="footer-col">
       <a href="/procesos/protocolos">Protocolos</a>
       <a href="/procesos/reglamento">Reglamento interno</a>
       <a href="/procesos/procedimientos">Procedimientos</a>
     </div>
-    
     <div class="footer-col">
        <a href="https://www.transworld.cl/nosotros/" target="_blank" rel="noopener noreferrer">Nosotros</a>
     </div>
-
     <div class="footer-col">
       <a href="/noticias">Noticias</a>
     </div>
-
     <div class="footer-col">
       <a href="/marketing/eventos">Eventos</a>
     </div>
-
     <div class="footer-col">
       <a href="/sistemas/tickets">Soporte</a>
     </div>
-    
     <div class="footer-col">
       <strong>Links externos</strong>
       <a href="https://transworld.mirexmas.com/" target="_blank" rel="noopener noreferrer">Rex+</a>
@@ -142,6 +148,28 @@
     </div>
   </div>
 </footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const okMsg = urlParams.get('ok'); // Busca ?ok=Mensaje en la URL
+
+    if (okMsg) {
+      const toastContainer = document.getElementById('toast-container');
+      const toastMessage = document.getElementById('toast-message');
+      
+      toastMessage.textContent = okMsg;
+      toastContainer.style.display = 'block';
+
+      // Ocultar después de 4 segundos
+      setTimeout(() => {
+        toastContainer.style.display = 'none';
+        // Limpiar la URL para que no salga al recargar
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }, 4000);
+    }
+  });
+</script>
 
 </body>
 </html>
