@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <style>
+      body {
+        background: url('/img/fondo-home.png') no-repeat center center fixed !important;
+        background-size: cover !important;
+      }
+  </style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= titulo %></title>
@@ -12,7 +18,9 @@
   <div class="login-page">
     <div class="card-login">
       <h2>Acceso a la intranet</h2>
-
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.5);">
+              <%= displayName.charAt(0).toUpperCase() %>
+            </div>
       <% if (locals.error) { %>
         <div class="mensaje-error" style="text-align: center;"><%= error %></div>
       <% } %>
