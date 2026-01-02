@@ -79,7 +79,7 @@ router.post('/:tipo/subir', requireRole('admin', 'control_y_seguridad', 'teresa'
     // 3. REGISTRAR EN HISTORIAL (Subida)
     if (req.session.user && req.session.user.id) {
       await db.query('INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
-        [req.session.user.id, `subió un archivo a ${tipo}`, 'Procesos', `/procesos/${tipo}`]);
+        [req.session.user.id, `subió un archivo a ${tipo}`, '', `/procesos/${tipo}`]);
     }
 
     res.redirect(`/procesos/${tipo}?ok=Documento subido exitosamente`);
@@ -129,7 +129,7 @@ router.post('/:tipo/eliminar', requireRole('admin', 'control_y_seguridad', 'tere
         [
           req.session.user.id, 
           `eliminó un archivo de ${tipo}`, // Acción: "eliminó un archivo de procedimientos"
-          'Procesos', 
+          '', 
           `/procesos/${tipo}`
         ]
       );
