@@ -161,4 +161,49 @@ router.post('/eventos/:slug/eliminar', requireRole(...WRITE_ROLES), async (req, 
   }
 });
 
+// ==========================================
+// NUEVO: RUTAS PARA EDITAR EVENTO (TÍTULO Y DESCRIPCIÓN)
+// ==========================================
+
+// GET: Mostrar formulario de edición
+router.get('/eventos/:slug/editar', requireRole(...WRITE_ROLES), async (req, res) => {
+  const { slug } = req.params;
+  try {
+    const [rows] = await db.query('SELECT * FROM eventos WHERE slug = ?', [slug]);
+    if (rows.length === 0) return res.status(404).send('Evento no encontrado');
+
+    res.render('marketing/eventos_editar', {
+      titulo: 'Editar Evento',
+      evento: rows[0]
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al cargar formulario de edición');
+  }
+});
+
+// POST: Procesar la edición
+router.post('/eventos/:slug/editar', requireRole(...WRITE_ROLES), async (req, res) => {
+  const { slug } = req.params;
+  const { nombre, descripcion } = req.body;
+
+  try {
+    // Actualizamos Nombre y Descripción. 
+    // NOTA: No actualizamos el 'slug' para no romper la conexión con la carpeta de imágenes en Cloudinary.
+    await db.query('UPDATE eventos SET nombre = ?, descripcion = ? WHERE slug = ?', 
+      [nombre, descripcion, slug]);
+
+    // Historial
+    if (req.session.user && req.session.user.id) {
+      await db.query('INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
+        [req.session.user.id, 'editó información del evento', 'Galería de Eventos', `/marketing/eventos/${slug}`]);
+    }
+
+    res.redirect(`/marketing/eventos/${slug}?ok=Evento actualizado correctamente`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al actualizar el evento');
+  }
+});
+
 module.exports = router;

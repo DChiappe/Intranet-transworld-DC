@@ -1,0 +1,28 @@
+<div class="contenedor" style="max-width: 600px; margin: 0 auto;">
+  <div style="margin-bottom: 20px;">
+    <a href="/marketing/eventos/<%= evento.slug %>" class="link-volver">← Cancelar y volver</a>
+  </div>
+
+  <h2 class="page-title">Editar Evento</h2>
+  <p class="page-description">Modifica el nombre o la descripción del evento.</p>
+
+  <div class="panel">
+    <form action="/marketing/eventos/<%= evento.slug %>/editar" method="POST" class="form-ticket">
+      
+      <label for="nombre" style="font-weight: bold; display: block; margin-bottom: 5px;">Nombre del Evento</label>
+      <input type="text" id="nombre" name="nombre" value="<%= evento.nombre %>" required 
+             style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem;">
+      <p class="small-text" style="color: #666; margin-top: 5px; margin-bottom: 15px;">
+        Nota: Cambiar el nombre no cambiará el enlace (URL) del evento para mantener la integridad de las fotos.
+      </p>
+
+      <label for="descripcion" style="font-weight: bold; display: block; margin-bottom: 5px;">Descripción</label>
+      <textarea id="descripcion" name="descripcion" rows="4" 
+                style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit;"><%= evento.descripcion %></textarea>
+
+      <div style="margin-top: 25px; text-align: right;">
+        <button type="submit" class="btn btn-primario">Guardar Cambios</button>
+      </div>
+    </form>
+  </div>
+</div>

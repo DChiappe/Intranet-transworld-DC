@@ -3,7 +3,17 @@
     <a href="/marketing/eventos" class="link-volver">← Volver a Eventos</a>
   </div>
 
-  <h2 class="page-title">Evento: <%= evento.nombre %></h2>
+  <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+    <h2 class="page-title" style="margin: 0;">Evento: <%= evento.nombre %></h2>
+    
+    <% if (can.eventos_write) { %>
+      <a href="/marketing/eventos/<%= evento.slug %>/editar" title="Editar título y descripción" 
+         style="text-decoration: none; font-size: 1.2rem; filter: grayscale(100%); transition: filter 0.2s;">
+        ✏️
+      </a>
+      <style>a[title="Editar título y descripción"]:hover { filter: none !important; }</style>
+    <% } %>
+  </div>
   
   <% if (evento.descripcion) { %>
     <p class="page-description" style="margin-bottom: 25px; font-style: italic; color: #555;">
