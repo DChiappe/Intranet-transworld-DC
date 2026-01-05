@@ -369,13 +369,12 @@ table.tabla tr:nth-child(even) td { background: #f9fbff; }
 table.tabla tr:hover td { background: #eef3ff; }
 .link-ticket { color: #003a70; text-decoration: none; font-weight: 600; }
 .link-ticket:hover { text-decoration: underline; }
-.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; color: #ffffff; font-weight: 600; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; color: #000000; font-weight: 600; }
 .badge-roja { background: #d32f2f; }
 .badge-amarilla { background: #fbc02d; color: #000; }
 .badge-verde { background: #388e3c; }
 .badge-estado-abierto { background: #d32f2f; }
 .badge-estado-cerrado { background: #388e3c; }
-.badge2 { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; color: #ffffff; font-weight: 600; }
 .ticket-detalle { background: #ffffff; padding: 16px 18px; border-radius: 8px; border: 1px solid #dde3ec; margin-bottom: 20px; }
 .ticket-detalle dt { font-weight: 600; margin-top: 8px; }
 .ticket-detalle dd { margin-left: 0; margin-bottom: 4px; }
