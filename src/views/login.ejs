@@ -18,9 +18,7 @@
   <div class="login-page">
     <div class="card-login">
       <h2>Acceso a la intranet</h2>
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.5);">
-              <%= displayName.charAt(0).toUpperCase() %>
-            </div>
+      
       <% if (locals.error) { %>
         <div class="mensaje-error" style="text-align: center;"><%= error %></div>
       <% } %>
@@ -41,7 +39,8 @@
 
       <div class="login-links">
         <a href="/register">Crear cuenta</a> | 
-        <a href="/forgot-password">¿Olvidaste tu contraseña?</a> </div>
+        <a href="/forgot-password">¿Olvidaste tu contraseña?</a>
+      </div>
     </div>
   </div>
 
