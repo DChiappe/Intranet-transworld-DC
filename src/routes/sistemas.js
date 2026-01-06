@@ -60,8 +60,8 @@ router.post('/tickets/crear', async (req, res) => {
     if (process.env.ADMIN_NOTIFY_EMAIL) {
       sendMail({
         to: process.env.ADMIN_NOTIFY_EMAIL,
-        subject: `Nuevo Ticket #${nuevoId}: ${titulo}`,
-        text: `Se ha creado un nuevo ticket.\n\nSolicitante: ${solicitante_nombre}\nDescripción: ${descripcion}`
+        subject: `Ticket #${nuevoId}: ${titulo}`,
+        text: `Ticket generado por ${solicitante_nombre}\n\nTitulo: ${titulo}\n\nDescripción: ${descripcion}`
       }).catch(console.error);
     }
     res.redirect(`/sistemas/tickets/${nuevoId}`);
