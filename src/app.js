@@ -71,11 +71,11 @@ app.use((req, res, next) => {
     const hasRole = (...roles) => roles.includes(role);
 
     res.locals.can = {
-      procedimientos_write: hasRole('admin', 'control_y_seguridad', 'teresa'),
+      procedimientos_write: hasRole('admin', 'control_y_seguridad'),
       protocolos_write: hasRole('admin', 'control_y_seguridad'),
       personas_write: hasRole('admin', 'rrhh'),
-      achs_write: hasRole('admin', 'teresa'),
-      reglamento_write: hasRole('admin', 'teresa'),
+      achs_write: hasRole('admin'),
+      reglamento_write: hasRole('admin'),
       organigrama_write: hasRole('admin', 'rrhh'),
       eventos_write: hasRole('admin', 'marketing'),
       tickets_reply: hasRole('admin'), 

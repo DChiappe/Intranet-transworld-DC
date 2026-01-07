@@ -57,7 +57,7 @@ router.post('/editar/:id', requireAdmin, async (req, res) => {
   try {
     // Validar roles permitidos (opcional, pero recomendado)
     const allowed = new Set([
-      '', 'admin', 'marketing', 'rrhh', 'teresa',
+      '', 'admin', 'marketing', 'rrhh',
       'control_y_seguridad', 'usuario', 'noticias'
     ]);
     

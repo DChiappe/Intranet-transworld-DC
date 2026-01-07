@@ -47,7 +47,7 @@ router.get('/reglamento', (req, res) => renderDocView(req, res, 'reglamento', 'p
 // ==========================================
 // ACCIONES: SUBIR
 // ==========================================
-router.post('/:tipo/subir', requireRole('admin', 'control_y_seguridad', 'teresa'), upload.single('archivo'), async (req, res) => {
+router.post('/:tipo/subir', requireRole('admin', 'control_y_seguridad'), upload.single('archivo'), async (req, res) => {
   const { tipo } = req.params;
   const nombrePersonalizado = req.body.nombre_archivo || req.file.originalname;
 
@@ -93,7 +93,7 @@ router.post('/:tipo/subir', requireRole('admin', 'control_y_seguridad', 'teresa'
 // ==========================================
 // ACCIONES: EDITAR NOMBRE
 // ==========================================
-router.post('/documento/editar', requireRole('admin', 'control_y_seguridad', 'teresa'), async (req, res) => {
+router.post('/documento/editar', requireRole('admin', 'control_y_seguridad'), async (req, res) => {
   const { id, nuevo_nombre, return_to } = req.body;
 
   try {
@@ -108,7 +108,7 @@ router.post('/documento/editar', requireRole('admin', 'control_y_seguridad', 'te
 // ==========================================
 // ACCIONES: ELIMINAR (MODIFICADO)
 // ==========================================
-router.post('/:tipo/eliminar', requireRole('admin', 'control_y_seguridad', 'teresa'), async (req, res) => {
+router.post('/:tipo/eliminar', requireRole('admin', 'control_y_seguridad'), async (req, res) => {
   const { public_id, db_id } = req.body;
   const { tipo } = req.params;
 
