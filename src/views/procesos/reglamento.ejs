@@ -151,3 +151,66 @@
     document.getElementById('editModal').style.display = 'block';
   }
 </script>
+
+<script>
+(function () {
+  const form = document.querySelector('form.form-ticket');
+  if (!form) return;
+
+  const tipo = location.pathname.split('/').pop();
+  const fileInput = form.querySelector('input[type="file"]');
+  const nameInput = form.querySelector('input[name="nombre_archivo"]');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const file = fileInput.files[0];
+    if (!file) return alert('Selecciona un archivo');
+
+    if (file.size > 10 * 1024 * 1024) {
+      return alert('El archivo supera los 10 MB permitidos.');
+    }
+
+    try {
+      // 1️⃣ Obtener signature
+      const sigRes = await fetch(`/procesos/${tipo}/signature`);
+      const sig = await sigRes.json();
+
+      // 2️⃣ Subir DIRECTO a Cloudinary (RAW)
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('api_key', sig.apiKey);
+      fd.append('timestamp', sig.timestamp);
+      fd.append('signature', sig.signature);
+      fd.append('folder', sig.folder);
+      fd.append('resource_type', 'raw');
+
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${sig.cloudName}/raw/upload`,
+        { method: 'POST', body: fd }
+      );
+
+      const data = await uploadRes.json();
+      if (!data.secure_url) throw new Error('Error subiendo a Cloudinary');
+
+      // 3️⃣ Registrar en tu sistema
+      const saveRes = await fetch(`/procesos/${tipo}/subir`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre_archivo: nameInput.value,
+          secure_url: data.secure_url,
+          public_id: data.public_id
+        })
+      });
+
+      if (!saveRes.ok) throw new Error('Error guardando documento');
+
+      location.reload();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Error subiendo documento');
+    }
+  });
+})();
+</script>
