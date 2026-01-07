@@ -52,16 +52,60 @@
 
           
           <div class="card-archivo">
-            <div class="preview-container" onclick="abrirModal('<%= archivo.url %>', '<%= archivo.name %>')">
-              <img
-                src="<%= thumbUrl %>"
-                alt="Doc"
-                class="preview-img"
-                loading="lazy"
-                onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=Documento';"
-              />
+            <%
+              const ext = (archivo.format || '').toLowerCase();
+              const isPdf = ext === 'pdf' || (archivo.url || '').toLowerCase().endsWith('.pdf');
+              const isDoc = ['doc', 'docx'].includes(ext) || (archivo.url || '').toLowerCase().endsWith('.doc') || (archivo.url || '').toLowerCase().endsWith('.docx');
+              const badge = isPdf ? 'PDF' : (isDoc ? (ext.toUpperCase() || 'DOC') : '');
+            %>
 
-              <div class="icon-fallback" style="display: none;">📄</div>
+            <div class="preview-container" onclick="abrirModal('<%= archivo.url %>', '<%= archivo.name %>')">
+              <% if (isPdf || isDoc) { %>
+                <div class="doc-preview <%= isPdf ? 'doc-preview--pdf' : 'doc-preview--doc' %>">
+                  <div class="doc-badge"><%= badge %></div>
+
+                  <!-- Icono (SVG inline, no depende de archivos externos) -->
+                  <div class="doc-icon" aria-hidden="true">
+                    <% if (isPdf) { %>
+                      <svg viewBox="0 0 24 24" width="52" height="52" fill="none">
+                        <path d="M7 3h7l3 3v15a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6"/>
+                        <path d="M14 3v3a1 1 0 0 0 1 1h3" stroke="currentColor" stroke-width="1.6"/>
+                        <path d="M8 16h8M8 13h8M8 10h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                      </svg>
+                    <% } else { %>
+                      <svg viewBox="0 0 24 24" width="52" height="52" fill="none">
+                        <path d="M7 3h7l3 3v15a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6"/>
+                        <path d="M14 3v3a1 1 0 0 0 1 1h3" stroke="currentColor" stroke-width="1.6"/>
+                        <path d="M8 15.5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                        <path d="M8 12.5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                        <path d="M8 9.5h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                      </svg>
+                    <% } %>
+                  </div>
+
+                  <div class="doc-hint">Ver documento</div>
+                </div>
+              <% } else { %>
+                <img
+                  src="<%= archivo.url %>"
+                  alt="<%= archivo.name %>"
+                  class="preview-img"
+                  loading="lazy"
+                  onerror="this.onerror=null; this.style.display='none'; this.parentElement.querySelector('.doc-fallback').style.display='flex';"
+                />
+                <div class="doc-preview doc-fallback" style="display:none;">
+                  <div class="doc-badge">ARCHIVO</div>
+                  <div class="doc-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="52" height="52" fill="none">
+                      <path d="M7 3h7l3 3v15a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6"/>
+                      <path d="M14 3v3a1 1 0 0 0 1 1h3" stroke="currentColor" stroke-width="1.6"/>
+                    </svg>
+                  </div>
+                  <div class="doc-hint">Ver archivo</div>
+                </div>
+              <% } %>
+            </div>
+
             </div>
 
             <div class="card-body">
