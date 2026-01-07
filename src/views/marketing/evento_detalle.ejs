@@ -5,16 +5,16 @@
 
   <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
     <h2 class="page-title" style="margin: 0;">Evento: <%= evento.nombre %></h2>
-    
+
     <% if (can.eventos_write) { %>
-      <a href="/marketing/eventos/<%= evento.slug %>/editar" title="Editar título y descripción" 
+      <a href="/marketing/eventos/<%= evento.slug %>/editar" title="Editar título y descripción"
          style="text-decoration: none; font-size: 1.2rem; filter: grayscale(100%); transition: filter 0.2s;">
         ✏️
       </a>
       <style>a[title="Editar título y descripción"]:hover { filter: none !important; }</style>
     <% } %>
   </div>
-  
+
   <% if (evento.descripcion) { %>
     <p class="page-description" style="margin-bottom: 25px; font-style: italic; color: #555;">
       <%= evento.descripcion %>
@@ -24,10 +24,35 @@
   <% if (can.eventos_write) { %>
     <div class="panel" style="margin-bottom: 30px;">
       <h3 class="panel-title">Subir nuevas fotos</h3>
-      <form action="/marketing/eventos/<%= evento.slug %>/fotos" method="POST" enctype="multipart/form-data" class="form-ticket">
-        <input type="file" name="fotos" multiple accept="image/*" required style="margin-bottom: 10px; display: block;">
-        <button type="submit" class="btn btn-primario">Subir a la nube</button>
+
+      <!-- Mantengo el form para que NO rompa nada visualmente.
+           Pero ahora se intercepta con JS para subir DIRECTO a Cloudinary -->
+      <form
+        id="uploadFotosForm"
+        action="/marketing/eventos/<%= evento.slug %>/fotos"
+        method="POST"
+        enctype="multipart/form-data"
+        class="form-ticket"
+        data-slug="<%= evento.slug %>"
+      >
+        <input
+          type="file"
+          id="fotosInput"
+          name="fotos"
+          multiple
+          accept="image/*"
+          required
+          style="margin-bottom: 10px; display: block;"
+        >
+
+        <div id="uploadStatus" style="margin: 8px 0; font-size: 0.95rem; color: #555; display:none;"></div>
+
+        <button type="submit" id="btnSubirFotos" class="btn btn-primario">Subir a la nube</button>
       </form>
+
+      <small style="display:block; margin-top:10px; color:#666;">
+        Recomendación: evita subir archivos muy pesados. (En Cloudinary Free, imágenes &gt; 10MB suelen fallar).
+      </small>
     </div>
   <% } %>
 
@@ -46,7 +71,7 @@
             data-full="<%= img.url %>"
             loading="lazy"
           >
-          
+
           <% if (can.eventos_write) { %>
             <form action="/marketing/eventos/<%= evento.slug %>/fotos/eliminar" method="POST" onsubmit="return confirm('¿Eliminar esta foto?');" style="margin-top: 8px;">
               <input type="hidden" name="public_id" value="<%= img.public_id %>">
@@ -63,7 +88,7 @@
   <div class="modal-imagen-contenido">
     <span class="modal-cerrar">&times;</span>
     <img id="modalImagenGrande" src="" alt="Vista previa">
-    
+
     <% if (can.eventos_write) { %>
       <form action="/marketing/eventos/<%= evento.slug %>/portada" method="POST" class="form-portada">
         <input type="hidden" name="url_imagen" id="inputPortadaUrl" value="">
@@ -98,7 +123,7 @@
   }
   .modal-imagen-contenido {
     /* Aseguramos que sea relativo para posicionar el botón */
-    position: relative; 
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -107,27 +132,155 @@
 
 <script>
   (function () {
+    // ====== MODAL (se mantiene igual) ======
     const modal = document.getElementById('modalImagen');
     const modalImg = document.getElementById('modalImagenGrande');
-    const inputUrl = document.getElementById('inputPortadaUrl'); // Input oculto
+    const inputUrl = document.getElementById('inputPortadaUrl');
     const cerrar = document.querySelector('.modal-cerrar');
     const thumbs = document.querySelectorAll('.galeria-thumb');
 
     thumbs.forEach(thumb => {
       thumb.addEventListener('click', function () {
         const fullUrl = this.getAttribute('data-full');
-        
-        // 1. Mostrar imagen
         modalImg.src = fullUrl;
-        
-        // 2. Cargar URL en el formulario de portada
-        if(inputUrl) inputUrl.value = fullUrl;
-
+        if (inputUrl) inputUrl.value = fullUrl;
         modal.style.display = 'flex';
       });
     });
 
-    cerrar.addEventListener('click', () => modal.style.display = 'none');
+    if (cerrar) cerrar.addEventListener('click', () => modal.style.display = 'none');
     window.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+
+    // ====== SUBIDA DIRECTA A CLOUDINARY ======
+    const form = document.getElementById('uploadFotosForm');
+    if (!form) return;
+
+    const input = document.getElementById('fotosInput');
+    const btn = document.getElementById('btnSubirFotos');
+    const status = document.getElementById('uploadStatus');
+
+    const MAX_FILES = 20;
+    const MAX_FILE_MB = 10; // Cloudinary Free suele limitar imágenes a 10MB
+    const CONCURRENCY = 3;  // evita saturar red/navegador
+
+    function setStatus(text, visible = true) {
+      if (!status) return;
+      status.textContent = text;
+      status.style.display = visible ? 'block' : 'none';
+    }
+
+    function disableUI(disabled) {
+      if (btn) btn.disabled = disabled;
+      if (input) input.disabled = disabled;
+    }
+
+    async function getSignature(slug) {
+      const res = await fetch(`/marketing/eventos/${encodeURIComponent(slug)}/fotos/signature`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error('No se pudo obtener la firma de Cloudinary.');
+      return res.json();
+    }
+
+    async function uploadOneToCloudinary(file, sig) {
+      const url = `https://api.cloudinary.com/v1_1/${encodeURIComponent(sig.cloudName)}/image/upload`;
+
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('api_key', sig.apiKey);
+      fd.append('timestamp', String(sig.timestamp));
+      fd.append('signature', sig.signature);
+      fd.append('folder', sig.folder);
+
+      const res = await fetch(url, { method: 'POST', body: fd });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(`Cloudinary rechazó una imagen (${file.name}). ${txt ? 'Detalle: ' + txt : ''}`);
+      }
+      const data = await res.json();
+      return { secure_url: data.secure_url, public_id: data.public_id };
+    }
+
+    async function mapWithConcurrency(items, limit, mapper) {
+      const results = new Array(items.length);
+      let idx = 0;
+
+      async function worker() {
+        while (true) {
+          const current = idx++;
+          if (current >= items.length) return;
+          results[current] = await mapper(items[current], current);
+        }
+      }
+
+      const workers = [];
+      for (let i = 0; i < Math.min(limit, items.length); i++) workers.push(worker());
+      await Promise.all(workers);
+      return results;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      // Interceptamos para usar direct upload. Si algo falla, evitamos “caída” y mostramos error.
+      e.preventDefault();
+
+      const slug = form.getAttribute('data-slug');
+      const files = input && input.files ? Array.from(input.files) : [];
+
+      if (!files.length) {
+        alert('Selecciona al menos una imagen.');
+        return;
+      }
+
+      if (files.length > MAX_FILES) {
+        alert(`Máximo ${MAX_FILES} imágenes por subida.`);
+        return;
+      }
+
+      const tooBig = files.find(f => f.size > MAX_FILE_MB * 1024 * 1024);
+      if (tooBig) {
+        alert(`La imagen "${tooBig.name}" supera ${MAX_FILE_MB}MB. Reduce el tamaño antes de subir.`);
+        return;
+      }
+
+      try {
+        disableUI(true);
+        setStatus('Preparando subida...', true);
+
+        const sig = await getSignature(slug);
+
+        let done = 0;
+        setStatus(`Subiendo a Cloudinary: 0 / ${files.length}`, true);
+
+        const uploaded = await mapWithConcurrency(files, CONCURRENCY, async (file) => {
+          const out = await uploadOneToCloudinary(file, sig);
+          done += 1;
+          setStatus(`Subiendo a Cloudinary: ${done} / ${files.length}`, true);
+          return out;
+        });
+
+        setStatus('Registrando imágenes en el sistema...', true);
+
+        const res = await fetch(`/marketing/eventos/${encodeURIComponent(slug)}/fotos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ images: uploaded })
+        });
+
+        // Tu backend puede responder redirect o 200. Si no es ok, mostramos error.
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          throw new Error(`Error registrando imágenes en tu servidor. ${txt ? 'Detalle: ' + txt : ''}`);
+        }
+
+        setStatus('Listo. Recargando...', true);
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert(err.message || 'Error subiendo imágenes.');
+        disableUI(false);
+        setStatus('', false);
+      }
+    });
   })();
 </script>
