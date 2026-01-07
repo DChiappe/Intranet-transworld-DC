@@ -1,18 +1,28 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <style>
-      body {
-        background: url('/img/fondo-home.png') no-repeat center center fixed !important;
-        background-size: cover !important;
-      }main { background: transparent !important; min-height: 80vh; }
-  </style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= titulo %></title>
   <link rel="icon" href="/img/favicon.png" type="image/png">
   <link rel="stylesheet" href="/css/intranet.css">
+
+  <style>
+      /* Estilo para poner la imagen de fondo */
+      body {
+        /* Ruta relativa a la carpeta 'public' */
+        background: url('/img/fondo-home.png') no-repeat center center fixed !important;
+        background-size: cover !important;
+      }
+      
+      /* Aseguramos que el contenido no tenga fondo blanco que tape la imagen */
+      .login-page {
+        background: transparent; 
+      }
+  </style>
 </head>
+
+<body>
 
   <div class="login-page">
     <div class="card-login">
