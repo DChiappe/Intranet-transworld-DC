@@ -1,7 +1,7 @@
 <div class="contenedor">
   <h2 class="page-title">Protocolos</h2>
   <p class="page-description">
-    Lineamientos formales para situaciones específicas y criterios de actuación.
+    Protocolos oficiales y documentos de referencia para procedimientos críticos y de seguridad.
   </p>
 
   <% const canWrite = (typeof can !== 'undefined' && can.protocolos_write); %>
@@ -10,15 +10,32 @@
     <div class="panel">
       <h3 class="panel-title">Subir nuevo protocolo</h3>
 
-      <form action="/procesos/protocolos/subir" method="POST" enctype="multipart/form-data" class="form-ticket">
+      <form id="uploadDocForm" action="/procesos/protocolos/subir" method="POST" enctype="multipart/form-data" class="form-ticket">
         <label style="font-weight: bold; display: block; margin-bottom: 5px;">Nombre del documento</label>
-        <input type="text" name="nombre_archivo" placeholder="Ej: Protocolo de Seguridad en Obra" required 
-               style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+        <input
+          type="text"
+          name="nombre_archivo"
+          placeholder="Ej: Protocolo de Evacuación"
+          required
+          style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;"
+        >
 
         <label style="font-weight: bold; display: block; margin-bottom: 5px;">Archivo</label>
-        <input type="file" name="archivo" required style="margin-bottom: 10px;" accept=".pdf,.doc,.docx">
-        
-        <button type="submit" class="btn btn-primario">Subir archivo</button>
+        <input
+          type="file"
+          name="archivo"
+          required
+          style="margin-bottom: 10px;"
+          accept=".pdf,.doc,.docx"
+        >
+
+        <div id="uploadStatus" style="margin: 10px 0 0; font-size: 0.95rem; color: #555; display:none;"></div>
+
+        <button type="submit" class="btn btn-primario" id="btnUploadDoc">Subir archivo</button>
+
+        <small style="display:block; margin-top:10px; color:#666;">
+          Nota: En Cloudinary Free, el límite típico por archivo es 10MB.
+        </small>
       </form>
     </div>
   <% } %>
@@ -29,58 +46,32 @@
     <% if (!archivos || archivos.length === 0) { %>
       <p class="no-data">No hay archivos cargados en esta sección.</p>
     <% } else { %>
-      
       <div class="grid-archivos">
         <% archivos.forEach(function(archivo) { %>
           <%
-            // FIX: no intentes cargar PDF como <img>. Eso deja el navegador “cargando” mucho rato.
-            let ext = (archivo.format || '').toLowerCase();
-            let isPdf = ext === 'pdf' || (archivo.url || '').toLowerCase().endsWith('.pdf');
-            let isDoc = ext === 'doc' || ext === 'docx' || (archivo.url || '').toLowerCase().endsWith('.doc') || (archivo.url || '').toLowerCase().endsWith('.docx');
+            var url = (archivo.url || '');
+            var ext = (archivo.format || '').toLowerCase();
+            var urlLower = url.toLowerCase();
 
-            let thumbUrl = archivo.url;
+            var isPdf = (ext === 'pdf') || urlLower.endsWith('.pdf');
+            var isDoc = (ext === 'doc' || ext === 'docx') || urlLower.endsWith('.doc') || urlLower.endsWith('.docx');
 
-            if (isPdf) {
-              thumbUrl = '/img/pdf-placeholder.png';      // crea este archivo o usa el placeholder de abajo
-            } else if (isDoc) {
-              thumbUrl = '/img/doc-placeholder.png';
-            } else {
-              // si algún día guardas imágenes en esta tabla, se verán normal
-              thumbUrl = archivo.url;
-            }
+            var badge = isPdf ? 'PDF' : (isDoc ? 'DOC' : '');
+            if (isDoc && (ext === 'docx' || urlLower.endsWith('.docx'))) badge = 'DOCX';
           %>
 
-          
           <div class="card-archivo">
-            <%
-              const ext = (archivo.format || '').toLowerCase();
-              const isPdf = ext === 'pdf' || (archivo.url || '').toLowerCase().endsWith('.pdf');
-              const isDoc = ['doc', 'docx'].includes(ext) || (archivo.url || '').toLowerCase().endsWith('.doc') || (archivo.url || '').toLowerCase().endsWith('.docx');
-              const badge = isPdf ? 'PDF' : (isDoc ? (ext.toUpperCase() || 'DOC') : '');
-            %>
-
             <div class="preview-container" onclick="abrirModal('<%= archivo.url %>', '<%= archivo.name %>')">
               <% if (isPdf || isDoc) { %>
                 <div class="doc-preview <%= isPdf ? 'doc-preview--pdf' : 'doc-preview--doc' %>">
                   <div class="doc-badge"><%= badge %></div>
 
-                  <!-- Icono (SVG inline, no depende de archivos externos) -->
                   <div class="doc-icon" aria-hidden="true">
-                    <% if (isPdf) { %>
-                      <svg viewBox="0 0 24 24" width="52" height="52" fill="none">
-                        <path d="M7 3h7l3 3v15a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6"/>
-                        <path d="M14 3v3a1 1 0 0 0 1 1h3" stroke="currentColor" stroke-width="1.6"/>
-                        <path d="M8 16h8M8 13h8M8 10h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                      </svg>
-                    <% } else { %>
-                      <svg viewBox="0 0 24 24" width="52" height="52" fill="none">
-                        <path d="M7 3h7l3 3v15a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6"/>
-                        <path d="M14 3v3a1 1 0 0 0 1 1h3" stroke="currentColor" stroke-width="1.6"/>
-                        <path d="M8 15.5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                        <path d="M8 12.5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                        <path d="M8 9.5h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                      </svg>
-                    <% } %>
+                    <svg viewBox="0 0 24 24" width="54" height="54" fill="none">
+                      <path d="M7 3h7l3 3v15a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6"/>
+                      <path d="M14 3v3a1 1 0 0 0 1 1h3" stroke="currentColor" stroke-width="1.6"/>
+                      <path d="M8 16h8M8 13h8M8 10h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    </svg>
                   </div>
 
                   <div class="doc-hint">Ver documento</div>
@@ -96,7 +87,7 @@
                 <div class="doc-preview doc-fallback" style="display:none;">
                   <div class="doc-badge">ARCHIVO</div>
                   <div class="doc-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="52" height="52" fill="none">
+                    <svg viewBox="0 0 24 24" width="54" height="54" fill="none">
                       <path d="M7 3h7l3 3v15a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6"/>
                       <path d="M14 3v3a1 1 0 0 0 1 1h3" stroke="currentColor" stroke-width="1.6"/>
                     </svg>
@@ -106,10 +97,9 @@
               <% } %>
             </div>
 
-
             <div class="card-body">
               <h4 class="card-title" title="<%= archivo.name %>"><%= archivo.name %></h4>
-              
+
               <div class="card-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
                 <a href="<%= archivo.url %>" target="_blank" download class="btn-secundario" style="font-size: 0.8rem; padding: 4px 8px;">
                   ⬇ Descargar
@@ -117,9 +107,12 @@
 
                 <% if (canWrite) { %>
                   <div style="display: flex; gap: 8px;">
-                    
-                    <button type="button" onclick="abrirModalEditar('<%= archivo.id %>', '<%= archivo.name %>')" 
-                            style="background:none; border:none; cursor:pointer; font-size:1.2rem;" title="Editar Nombre">
+                    <button
+                      type="button"
+                      onclick="abrirModalEditar('<%= archivo.id %>', '<%= archivo.name %>')"
+                      style="background:none; border:none; cursor:pointer; font-size:1.2rem;"
+                      title="Editar Nombre"
+                    >
                       ✏️
                     </button>
 
@@ -154,6 +147,7 @@
   </div>
 </div>
 
+<!-- Modal visor -->
 <div id="pdfModal" class="modal-overlay" onclick="cerrarModal(event)">
   <div class="modal-content">
     <div class="modal-header">
@@ -164,17 +158,18 @@
   </div>
 </div>
 
+<!-- Modal editar -->
 <div id="editModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000;">
   <div class="modal-content" style="max-width: 400px; margin: 100px auto; background: white; padding: 20px; border-radius: 8px;">
     <h3 style="margin-top: 0;">Editar Nombre</h3>
-    
+
     <form action="/procesos/documento/editar" method="POST">
       <input type="hidden" name="return_to" value="/procesos/protocolos">
       <input type="hidden" id="edit_id" name="id">
-      
+
       <label style="display:block; margin-bottom: 5px;">Nuevo Nombre:</label>
       <input type="text" id="edit_nombre" name="nuevo_nombre" required style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px;">
-      
+
       <div style="text-align: right;">
         <button type="button" onclick="document.getElementById('editModal').style.display='none'" style="padding: 8px 15px; background: #ccc; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">Cancelar</button>
         <button type="submit" class="btn btn-primario" style="padding: 8px 15px;">Guardar</button>
@@ -183,15 +178,64 @@
   </div>
 </div>
 
+<style>
+  .preview-container{
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .preview-img{
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+  }
+  .doc-preview{
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    background: #f5f7fa;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .doc-preview--pdf{
+    color: #b42318;
+    background: linear-gradient(180deg, #fff5f5 0%, #f5f7fa 100%);
+  }
+  .doc-preview--doc{
+    color: #175cd3;
+    background: linear-gradient(180deg, #eef4ff 0%, #f5f7fa 100%);
+  }
+  .doc-badge{
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  .doc-icon{ line-height: 0; opacity: 0.95; }
+  .doc-hint{ font-size: 0.9rem; color: rgba(0,0,0,0.65); }
+</style>
+
 <script>
   function abrirModal(url, nombre) {
     const modal = document.getElementById('pdfModal');
     const iframe = document.getElementById('pdfFrame');
     const title = document.getElementById('modalTitle');
+
     iframe.src = 'https://docs.google.com/gview?url=' + encodeURIComponent(url) + '&embedded=true';
     title.innerText = nombre || 'Documento';
     modal.style.display = 'block';
   }
+
   function cerrarModal(event) {
     if (event && event.target !== document.getElementById('pdfModal') && event.target.className !== 'modal-close') return;
     document.getElementById('pdfModal').style.display = 'none';
@@ -205,133 +249,116 @@
   }
 </script>
 
-
 <script>
-(function () {
-  const form = document.querySelector('form.form-ticket');
-  if (!form) return;
+  (function () {
+    const form = document.getElementById('uploadDocForm');
+    if (!form) return;
 
-  // OJO: en tu vista el input file se llama "archivo"
-  const fileInput = form.querySelector('input[name="archivo"]');
-  const nameInput = form.querySelector('input[name="nombre_archivo"]');
-  const submitBtn = form.querySelector('button[type="submit"]');
+    const fileInput = form.querySelector('input[name="archivo"]');
+    const nameInput = form.querySelector('input[name="nombre_archivo"]');
+    const btn = document.getElementById('btnUploadDoc');
+    const statusEl = document.getElementById('uploadStatus');
 
-  // Indicador simple de estado (lo creamos si no existe)
-  let statusEl = document.getElementById('uploadStatus');
-  if (!statusEl) {
-    statusEl = document.createElement('div');
-    statusEl.id = 'uploadStatus';
-    statusEl.style.marginTop = '10px';
-    statusEl.style.fontSize = '0.95rem';
-    statusEl.style.color = '#555';
-    form.appendChild(statusEl);
-  }
-
-  function setStatus(msg) { statusEl.textContent = msg || ''; }
-  function setBusy(busy) {
-    if (submitBtn) submitBtn.disabled = busy;
-    if (fileInput) fileInput.disabled = busy;
-    if (nameInput) nameInput.disabled = busy;
-    if (submitBtn) submitBtn.textContent = busy ? 'Subiendo...' : 'Subir archivo';
-  }
-
-  function withTimeout(ms) {
-    const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), ms);
-    return { controller, clear: () => clearTimeout(t) };
-  }
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const file = fileInput?.files?.[0];
-    if (!file) return alert('Selecciona un archivo.');
-
-    // Cloudinary Free: típicamente 10MB por archivo en RAW
-    if (file.size > 10 * 1024 * 1024) {
-      return alert('El archivo supera los 10 MB permitidos.');
+    function setStatus(msg, show) {
+      statusEl.textContent = msg || '';
+      statusEl.style.display = show ? 'block' : 'none';
     }
 
-    // Tipo (procedimientos/protocolos/reglamento)
-    const tipo = location.pathname.split('/').pop();
-
-    try {
-      setBusy(true);
-      setStatus('Obteniendo autorización de subida...');
-
-      // 1) Signature (timeout corto)
-      const sigTO = withTimeout(15000);
-      const sigRes = await fetch(`/procesos/${encodeURIComponent(tipo)}/signature`, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        signal: sigTO.controller.signal
-      });
-      sigTO.clear();
-
-      if (!sigRes.ok) {
-        const txt = await sigRes.text().catch(() => '');
-        throw new Error(`No se pudo obtener la firma (HTTP ${sigRes.status}). ${txt ? 'Detalle: ' + txt : ''}`);
-      }
-
-      const sig = await sigRes.json();
-      if (!sig.cloudName || !sig.apiKey || !sig.signature || !sig.timestamp || !sig.folder) {
-        throw new Error('Signature inválida (faltan datos). Revisa variables de entorno de Cloudinary en Render.');
-      }
-
-      // 2) Subida a Cloudinary (RAW) con timeout más largo
-      setStatus('Subiendo a Cloudinary...');
-      const uploadUrl = `https://api.cloudinary.com/v1_1/${encodeURIComponent(sig.cloudName)}/raw/upload`;
-
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('api_key', sig.apiKey);
-      fd.append('timestamp', String(sig.timestamp));
-      fd.append('signature', sig.signature);
-      fd.append('folder', sig.folder);
-      // Importante: NO agregamos "resource_type" como parámetro firmado; el endpoint ya es /raw/upload
-
-      const upTO = withTimeout(120000);
-      const uploadRes = await fetch(uploadUrl, { method: 'POST', body: fd, signal: upTO.controller.signal });
-      upTO.clear();
-
-      const uploadData = await uploadRes.json().catch(() => ({}));
-      if (!uploadRes.ok || !uploadData.secure_url) {
-        const msg = uploadData?.error?.message || 'Cloudinary rechazó el archivo.';
-        throw new Error(msg);
-      }
-
-      // 3) Guardar en tu BD (JSON) con timeout
-      setStatus('Registrando documento en el sistema...');
-      const saveTO = withTimeout(20000);
-      const saveRes = await fetch(`/procesos/${encodeURIComponent(tipo)}/subir`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          nombre_archivo: nameInput?.value || file.name,
-          secure_url: uploadData.secure_url,
-          public_id: uploadData.public_id
-        }),
-        signal: saveTO.controller.signal
-      });
-      saveTO.clear();
-
-      if (!saveRes.ok) {
-        const txt = await saveRes.text().catch(() => '');
-        throw new Error(`Error guardando en BD (HTTP ${saveRes.status}). ${txt ? 'Detalle: ' + txt : ''}`);
-      }
-
-      setStatus('Listo. Recargando...');
-      location.reload();
-    } catch (err) {
-      console.error(err);
-      alert(err.name === 'AbortError'
-        ? 'La subida tardó demasiado y se canceló. Intenta de nuevo o revisa tu conexión.'
-        : (err.message || 'Error subiendo documento.')
-      );
-      setStatus('');
-      setBusy(false);
+    function setBusy(busy) {
+      if (btn) btn.disabled = busy;
+      if (fileInput) fileInput.disabled = busy;
+      if (nameInput) nameInput.disabled = busy;
+      if (btn) btn.textContent = busy ? 'Subiendo...' : 'Subir archivo';
     }
-  });
-})();
+
+    function withTimeout(ms) {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), ms);
+      return { controller, clear: () => clearTimeout(t) };
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+      if (!file) return alert('Selecciona un archivo.');
+
+      if (file.size > 10 * 1024 * 1024) {
+        return alert('El archivo supera los 10 MB permitidos.');
+      }
+
+      try {
+        setBusy(true);
+        setStatus('Obteniendo autorización...', true);
+
+        const sigTO = withTimeout(15000);
+        const sigRes = await fetch('/procesos/protocolos/signature', {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: sigTO.controller.signal
+        });
+        sigTO.clear();
+
+        if (!sigRes.ok) {
+          const txt = await sigRes.text().catch(function () { return ''; });
+          throw new Error('No se pudo obtener la firma (HTTP ' + sigRes.status + '). ' + (txt ? ('Detalle: ' + txt) : ''));
+        }
+
+        const sig = await sigRes.json();
+        if (!sig.cloudName || !sig.apiKey || !sig.signature || !sig.timestamp || !sig.folder) {
+          throw new Error('Signature inválida. Revisa variables de Cloudinary en Render.');
+        }
+
+        setStatus('Subiendo a la nube...', true);
+        const uploadUrl = 'https://api.cloudinary.com/v1_1/' + encodeURIComponent(sig.cloudName) + '/raw/upload';
+
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('api_key', sig.apiKey);
+        fd.append('timestamp', String(sig.timestamp));
+        fd.append('signature', sig.signature);
+        fd.append('folder', sig.folder);
+
+        const upTO = withTimeout(120000);
+        const uploadRes = await fetch(uploadUrl, { method: 'POST', body: fd, signal: upTO.controller.signal });
+        upTO.clear();
+
+        const uploadData = await uploadRes.json().catch(function () { return {}; });
+        if (!uploadRes.ok || !uploadData.secure_url) {
+          const msg = (uploadData && uploadData.error && uploadData.error.message) ? uploadData.error.message : 'Cloudinary rechazó el archivo.';
+          throw new Error(msg);
+        }
+
+        setStatus('Registrando en el sistema...', true);
+        const saveTO = withTimeout(20000);
+        const saveRes = await fetch('/procesos/protocolos/subir', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            nombre_archivo: (nameInput && nameInput.value) ? nameInput.value : file.name,
+            secure_url: uploadData.secure_url,
+            public_id: uploadData.public_id
+          }),
+          signal: saveTO.controller.signal
+        });
+        saveTO.clear();
+
+        if (!saveRes.ok) {
+          const txt2 = await saveRes.text().catch(function () { return ''; });
+          throw new Error('Error guardando en BD (HTTP ' + saveRes.status + '). ' + (txt2 ? ('Detalle: ' + txt2) : ''));
+        }
+
+        setStatus('Listo. Actualizando...', true);
+        location.reload();
+      } catch (err) {
+        console.error(err);
+        alert(err && err.name === 'AbortError'
+          ? 'La subida tardó demasiado y se canceló. Intenta de nuevo.'
+          : ((err && err.message) ? err.message : 'Error subiendo documento.')
+        );
+        setStatus('', false);
+        setBusy(false);
+      }
+    });
+  })();
 </script>
-
