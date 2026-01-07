@@ -157,60 +157,127 @@
   const form = document.querySelector('form.form-ticket');
   if (!form) return;
 
-  const tipo = location.pathname.split('/').pop();
-  const fileInput = form.querySelector('input[type="file"]');
+  // OJO: en tu vista el input file se llama "archivo"
+  const fileInput = form.querySelector('input[name="archivo"]');
   const nameInput = form.querySelector('input[name="nombre_archivo"]');
+  const submitBtn = form.querySelector('button[type="submit"]');
+
+  // Indicador simple de estado (lo creamos si no existe)
+  let statusEl = document.getElementById('uploadStatus');
+  if (!statusEl) {
+    statusEl = document.createElement('div');
+    statusEl.id = 'uploadStatus';
+    statusEl.style.marginTop = '10px';
+    statusEl.style.fontSize = '0.95rem';
+    statusEl.style.color = '#555';
+    form.appendChild(statusEl);
+  }
+
+  function setStatus(msg) { statusEl.textContent = msg || ''; }
+  function setBusy(busy) {
+    if (submitBtn) submitBtn.disabled = busy;
+    if (fileInput) fileInput.disabled = busy;
+    if (nameInput) nameInput.disabled = busy;
+    if (submitBtn) submitBtn.textContent = busy ? 'Subiendo...' : 'Subir archivo';
+  }
+
+  function withTimeout(ms) {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), ms);
+    return { controller, clear: () => clearTimeout(t) };
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const file = fileInput.files[0];
-    if (!file) return alert('Selecciona un archivo');
+    const file = fileInput?.files?.[0];
+    if (!file) return alert('Selecciona un archivo.');
 
+    // Cloudinary Free: típicamente 10MB por archivo en RAW
     if (file.size > 10 * 1024 * 1024) {
       return alert('El archivo supera los 10 MB permitidos.');
     }
 
-    try {
-      // 1️⃣ Obtener signature
-      const sigRes = await fetch(`/procesos/${tipo}/signature`);
-      const sig = await sigRes.json();
+    // Tipo (procedimientos/protocolos/reglamento)
+    const tipo = location.pathname.split('/').pop();
 
-      // 2️⃣ Subir DIRECTO a Cloudinary (RAW)
+    try {
+      setBusy(true);
+      setStatus('Obteniendo autorización de subida...');
+
+      // 1) Signature (timeout corto)
+      const sigTO = withTimeout(15000);
+      const sigRes = await fetch(`/procesos/${encodeURIComponent(tipo)}/signature`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: sigTO.controller.signal
+      });
+      sigTO.clear();
+
+      if (!sigRes.ok) {
+        const txt = await sigRes.text().catch(() => '');
+        throw new Error(`No se pudo obtener la firma (HTTP ${sigRes.status}). ${txt ? 'Detalle: ' + txt : ''}`);
+      }
+
+      const sig = await sigRes.json();
+      if (!sig.cloudName || !sig.apiKey || !sig.signature || !sig.timestamp || !sig.folder) {
+        throw new Error('Signature inválida (faltan datos). Revisa variables de entorno de Cloudinary en Render.');
+      }
+
+      // 2) Subida a Cloudinary (RAW) con timeout más largo
+      setStatus('Subiendo a Cloudinary...');
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${encodeURIComponent(sig.cloudName)}/raw/upload`;
+
       const fd = new FormData();
       fd.append('file', file);
       fd.append('api_key', sig.apiKey);
-      fd.append('timestamp', sig.timestamp);
+      fd.append('timestamp', String(sig.timestamp));
       fd.append('signature', sig.signature);
       fd.append('folder', sig.folder);
-      fd.append('resource_type', 'raw');
+      // Importante: NO agregamos "resource_type" como parámetro firmado; el endpoint ya es /raw/upload
 
-      const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${sig.cloudName}/raw/upload`,
-        { method: 'POST', body: fd }
-      );
+      const upTO = withTimeout(120000);
+      const uploadRes = await fetch(uploadUrl, { method: 'POST', body: fd, signal: upTO.controller.signal });
+      upTO.clear();
 
-      const data = await uploadRes.json();
-      if (!data.secure_url) throw new Error('Error subiendo a Cloudinary');
+      const uploadData = await uploadRes.json().catch(() => ({}));
+      if (!uploadRes.ok || !uploadData.secure_url) {
+        const msg = uploadData?.error?.message || 'Cloudinary rechazó el archivo.';
+        throw new Error(msg);
+      }
 
-      // 3️⃣ Registrar en tu sistema
-      const saveRes = await fetch(`/procesos/${tipo}/subir`, {
+      // 3) Guardar en tu BD (JSON) con timeout
+      setStatus('Registrando documento en el sistema...');
+      const saveTO = withTimeout(20000);
+      const saveRes = await fetch(`/procesos/${encodeURIComponent(tipo)}/subir`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({
-          nombre_archivo: nameInput.value,
-          secure_url: data.secure_url,
-          public_id: data.public_id
-        })
+          nombre_archivo: nameInput?.value || file.name,
+          secure_url: uploadData.secure_url,
+          public_id: uploadData.public_id
+        }),
+        signal: saveTO.controller.signal
       });
+      saveTO.clear();
 
-      if (!saveRes.ok) throw new Error('Error guardando documento');
+      if (!saveRes.ok) {
+        const txt = await saveRes.text().catch(() => '');
+        throw new Error(`Error guardando en BD (HTTP ${saveRes.status}). ${txt ? 'Detalle: ' + txt : ''}`);
+      }
 
+      setStatus('Listo. Recargando...');
       location.reload();
     } catch (err) {
       console.error(err);
-      alert(err.message || 'Error subiendo documento');
+      alert(err.name === 'AbortError'
+        ? 'La subida tardó demasiado y se canceló. Intenta de nuevo o revisa tu conexión.'
+        : (err.message || 'Error subiendo documento.')
+      );
+      setStatus('');
+      setBusy(false);
     }
   });
 })();
 </script>
+
