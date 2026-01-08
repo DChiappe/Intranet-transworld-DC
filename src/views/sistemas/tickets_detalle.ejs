@@ -31,11 +31,11 @@
       <dt>Estado</dt>
       <dd>
         <% 
-          let claseEstado = 'badge-estado-abierto'; // Default rojo
+          let claseEstado = 'badge-estado-abierto'; 
           let textoEstado = ticket.estado || 'Abierto';
           
-          if (textoEstado === 'Cerrado') claseEstado = 'badge-estado-cerrado'; // Verde
-          else if (textoEstado === 'Resuelto') claseEstado = 'badge-amarilla'; // Amarillo (usando clase existente)
+          if (textoEstado === 'Cerrado') claseEstado = 'badge-estado-cerrado'; 
+          else if (textoEstado === 'Resuelto') claseEstado = 'badge-amarilla'; 
         %>
         <span class="badge <%= claseEstado %>"><%= textoEstado %></span>
       </dd>
@@ -52,21 +52,9 @@
     <% if (canManage) { %>
       <div class="panel panel-actualizar-ticket">
         <h3 class="panel-title">Gestionar Ticket</h3>
-        <form action="/sistemas/tickets/<%= ticket.id %>/actualizar" method="POST" class="form-actualizar-ticket">
+        
+        <form action="/sistemas/tickets/<%= ticket.id %>/gestionar" method="POST" class="form-actualizar-ticket">
           
-          <label for="categoria">Categoría</label>
-          <select id="categoria" name="categoria">
-            <option value="Sistemas" <%= ticket.categoria === 'Sistemas' ? 'selected' : '' %>>Sistemas</option>
-            <option value="Otros" <%= ticket.categoria === 'Otros' ? 'selected' : '' %>>Otros</option>
-            </select>
-
-          <label for="prioridad">Prioridad</label>
-          <select id="prioridad" name="prioridad">
-            <option value="Alta" <%= ticket.prioridad === 'Alta' ? 'selected' : '' %>>🔴 Alta</option>
-            <option value="Media" <%= ticket.prioridad === 'Media' ? 'selected' : '' %>>🟡 Media</option>
-            <option value="Baja" <%= ticket.prioridad === 'Baja' ? 'selected' : '' %>>🟢 Baja</option>
-          </select>
-
           <label for="estado">Estado</label>
           <select id="estado" name="estado">
             <option value="Abierto" <%= ticket.estado === 'Abierto' ? 'selected' : '' %>>🔴 Abierto</option>
@@ -74,7 +62,10 @@
             <option value="Cerrado" <%= ticket.estado === 'Cerrado' ? 'selected' : '' %>>🟢 Cerrado</option>
           </select>
 
-          <button type="submit" class="btn btn-primario">Actualizar</button>
+          <label for="mensaje_respuesta" style="margin-top: 15px;">Mensaje / Respuesta (Opcional)</label>
+          <textarea id="mensaje_respuesta" name="mensaje_respuesta" rows="4" placeholder="Escribe aquí si deseas enviar una respuesta al usuario junto con el cambio de estado..."></textarea>
+
+          <button type="submit" class="btn btn-primario" style="margin-top: 15px;">Actualizar ticket</button>
         </form>
       </div>
     <% } %>
@@ -100,15 +91,10 @@
       </div>
     <% } %>
 
-    <% if ( (canManage || isOwner) && ticket.estado !== 'Cerrado' ) { %>
+    <% if ( isOwner && !canManage && ticket.estado !== 'Cerrado' ) { %>
       <div class="panel panel-responder">
         <h3 class="panel-title">Agregar mensaje</h3>
         <form action="/sistemas/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
-          <% if (canManage) { %>
-            <label for="asunto_respuesta">Asunto (Opcional)</label>
-            <input type="text" id="asunto_respuesta" name="asunto_respuesta" placeholder="Ej: Solicitud de más datos">
-          <% } %>
-
           <label for="mensaje_respuesta">Mensaje</label>
           <textarea id="mensaje_respuesta" name="mensaje_respuesta" rows="4" required></textarea>
           <button type="submit" class="btn btn-primario">Enviar mensaje</button>

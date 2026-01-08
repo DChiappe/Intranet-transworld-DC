@@ -72,46 +72,81 @@ router.post('/tickets/crear', async (req, res) => {
 });
 
 // ======================================================================
-//  ADMIN: Actualizar Ticket (Ahora maneja estado "Resuelto")
+//  ADMIN: Gestionar Ticket (Unificado: Estado + Respuesta)
 // ======================================================================
-router.post('/tickets/:id/actualizar', requireRole('admin'), async (req, res) => {
+router.post('/tickets/:id/gestionar', requireRole('admin'), async (req, res) => {
   const { id } = req.params;
-  const { categoria, prioridad, estado } = req.body;
-
-  let sql = `UPDATE tickets SET categoria = ?, prioridad = ?, estado = ?`;
-  const params = [categoria, prioridad, estado];
-
-  // Si el admin lo marca como Resuelto, guardamos la fecha de resolución
-  if (estado === 'Resuelto') {
-    sql += `, fecha_resolucion = NOW()`;
-  } 
-  // Si lo cierra manualmente (forzado), guardamos fecha cierre
-  else if (estado === 'Cerrado') {
-    sql += `, fecha_cierre = NOW()`;
-  }
-
-  sql += ` WHERE id = ?`;
-  params.push(id);
+  const { estado, mensaje_respuesta } = req.body;
+  
+  // Validar si hay mensaje (trim para evitar espacios en blanco)
+  const tieneMensaje = mensaje_respuesta && mensaje_respuesta.trim().length > 0;
 
   try {
-    await db.query(sql, params);
+    // 1. Obtener estado actual y datos para el correo
+    const [rows] = await db.query('SELECT estado, solicitante_email, titulo FROM tickets WHERE id = ?', [id]);
+    if (rows.length === 0) return res.status(404).send('Ticket no encontrado');
     
-    // Opcional: Notificar al usuario que su ticket fue resuelto/actualizado
-    if (estado === 'Resuelto') {
-      const [ticket] = await db.query('SELECT solicitante_email, titulo FROM tickets WHERE id = ?', [id]);
-      if (ticket.length > 0) {
-        sendMail({
-          to: ticket[0].solicitante_email,
-          subject: `Ticket #${id} Resuelto: ${ticket[0].titulo}`,
-          text: `Hola,\n\nEl soporte ha marcado tu ticket como RESUELTO. Por favor ingresa a la intranet para confirmar si la solución funciona o rechazarla si el problema persiste.\n\nSi no confirmas en 3 días, se cerrará automáticamente.`
-        }).catch(console.error);
+    const ticket = rows[0];
+    const estadoAnterior = ticket.estado;
+    const cambioEstado = estado !== estadoAnterior;
+
+    // 2. Si no hubo cambio de estado NI mensaje, no hacemos nada
+    if (!cambioEstado && !tieneMensaje) {
+       return res.redirect(`/sistemas/tickets/${id}`);
+    }
+
+    // 3. Actualizar Estado (Si cambió)
+    if (cambioEstado) {
+      let sqlUpdate = `UPDATE tickets SET estado = ?`;
+      
+      // Manejo de fechas según el estado
+      if (estado === 'Resuelto') sqlUpdate += `, fecha_resolucion = NOW()`;
+      else if (estado === 'Cerrado') sqlUpdate += `, fecha_cierre = NOW()`;
+      else if (estado === 'Abierto') sqlUpdate += `, fecha_resolucion = NULL, fecha_cierre = NULL`; // Si se reabre
+      
+      sqlUpdate += ` WHERE id = ?`;
+      await db.query(sqlUpdate, [estado, id]);
+    }
+
+    // 4. Insertar Mensaje (Si existe)
+    if (tieneMensaje) {
+      await db.query(
+        `INSERT INTO ticket_respuestas (ticket_id, mensaje, remitente) VALUES (?, ?, ?)`,
+        [id, mensaje_respuesta, 'Soporte']
+      );
+    }
+
+    // 5. Enviar Correo Unificado
+    // Solo si hay destinatario y hubo algún cambio
+    if (ticket.solicitante_email) {
+      let asunto = `Actualización Ticket #${id}: ${ticket.titulo}`;
+      let cuerpo = `Hola,\n\nSe ha actualizado tu ticket "${ticket.titulo}".\n`;
+
+      if (cambioEstado) {
+        cuerpo += `\n- Nuevo Estado: ${estado.toUpperCase()}`;
+        if (estado === 'Resuelto') {
+          cuerpo += `\n(Por favor ingresa a la intranet para confirmar si la solución funciona)`;
+        }
       }
+
+      if (tieneMensaje) {
+        cuerpo += `\n\n- Mensaje de Soporte:\n"${mensaje_respuesta}"`;
+      }
+
+      cuerpo += `\n\n---------------------------------------------------\nPara responder o ver detalles, ingrese a la sección de tickets en la intranet.\nSaludos cordiales.`;
+
+      sendMail({
+        to: ticket.solicitante_email,
+        subject: asunto,
+        text: cuerpo
+      }).catch(console.error);
     }
 
     res.redirect(`/sistemas/tickets/${id}`);
+
   } catch (err) {
     console.error(err);
-    res.status(500).send('Error actualizando ticket');
+    res.status(500).send('Error gestionando ticket');
   }
 });
 
