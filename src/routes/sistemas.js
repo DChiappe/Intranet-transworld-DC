@@ -72,81 +72,32 @@ router.post('/tickets/crear', async (req, res) => {
 });
 
 // ======================================================================
-//  ADMIN: Gestionar Ticket (Unificado: Estado + Respuesta)
+//  ADMIN: Actualizar Ticket (Gestión antigua por POST directo si existe)
 // ======================================================================
-router.post('/tickets/:id/gestionar', requireRole('admin'), async (req, res) => {
+// Nota: La gestión principal ahora se hace via /tickets/:id/gestionar en tickets.js, 
+// pero mantenemos esta por compatibilidad si algún form viejo apunta aquí.
+router.post('/tickets/:id/actualizar', requireRole('admin'), async (req, res) => {
   const { id } = req.params;
-  const { estado, mensaje_respuesta } = req.body;
-  
-  // Validar si hay mensaje (trim para evitar espacios en blanco)
-  const tieneMensaje = mensaje_respuesta && mensaje_respuesta.trim().length > 0;
+  const { categoria, prioridad, estado } = req.body;
+
+  let sql = `UPDATE tickets SET categoria = ?, prioridad = ?, estado = ?`;
+  const params = [categoria, prioridad, estado];
+
+  if (estado === 'Resuelto') {
+    sql += `, fecha_resolucion = NOW()`;
+  } else if (estado === 'Cerrado') {
+    sql += `, fecha_cierre = NOW()`;
+  }
+
+  sql += ` WHERE id = ?`;
+  params.push(id);
 
   try {
-    // 1. Obtener estado actual y datos para el correo
-    const [rows] = await db.query('SELECT estado, solicitante_email, titulo FROM tickets WHERE id = ?', [id]);
-    if (rows.length === 0) return res.status(404).send('Ticket no encontrado');
-    
-    const ticket = rows[0];
-    const estadoAnterior = ticket.estado;
-    const cambioEstado = estado !== estadoAnterior;
-
-    // 2. Si no hubo cambio de estado NI mensaje, no hacemos nada
-    if (!cambioEstado && !tieneMensaje) {
-       return res.redirect(`/sistemas/tickets/${id}`);
-    }
-
-    // 3. Actualizar Estado (Si cambió)
-    if (cambioEstado) {
-      let sqlUpdate = `UPDATE tickets SET estado = ?`;
-      
-      // Manejo de fechas según el estado
-      if (estado === 'Resuelto') sqlUpdate += `, fecha_resolucion = NOW()`;
-      else if (estado === 'Cerrado') sqlUpdate += `, fecha_cierre = NOW()`;
-      else if (estado === 'Abierto') sqlUpdate += `, fecha_resolucion = NULL, fecha_cierre = NULL`; // Si se reabre
-      
-      sqlUpdate += ` WHERE id = ?`;
-      await db.query(sqlUpdate, [estado, id]);
-    }
-
-    // 4. Insertar Mensaje (Si existe)
-    if (tieneMensaje) {
-      await db.query(
-        `INSERT INTO ticket_respuestas (ticket_id, mensaje, remitente) VALUES (?, ?, ?)`,
-        [id, mensaje_respuesta, 'Soporte']
-      );
-    }
-
-    // 5. Enviar Correo Unificado
-    // Solo si hay destinatario y hubo algún cambio
-    if (ticket.solicitante_email) {
-      let asunto = `Actualización Ticket #${id}: ${ticket.titulo}`;
-      let cuerpo = `Hola,\n\nSe ha actualizado tu ticket "${ticket.titulo}".\n`;
-
-      if (cambioEstado) {
-        cuerpo += `\n- Nuevo Estado: ${estado.toUpperCase()}`;
-        if (estado === 'Resuelto') {
-          cuerpo += `\n(Por favor ingresa a la intranet para confirmar si la solución funciona)`;
-        }
-      }
-
-      if (tieneMensaje) {
-        cuerpo += `\n\n- Mensaje de Soporte:\n"${mensaje_respuesta}"`;
-      }
-
-      cuerpo += `\n\n---------------------------------------------------\nPara responder o ver detalles, ingrese a la sección de tickets en la intranet.\nSaludos cordiales.`;
-
-      sendMail({
-        to: ticket.solicitante_email,
-        subject: asunto,
-        text: cuerpo
-      }).catch(console.error);
-    }
-
+    await db.query(sql, params);
     res.redirect(`/sistemas/tickets/${id}`);
-
   } catch (err) {
     console.error(err);
-    res.status(500).send('Error gestionando ticket');
+    res.status(500).send('Error actualizando ticket');
   }
 });
 
@@ -158,7 +109,6 @@ router.post('/tickets/:id/confirmar', async (req, res) => {
   const user = req.session.user;
 
   try {
-    // Validar dueño
     const [rows] = await db.query('SELECT solicitante_email FROM tickets WHERE id = ?', [id]);
     if (rows.length === 0 || rows[0].solicitante_email !== user.email) {
       return res.status(403).send('No tienes permiso.');
@@ -180,7 +130,6 @@ router.post('/tickets/:id/rechazar', async (req, res) => {
   const user = req.session.user;
 
   try {
-    // Validar dueño
     const [rows] = await db.query('SELECT solicitante_email, titulo FROM tickets WHERE id = ?', [id]);
     if (rows.length === 0 || rows[0].solicitante_email !== user.email) {
       return res.status(403).send('No tienes permiso.');
@@ -188,14 +137,9 @@ router.post('/tickets/:id/rechazar', async (req, res) => {
     
     const ticketTitulo = rows[0].titulo;
 
-    // Cambiar a Abierto y limpiar fecha de resolución
     await db.query(`UPDATE tickets SET estado = 'Abierto', fecha_resolucion = NULL WHERE id = ?`, [id]);
-
-    // Insertar un mensaje automático en el chat del ticket
-    await db.query(`INSERT INTO ticket_respuestas (ticket_id, mensaje, remitente) VALUES (?, ?, ?)`, 
-      [id, 'El usuario ha rechazado la solución y el ticket se ha reabierto.', 'Sistema']);
-
-    // Notificar al Admin con el texto solicitado
+    
+    // Notificar al Admin
     if (process.env.ADMIN_NOTIFY_EMAIL) {
       sendMail({
         to: process.env.ADMIN_NOTIFY_EMAIL,
@@ -212,50 +156,6 @@ router.post('/tickets/:id/rechazar', async (req, res) => {
 });
 
 // ======================================================================
-//  Responder Ticket
-// ======================================================================
-router.post('/tickets/:id/responder', async (req, res) => {
-  const { id } = req.params;
-  const { asunto_respuesta, mensaje_respuesta } = req.body;
-  const user = req.session.user;
-
-  if (!mensaje_respuesta || !mensaje_respuesta.trim()) return res.status(400).send('Mensaje vacío.');
-
-  try {
-    const [results] = await db.query(`SELECT solicitante_email, titulo FROM tickets WHERE id = ?`, [id]);
-    if (results.length === 0) return res.status(404).send('Ticket no encontrado');
-
-    const ticket = results[0];
-    const isAdmin = user.role === 'admin';
-    const isOwner = user.email === ticket.solicitante_email;
-
-    if (!isAdmin && !isOwner) return res.status(403).send('Sin permiso.');
-
-    let remitenteNombre = isAdmin ? 'Soporte' : (user.username || user.first_name);
-    let emailDestino = isAdmin ? ticket.solicitante_email : process.env.ADMIN_NOTIFY_EMAIL;
-    let asuntoEmail = isAdmin 
-      ? (asunto_respuesta || `Respuesta a tu ticket #${id}: ${ticket.titulo}`)
-      : `Nueva respuesta del usuario en Ticket #${id}: ${ticket.titulo}`;
-
-    await db.query(`INSERT INTO ticket_respuestas (ticket_id, mensaje, remitente) VALUES (?, ?, ?)`, [id, mensaje_respuesta, remitenteNombre]);
-
-    if (emailDestino) {
-      const footer = `\n---------------------------------------------------\nPara responder, ingrese a la sección de tickets en la intranet.\nSaludos cordiales.`;
-      sendMail({
-        to: emailDestino,
-        subject: asuntoEmail,
-        text: `Nueva respuesta de ${remitenteNombre}:\n\n${mensaje_respuesta}${footer}`
-      }).catch(console.error);
-    }
-
-    res.redirect(`/sistemas/tickets/${id}`);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error procesando respuesta.');
-  }
-});
-
-// ======================================================================
 //  Detalle de Ticket
 // ======================================================================
 router.get('/tickets/:id', async (req, res) => {
@@ -263,7 +163,14 @@ router.get('/tickets/:id', async (req, res) => {
   const user = req.session.user;
 
   const sqlTicket = `SELECT id, titulo, descripcion, categoria, prioridad, estado, solicitante_nombre, solicitante_email, fecha_creacion, fecha_actualizacion, fecha_resolucion FROM tickets WHERE id = ?`;
-  const sqlRespuestas = `SELECT id, mensaje, remitente, fecha FROM ticket_respuestas WHERE ticket_id = ? ORDER BY fecha ASC`;
+  
+  // AQUÍ ESTABA EL ERROR: Faltaban las columnas de archivo
+  const sqlRespuestas = `
+    SELECT id, mensaje, remitente, fecha, archivo_url, archivo_nombre, archivo_tipo 
+    FROM ticket_respuestas 
+    WHERE ticket_id = ? 
+    ORDER BY fecha ASC
+  `;
 
   try {
     const [ticketResults] = await db.query(sqlTicket, [id]);

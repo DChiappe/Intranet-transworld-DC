@@ -5,7 +5,7 @@ const { sendMail } = require('../services/mailer');
 const requireRole = require('../middlewares/requireRole');
 const cloudinary = require('../services/cloudinary');
 
-const EMAIL_FOOTER = `
+const EMAIL_FOOTER_HTML = `
 <br><hr>
 <p style="font-size: 0.9rem; color: #555;">
   Para responder a este correo, por favor ingrese a la sección de tickets en la intranet.<br>
@@ -13,32 +13,44 @@ const EMAIL_FOOTER = `
 </p>
 `;
 
-// Función auxiliar para generar el HTML del correo
+const EMAIL_FOOTER_TEXT = `
+---------------------------------------------------
+Para responder a este correo, por favor ingrese a la sección de tickets en la intranet.
+Saludos cordiales.
+`;
+
+// Helper: Genera contenido HTML para el correo
 function generarHtmlCorreo(mensaje, archivo) {
   let html = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.5;">`;
   
-  // Convertir saltos de línea en <br>
   html += `<p>${mensaje.replace(/\n/g, '<br>')}</p>`;
 
-  // Lógica de adjuntos visuales
   if (archivo && archivo.url) {
     html += `<div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 5px;">`;
     
     if (archivo.tipo === 'image') {
-      // Si es imagen, la mostramos
       html += `<p style="font-weight: bold; margin-top: 0;">📎 Imagen adjunta:</p>`;
       html += `<img src="${archivo.url}" alt="Adjunto" style="max-width: 100%; height: auto; border-radius: 4px; border: 1px solid #ddd;">`;
     } else {
-      // Si es video, pdf u otro, mostramos el link
       html += `<p style="margin: 0;">📎 <strong>Se ha adjuntado un archivo:</strong> <a href="${archivo.url}" target="_blank" style="color: #0056b3; text-decoration: underline;">${archivo.nombre || 'Ver archivo'}</a></p>`;
     }
     
     html += `</div>`;
   }
 
-  html += EMAIL_FOOTER;
+  html += EMAIL_FOOTER_HTML;
   html += `</div>`;
   return html;
+}
+
+// Helper: Genera contenido Texto Plano (Fallback)
+function generarTextoCorreo(mensaje, archivo) {
+  let texto = mensaje;
+  if (archivo && archivo.url) {
+    texto += `\n\n[Adjunto: ${archivo.nombre || 'Archivo'} - ${archivo.url}]`;
+  }
+  texto += `\n${EMAIL_FOOTER_TEXT}`;
+  return texto;
 }
 
 // ==========================================
@@ -95,12 +107,13 @@ router.post('/crear', async (req, res) => {
     const nuevoId = result.insertId;
 
     if (process.env.ADMIN_NOTIFY_EMAIL) {
-      const mensajeTexto = `Se ha generado un nuevo requerimiento.<br><br><strong>Solicitante:</strong> ${solicitante_nombre}<br><strong>Categoría:</strong> ${categoria}<br><strong>Prioridad:</strong> ${prioridad}<br><br><strong>Descripción:</strong><br>${descripcion}`;
+      const mensajeBase = `Se ha generado un nuevo requerimiento.\n\nSolicitante: ${solicitante_nombre}\nCategoría: ${categoria}\nPrioridad: ${prioridad}\n\nDescripción:\n${descripcion}`;
       
       sendMail({
         to: process.env.ADMIN_NOTIFY_EMAIL,
         subject: `Nuevo Ticket #${nuevoId}: ${titulo}`,
-        html: generarHtmlCorreo(mensajeTexto, null) // Usamos HTML
+        text: mensajeBase + EMAIL_FOOTER_TEXT, // Versión texto
+        html: generarHtmlCorreo(mensajeBase, null) // Versión HTML
       }).catch(console.error);
     }
     res.redirect(`/sistemas/tickets/${nuevoId}`);
@@ -150,13 +163,13 @@ router.post('/:id/gestionar', requireRole('admin'), async (req, res) => {
       );
     }
 
-    // Enviar Correo HTML
+    // Enviar Correo (HTML + Texto)
     if (ticket.solicitante_email) {
       let asunto = `Actualización Ticket #${id}: ${ticket.titulo}`;
-      let mensajeBase = `Hola,\n\nSe ha actualizado tu ticket "<strong>${ticket.titulo}</strong>".\n`;
+      let mensajeBase = `Hola,\n\nSe ha actualizado tu ticket "${ticket.titulo}".\n`;
 
       if (cambioEstado) {
-        mensajeBase += `\n- Nuevo Estado: <strong>${estado.toUpperCase()}</strong>`;
+        mensajeBase += `\n- Nuevo Estado: ${estado.toUpperCase()}`;
         if (estado === 'Resuelto') mensajeBase += `\n(Por favor confirma si funciona)`;
       }
 
@@ -164,13 +177,13 @@ router.post('/:id/gestionar', requireRole('admin'), async (req, res) => {
         mensajeBase += `\n\n- Mensaje de Soporte:\n"${mensaje_respuesta}"`;
       }
 
-      // Preparamos objeto archivo para el helper
       const archivoObj = archivo_url ? { url: archivo_url, nombre: archivo_nombre, tipo: archivo_tipo } : null;
 
       sendMail({ 
         to: ticket.solicitante_email, 
         subject: asunto, 
-        html: generarHtmlCorreo(mensajeBase, archivoObj) 
+        text: generarTextoCorreo(mensajeBase, archivoObj), // Fallback texto
+        html: generarHtmlCorreo(mensajeBase, archivoObj)   // HTML Rico
       }).catch(console.error);
     }
 
@@ -216,14 +229,14 @@ router.post('/:id/responder', async (req, res) => {
     );
 
     if (emailDestino) {
-      let mensajeBase = `Nueva respuesta de <strong>${remitenteNombre}</strong>:\n\n${mensaje_respuesta}`;
-      
+      let mensajeBase = `Nueva respuesta de ${remitenteNombre}:\n\n${mensaje_respuesta}`;
       const archivoObj = archivo_url ? { url: archivo_url, nombre: archivo_nombre, tipo: archivo_tipo } : null;
 
       sendMail({
         to: emailDestino,
         subject: asuntoEmail,
-        html: generarHtmlCorreo(mensajeBase, archivoObj)
+        text: generarTextoCorreo(mensajeBase, archivoObj), // Fallback texto
+        html: generarHtmlCorreo(mensajeBase, archivoObj)   // HTML Rico
       }).catch(console.error);
     }
 
