@@ -93,7 +93,7 @@
         <h3 class="panel-title">Agregar mensaje</h3>
         <form id="formUser" action="/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
           <label for="mensaje_user">Mensaje</label>
-          <textarea id="mensaje_user" name="mensaje_respuesta" rows="4" placeholder="Describe tu respuesta..." style="resize: none;"></textarea>
+          <textarea id="mensaje_user" name="mensaje_respuesta" rows="4" placeholder="Describe tu respuesta..." style="max-width: 1200px; max-height: 400px;"></textarea>
           
           <div class="adjuntos-wrapper" style="margin-top: 10px;">
             <input type="hidden" name="archivo_url" id="user_url">
