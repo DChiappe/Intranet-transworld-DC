@@ -3,24 +3,53 @@ const router = express.Router();
 const db = require('../db');
 const { sendMail } = require('../services/mailer'); 
 const requireRole = require('../middlewares/requireRole');
-const cloudinary = require('../services/cloudinary'); // <--- IMPORTANTE
+const cloudinary = require('../services/cloudinary');
 
 const EMAIL_FOOTER = `
----------------------------------------------------
-Para responder a este correo, por favor ingrese a la sección de tickets en la intranet.
-Saludos cordiales.
+<br><hr>
+<p style="font-size: 0.9rem; color: #555;">
+  Para responder a este correo, por favor ingrese a la sección de tickets en la intranet.<br>
+  Saludos cordiales.
+</p>
 `;
 
+// Función auxiliar para generar el HTML del correo
+function generarHtmlCorreo(mensaje, archivo) {
+  let html = `<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.5;">`;
+  
+  // Convertir saltos de línea en <br>
+  html += `<p>${mensaje.replace(/\n/g, '<br>')}</p>`;
+
+  // Lógica de adjuntos visuales
+  if (archivo && archivo.url) {
+    html += `<div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 5px;">`;
+    
+    if (archivo.tipo === 'image') {
+      // Si es imagen, la mostramos
+      html += `<p style="font-weight: bold; margin-top: 0;">📎 Imagen adjunta:</p>`;
+      html += `<img src="${archivo.url}" alt="Adjunto" style="max-width: 100%; height: auto; border-radius: 4px; border: 1px solid #ddd;">`;
+    } else {
+      // Si es video, pdf u otro, mostramos el link
+      html += `<p style="margin: 0;">📎 <strong>Se ha adjuntado un archivo:</strong> <a href="${archivo.url}" target="_blank" style="color: #0056b3; text-decoration: underline;">${archivo.nombre || 'Ver archivo'}</a></p>`;
+    }
+    
+    html += `</div>`;
+  }
+
+  html += EMAIL_FOOTER;
+  html += `</div>`;
+  return html;
+}
+
 // ==========================================
-// RUTA PARA FIRMA DE CLOUDINARY (Seguridad)
+// RUTA PARA FIRMA DE CLOUDINARY
 // ==========================================
 router.get('/signature', async (req, res) => {
   if (!req.session.user) return res.status(403).json({ error: 'No autorizado' });
 
   try {
     const timestamp = Math.round(Date.now() / 1000);
-    const folder = 'tickets_adjuntos'; // Carpeta en Cloudinary
-    
+    const folder = 'tickets_adjuntos';
     const paramsToSign = { timestamp, folder };
 
     const signature = cloudinary.utils.api_sign_request(
@@ -45,7 +74,7 @@ router.get('/signature', async (req, res) => {
 // RUTAS PARA USUARIOS (Creación)
 // ==========================================
 router.get('/nuevo', (req, res) => {
-  res.render('sistemas/ticket_nuevo', { titulo: 'Nuevo Ticket', user: req.session.user }); // Ajusté la ruta de vista
+  res.render('sistemas/ticket_nuevo', { titulo: 'Nuevo Ticket', user: req.session.user });
 });
 
 router.post('/crear', async (req, res) => {
@@ -66,11 +95,12 @@ router.post('/crear', async (req, res) => {
     const nuevoId = result.insertId;
 
     if (process.env.ADMIN_NOTIFY_EMAIL) {
-      const mensaje = `Se ha generado un nuevo requerimiento.\n\nSolicitante: ${solicitante_nombre}\nCategoría: ${categoria}\nPrioridad: ${prioridad}\n\nDescripción:\n${descripcion}`;
+      const mensajeTexto = `Se ha generado un nuevo requerimiento.<br><br><strong>Solicitante:</strong> ${solicitante_nombre}<br><strong>Categoría:</strong> ${categoria}<br><strong>Prioridad:</strong> ${prioridad}<br><br><strong>Descripción:</strong><br>${descripcion}`;
+      
       sendMail({
         to: process.env.ADMIN_NOTIFY_EMAIL,
         subject: `Nuevo Ticket #${nuevoId}: ${titulo}`,
-        text: mensaje + EMAIL_FOOTER
+        html: generarHtmlCorreo(mensajeTexto, null) // Usamos HTML
       }).catch(console.error);
     }
     res.redirect(`/sistemas/tickets/${nuevoId}`);
@@ -81,14 +111,13 @@ router.post('/crear', async (req, res) => {
 });
 
 // ==========================================
-// ADMIN: Gestionar (Con Adjuntos)
+// ADMIN: Gestionar (Con Adjuntos Visuales)
 // ==========================================
 router.post('/:id/gestionar', requireRole('admin'), async (req, res) => {
   const { id } = req.params;
-  const { estado, mensaje_respuesta, archivo_url, archivo_nombre, archivo_tipo } = req.body; // <--- Nuevos campos
+  const { estado, mensaje_respuesta, archivo_url, archivo_nombre, archivo_tipo } = req.body;
   
   const tieneMensaje = mensaje_respuesta && mensaje_respuesta.trim().length > 0;
-  // Consideramos que "hay respuesta" si hay texto O si hay un archivo
   const hayRespuesta = tieneMensaje || (archivo_url && archivo_url.trim().length > 0);
 
   try {
@@ -121,27 +150,28 @@ router.post('/:id/gestionar', requireRole('admin'), async (req, res) => {
       );
     }
 
-    // Enviar Correo
+    // Enviar Correo HTML
     if (ticket.solicitante_email) {
       let asunto = `Actualización Ticket #${id}: ${ticket.titulo}`;
-      let cuerpo = `Hola,\n\nSe ha actualizado tu ticket "${ticket.titulo}".\n`;
+      let mensajeBase = `Hola,\n\nSe ha actualizado tu ticket "<strong>${ticket.titulo}</strong>".\n`;
 
       if (cambioEstado) {
-        cuerpo += `\n- Nuevo Estado: ${estado.toUpperCase()}`;
-        if (estado === 'Resuelto') cuerpo += `\n(Por favor confirma si funciona)`;
+        mensajeBase += `\n- Nuevo Estado: <strong>${estado.toUpperCase()}</strong>`;
+        if (estado === 'Resuelto') mensajeBase += `\n(Por favor confirma si funciona)`;
       }
 
       if (tieneMensaje) {
-        cuerpo += `\n\n- Mensaje de Soporte:\n"${mensaje_respuesta}"`;
+        mensajeBase += `\n\n- Mensaje de Soporte:\n"${mensaje_respuesta}"`;
       }
 
-      if (archivo_url) {
-        cuerpo += `\n\n[Soporte ha adjuntado un archivo: ${archivo_nombre}]`;
-      }
+      // Preparamos objeto archivo para el helper
+      const archivoObj = archivo_url ? { url: archivo_url, nombre: archivo_nombre, tipo: archivo_tipo } : null;
 
-      cuerpo += EMAIL_FOOTER;
-
-      sendMail({ to: ticket.solicitante_email, subject: asunto, text: cuerpo }).catch(console.error);
+      sendMail({ 
+        to: ticket.solicitante_email, 
+        subject: asunto, 
+        html: generarHtmlCorreo(mensajeBase, archivoObj) 
+      }).catch(console.error);
     }
 
     res.redirect(`/sistemas/tickets/${id}`);
@@ -152,14 +182,13 @@ router.post('/:id/gestionar', requireRole('admin'), async (req, res) => {
 });
 
 // ==========================================
-// USUARIO: Responder (Con Adjuntos)
+// USUARIO: Responder (Con Adjuntos Visuales)
 // ==========================================
 router.post('/:id/responder', async (req, res) => {
   const { id } = req.params;
-  const { mensaje_respuesta, archivo_url, archivo_nombre, archivo_tipo } = req.body; // <--- Nuevos campos
+  const { mensaje_respuesta, archivo_url, archivo_nombre, archivo_tipo } = req.body;
   const user = req.session.user;
 
-  // Validación: Debe haber texto O archivo
   const tieneMensaje = mensaje_respuesta && mensaje_respuesta.trim().length > 0;
   const tieneArchivo = archivo_url && archivo_url.trim().length > 0;
 
@@ -187,13 +216,14 @@ router.post('/:id/responder', async (req, res) => {
     );
 
     if (emailDestino) {
-      let cuerpoCorreo = `Nueva respuesta de ${remitenteNombre}:\n\n${mensaje_respuesta}`;
-      if (tieneArchivo) cuerpoCorreo += `\n\n[Se ha adjuntado un archivo: ${archivo_nombre}]`;
+      let mensajeBase = `Nueva respuesta de <strong>${remitenteNombre}</strong>:\n\n${mensaje_respuesta}`;
       
+      const archivoObj = archivo_url ? { url: archivo_url, nombre: archivo_nombre, tipo: archivo_tipo } : null;
+
       sendMail({
         to: emailDestino,
         subject: asuntoEmail,
-        text: cuerpoCorreo + EMAIL_FOOTER
+        html: generarHtmlCorreo(mensajeBase, archivoObj)
       }).catch(console.error);
     }
 

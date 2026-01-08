@@ -17,7 +17,6 @@
       <dt>Descripción</dt> <dd><pre class="ticket-descripcion"><%= ticket.descripcion %></pre></dd>
       <dt>Solicitante</dt> <dd><%= ticket.solicitante_nombre || '-' %> &lt;<%= ticket.solicitante_email %>&gt;</dd>
       <dt>Área</dt> <dd><%= ticket.categoria || '-' %></dd>
-      
       <dt>Importancia</dt>
       <dd>
         <% 
@@ -27,7 +26,6 @@
         %>
         <span class="badge <%= clasePrioridad %>"><%= ticket.prioridad || 'Media' %></span>
       </dd>
-
       <dt>Estado</dt>
       <dd>
         <% 
@@ -38,7 +36,6 @@
         %>
         <span class="badge <%= claseEstado %>"><%= textoEstado %></span>
       </dd>
-
       <dt>Creado</dt> 
       <dd class="small-text"><%= ticket.fecha_creacion ? new Date(ticket.fecha_creacion).toLocaleString('es-CL') : '-' %></dd>
     </dl>
@@ -51,9 +48,7 @@
     <% if (canManage) { %>
       <div class="panel panel-actualizar-ticket">
         <h3 class="panel-title">Gestionar Ticket</h3>
-        
         <form id="formAdmin" action="/tickets/<%= ticket.id %>/gestionar" method="POST" class="form-actualizar-ticket">
-          
           <label for="estado">Estado</label>
           <select id="estado" name="estado">
             <option value="Abierto" <%= ticket.estado === 'Abierto' ? 'selected' : '' %>>🔴 Abierto</option>
@@ -62,17 +57,14 @@
           </select>
 
           <label for="mensaje_admin" style="margin-top: 15px;">Mensaje / Respuesta (Opcional)</label>
-          <textarea id="mensaje_admin" name="mensaje_respuesta" rows="4" placeholder="Escribe aquí tu respuesta..."></textarea>
+          <textarea id="mensaje_admin" name="mensaje_respuesta" rows="4" placeholder="Escribe aquí tu respuesta..." style="resize: none;"></textarea>
           
           <div class="adjuntos-wrapper" style="margin-top: 10px;">
             <input type="hidden" name="archivo_url" id="admin_url">
             <input type="hidden" name="archivo_nombre" id="admin_nombre">
             <input type="hidden" name="archivo_tipo" id="admin_tipo">
-            
             <input type="file" id="fileAdmin" style="display: none;" accept="image/*,video/*,.pdf">
-            <button type="button" class="btn btn-primario" onclick="document.getElementById('fileAdmin').click()">
-              📎 Adjuntar archivo
-            </button>
+            <button type="button" class="btn btn-primario" onclick="document.getElementById('fileAdmin').click()">📎 Adjuntar archivo</button>
             <span id="statusAdmin" class="small-text" style="margin-left: 10px;"></span>
           </div>
 
@@ -101,17 +93,14 @@
         <h3 class="panel-title">Agregar mensaje</h3>
         <form id="formUser" action="/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
           <label for="mensaje_user">Mensaje</label>
-          <textarea id="mensaje_user" name="mensaje_respuesta" rows="4" placeholder="Describe tu respuesta..."></textarea>
+          <textarea id="mensaje_user" name="mensaje_respuesta" rows="4" placeholder="Describe tu respuesta..." style="resize: none;"></textarea>
           
           <div class="adjuntos-wrapper" style="margin-top: 10px;">
             <input type="hidden" name="archivo_url" id="user_url">
             <input type="hidden" name="archivo_nombre" id="user_nombre">
             <input type="hidden" name="archivo_tipo" id="user_tipo">
-            
             <input type="file" id="fileUser" style="display: none;" accept="image/*,video/*,.pdf">
-            <button type="button" class="btn btn-primario" onclick="document.getElementById('fileUser').click()">
-              📎 Adjuntar archivo
-            </button>
+            <button type="button" class="btn btn-primario" onclick="document.getElementById('fileUser').click()">📎 Adjuntar archivo</button>
             <span id="statusUser" class="small-text" style="margin-left: 10px;"></span>
           </div>
 
@@ -134,19 +123,23 @@
             <pre class="respuesta-mensaje"><%= r.mensaje %></pre>
             
             <% if (r.archivo_url) { %>
-              <div style="margin-top: 10px; background: #f1f1f1; padding: 10px; border-radius: 6px; display: inline-block;">
-                <span style="font-weight: bold; font-size: 0.85rem;">📎 Adjunto:</span>
+              <div style="margin-top: 10px; background: #f1f1f1; padding: 10px; border-radius: 6px; display: inline-block; max-width: 100%;">
+                
                 <% if (r.archivo_tipo === 'image') { %>
-                  <br>
+                  <div style="font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;">📎 Imagen adjunta:</div>
                   <a href="<%= r.archivo_url %>" target="_blank">
-                    <img src="<%= r.archivo_url %>" style="max-width: 200px; max-height: 200px; border-radius: 4px; margin-top: 5px;">
+                    <img src="<%= r.archivo_url %>" style="max-width: 100%; max-height: 300px; border-radius: 4px; border: 1px solid #ddd;">
                   </a>
+
                 <% } else if (r.archivo_tipo === 'video') { %>
-                   <br>
-                   <video src="<%= r.archivo_url %>" controls style="max-width: 250px; margin-top: 5px;"></video>
+                   <div style="font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;">📎 Video adjunto:</div>
+                   <video src="<%= r.archivo_url %>" controls style="max-width: 100%; max-height: 300px; border-radius: 4px;"></video>
+
                 <% } else { %>
-                   <a href="<%= r.archivo_url %>" target="_blank" style="margin-left: 5px;"><%= r.archivo_nombre || 'Ver archivo' %></a>
+                   <span style="font-weight: bold; font-size: 0.85rem;">📎 Archivo adjunto:</span>
+                   <a href="<%= r.archivo_url %>" target="_blank" style="margin-left: 5px; color: #0056b3; text-decoration: underline;"><%= r.archivo_nombre || 'Ver archivo' %></a>
                 <% } %>
+
               </div>
             <% } %>
 
@@ -159,38 +152,32 @@
   </div>
 
   <script>
-    // Función reutilizable para manejar la subida en cualquier formulario
     function setupDirectUpload(fileInputId, hiddenUrlId, hiddenNameId, hiddenTypeId, statusId) {
       const fileInput = document.getElementById(fileInputId);
-      if (!fileInput) return; // Si no existe el formulario en esta vista (ej. usuario vs admin)
+      if (!fileInput) return;
 
       fileInput.addEventListener('change', async function() {
         const file = this.files[0];
         if (!file) return;
 
         const statusSpan = document.getElementById(statusId);
-        
-        // Validar tamaño (10MB img/pdf, 50MB video)
         const isVideo = file.type.startsWith('video/');
         const limit = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
         
         if (file.size > limit) {
-          alert('El archivo es muy pesado. Máx 10MB (Img/PDF) o 50MB (Video).');
-          this.value = ''; // Limpiar
+          alert('El archivo es muy pesado.');
+          this.value = '';
           return;
         }
 
-        // UI: Subiendo...
         statusSpan.innerText = '⏳ Subiendo ' + file.name + '...';
         statusSpan.style.color = '#e67e22';
 
         try {
-          // 1. Obtener firma
           const resSig = await fetch('/tickets/signature');
-          if (!resSig.ok) throw new Error('Error obteniendo firma');
+          if (!resSig.ok) throw new Error('Error firma');
           const sig = await resSig.json();
 
-          // 2. Preparar FormData
           const formData = new FormData();
           formData.append('file', file);
           formData.append('api_key', sig.apiKey);
@@ -198,42 +185,30 @@
           formData.append('signature', sig.signature);
           formData.append('folder', sig.folder);
 
-          // Determinar endpoint (image, video, o raw para pdfs complejos)
-          // Cloudinary maneja PDFs como 'image' usualmente para tener preview, 
-          // pero si falla podemos usar 'auto'. Usaremos lógica simple:
-          let resourceType = 'image';
-          if (isVideo) resourceType = 'video';
-          
+          let resourceType = isVideo ? 'video' : 'image';
           const uploadUrl = `https://api.cloudinary.com/v1_1/${sig.cloudName}/${resourceType}/upload`;
 
-          // 3. Subir
           const resUpload = await fetch(uploadUrl, { method: 'POST', body: formData });
-          if (!resUpload.ok) throw new Error('Error subiendo a la nube');
+          if (!resUpload.ok) throw new Error('Error nube');
           const data = await resUpload.json();
 
-          // 4. Llenar inputs ocultos
           document.getElementById(hiddenUrlId).value = data.secure_url;
           document.getElementById(hiddenNameId).value = file.name;
           document.getElementById(hiddenTypeId).value = resourceType;
 
-          statusSpan.innerText = '✅ Archivo listo para enviar';
+          statusSpan.innerText = '✅ Listo para enviar';
           statusSpan.style.color = 'green';
-
         } catch (err) {
           console.error(err);
-          statusSpan.innerText = '❌ Error al subir. Intenta de nuevo.';
+          statusSpan.innerText = '❌ Error al subir.';
           statusSpan.style.color = 'red';
-          fileInput.value = ''; // Limpiar para reintentar
+          fileInput.value = '';
         }
       });
     }
 
-    // Inicializar para el form de Admin (si existe)
     setupDirectUpload('fileAdmin', 'admin_url', 'admin_nombre', 'admin_tipo', 'statusAdmin');
-    
-    // Inicializar para el form de Usuario (si existe)
     setupDirectUpload('fileUser', 'user_url', 'user_nombre', 'user_tipo', 'statusUser');
   </script>
-
 </body>
 </html>

@@ -249,16 +249,9 @@
     <% mixedCarousel.forEach((item, index) => { %>
       <div class="news-slide <%= index === 0 ? 'active' : '' %>">
         <a href="<%= item.link %>" title="Ver detalle">
-          <img src="<%= item.imagen %>" alt="Destacado">
-          <% if (item.tipo === 'historial') { %>
             <div class="history-overlay">
               <div class="history-text"><%= item.titulo %></div>
             </div>
-          <% } else { %>
-            <div class="news-caption">
-              <%= item.titulo %>
-            </div>
-          <% } %>
         </a>
       </div>
     <% }); %>
