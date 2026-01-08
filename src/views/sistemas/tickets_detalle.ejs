@@ -5,57 +5,77 @@
   <title><%= titulo %></title>
   <link rel="stylesheet" href="/css/styles.css" />
   <style>
-    /* ESTILOS PARA ADJUNTOS */
-    .adjuntos-container { margin-top: 15px; }
+    /* === ESTILOS PARA ADJUNTOS === */
+    .adjuntos-wrapper { margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; }
     
-    /* Grilla para Imágenes y Videos (Círculos para img, Cuadrados para video) */
-    .grid-media { 
+    .seccion-adjunto { margin-bottom: 15px; }
+    .titulo-adjunto { font-size: 0.85rem; font-weight: bold; color: #555; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+    
+    /* 1. IMÁGENES (Círculos lado a lado) */
+    .grid-imagenes { 
         display: flex; 
         gap: 15px; 
         flex-wrap: wrap; 
-        margin-bottom: 15px; 
     }
-    
-    .media-item {
-        width: 120px;
-        height: 120px;
-        position: relative;
-        border-radius: 50%; /* Por defecto redondo para imágenes */
-        overflow: hidden;
+    .thumb-imagen {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%; /* Círculo perfecto */
+        object-fit: cover;
         border: 3px solid #eee;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        transition: transform 0.2s;
-        background: #f0f0f0;
+        transition: transform 0.2s, border-color 0.2s;
+        cursor: pointer;
+        background-color: #f0f0f0;
     }
-    .media-item:hover { transform: scale(1.05); border-color: #003a70; }
-    
-    .media-item img { width: 100%; height: 100%; object-fit: cover; }
-    
-    /* Estilo específico para Videos (Cuadrados con bordes redondeados) */
-    .media-item.is-video {
-        width: 200px; /* Más ancho */
-        height: 120px;
-        border-radius: 8px; /* Cuadrado redondeado */
-        background: #000;
-        display: flex; align-items: center; justify-content: center;
+    .thumb-imagen:hover {
+        transform: scale(1.05);
+        border-color: #28a745; /* Verde al pasar mouse */
     }
-    .media-item.is-video video { width: 100%; height: 100%; object-fit: cover; }
 
-    /* Lista para Documentos (PDF, DOC) */
-    .list-docs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-    .doc-item {
+    /* 2. DOCUMENTOS (Lista vertical) */
+    .lista-docs { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 6px; 
+    }
+    .item-doc {
         background: #f8f9fa;
         padding: 8px 12px;
-        border-radius: 4px;
+        border-radius: 6px;
         border-left: 4px solid #003a70;
-        display: flex; align-items: center; gap: 8px;
+        display: flex;
+        align-items: center;
         font-size: 0.9rem;
+        text-decoration: none;
+        color: #333;
+        transition: background 0.2s;
+        width: fit-content;
     }
-    .doc-item a { text-decoration: none; color: #003a70; font-weight: bold; }
-    .doc-item a:hover { text-decoration: underline; }
+    .item-doc:hover { background: #e9ecef; }
+    .item-doc span { font-weight: 600; margin-left: 5px; }
 
-    /* Estilos etiquetas */
-    .label-adjunto { font-size: 0.8rem; font-weight: bold; color: #666; margin-bottom: 5px; display: block; }
+    /* 3. VIDEOS (Rectángulos lado a lado) */
+    .grid-videos { 
+        display: flex; 
+        gap: 15px; 
+        flex-wrap: wrap; 
+    }
+    .item-video {
+        width: 200px;
+        background: #000;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .item-video video {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        display: block;
+    }
+    
+    /* Pequeño texto de estado de subida */
+    .status-upload { font-size: 0.85rem; margin-top: 5px; font-weight: bold; }
   </style>
 </head>
 
@@ -69,7 +89,15 @@
       <dt>Título</dt> <dd><%= ticket.titulo %></dd>
       <dt>Descripción</dt> <dd><pre class="ticket-descripcion"><%= ticket.descripcion %></pre></dd>
       <dt>Solicitante</dt> <dd><%= ticket.solicitante_nombre || '-' %> &lt;<%= ticket.solicitante_email %>&gt;</dd>
-      <dt>Estado</dt> <dd><span class="badge badge-amarilla"><%= ticket.estado %></span></dd>
+      <dt>Estado</dt> 
+      <dd>
+        <% 
+           let claseEstado = 'badge-estado-abierto'; 
+           if (ticket.estado === 'Cerrado') claseEstado = 'badge-estado-cerrado';
+           else if (ticket.estado === 'Resuelto') claseEstado = 'badge-amarilla';
+        %>
+        <span class="badge <%= claseEstado %>"><%= ticket.estado %></span>
+      </dd>
     </dl>
 
     <% 
@@ -95,8 +123,8 @@
 
           <div style="margin-top: 10px;">
              <input type="file" id="fileAdmin" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="display: none;">
-             <button type="button" class="btn btn-primario" onclick="document.getElementById('fileAdmin').click()">📎 Adjuntar archivos (Múltiple)</button>
-             <div id="statusAdmin" class="small-text" style="margin-top: 5px;"></div>
+             <button type="button" class="btn btn-primario" onclick="document.getElementById('fileAdmin').click()">📎 Adjuntar archivos</button>
+             <div id="statusAdmin" class="status-upload"></div>
           </div>
 
           <button type="submit" class="btn btn-primario" style="margin-top: 15px; background-color: #002a52;">Actualizar ticket</button>
@@ -114,8 +142,8 @@
 
           <div style="margin-top: 10px;">
              <input type="file" id="fileUser" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="display: none;">
-             <button type="button" class="btn btn-primario" onclick="document.getElementById('fileUser').click()">📎 Adjuntar archivos (Múltiple)</button>
-             <div id="statusUser" class="small-text" style="margin-top: 5px;"></div>
+             <button type="button" class="btn btn-primario" onclick="document.getElementById('fileUser').click()">📎 Adjuntar archivos</button>
+             <div id="statusUser" class="status-upload"></div>
           </div>
 
           <button type="submit" class="btn btn-primario" style="margin-top: 15px;">Enviar mensaje</button>
@@ -136,12 +164,10 @@
             
             <% 
                let archivos = [];
-               // 1. Intentamos leer la columna nueva JSON
                if (r.adjuntos) {
                  try { archivos = JSON.parse(r.adjuntos); } catch(e){}
-               } 
-               // 2. Si no hay JSON, miramos si hay archivo legacy (antiguo)
-               else if (r.archivo_url) {
+               } else if (r.archivo_url) {
+                 // Compatibilidad antigua
                  archivos.push({
                    url: r.archivo_url,
                    nombre: r.archivo_nombre || 'Adjunto',
@@ -149,48 +175,57 @@
                  });
                }
 
-               // 3. Separar por tipos
+               // Filtrar por grupos
                let imagenes = archivos.filter(a => a.tipo === 'image');
                let videos   = archivos.filter(a => a.tipo === 'video');
                let docs     = archivos.filter(a => a.tipo !== 'image' && a.tipo !== 'video');
             %>
 
-            <div class="adjuntos-container">
-              
-              <% if (imagenes.length > 0) { %>
-                <span class="label-adjunto">📎 Imágenes adjuntas:</span>
-                <div class="grid-media">
-                  <% imagenes.forEach(img => { %>
-                    <a href="<%= img.url %>" target="_blank" class="media-item">
-                       <img src="<%= img.url %>" title="<%= img.nombre %>">
-                    </a>
-                  <% }) %>
-                </div>
-              <% } %>
+            <% if (archivos.length > 0) { %>
+                <div class="adjuntos-wrapper">
+                    
+                    <% if (imagenes.length > 0) { %>
+                        <div class="seccion-adjunto">
+                            <div class="titulo-adjunto">📎 Imagen adjunta:</div>
+                            <div class="grid-imagenes">
+                                <% imagenes.forEach(img => { %>
+                                    <a href="<%= img.url %>" target="_blank">
+                                        <img src="<%= img.url %>" class="thumb-imagen" title="<%= img.nombre %>">
+                                    </a>
+                                <% }) %>
+                            </div>
+                        </div>
+                    <% } %>
 
-              <% if (docs.length > 0) { %>
-                <span class="label-adjunto">📎 Documentos:</span>
-                <div class="list-docs">
-                  <% docs.forEach(doc => { %>
-                    <div class="doc-item">
-                      📄 <a href="<%= doc.url %>" target="_blank"><%= doc.nombre %></a>
-                    </div>
-                  <% }) %>
-                </div>
-              <% } %>
+                    <% if (docs.length > 0) { %>
+                        <div class="seccion-adjunto">
+                            <div class="titulo-adjunto">📎 Archivo adjunto:</div>
+                            <div class="lista-docs">
+                                <% docs.forEach(doc => { %>
+                                    <a href="<%= doc.url %>" target="_blank" class="item-doc">
+                                        📄 <span><%= doc.nombre %></span>
+                                    </a>
+                                <% }) %>
+                            </div>
+                        </div>
+                    <% } %>
 
-              <% if (videos.length > 0) { %>
-                <span class="label-adjunto">📎 Videos adjuntos:</span>
-                <div class="grid-media">
-                  <% videos.forEach(vid => { %>
-                     <div class="media-item is-video">
-                        <video src="<%= vid.url %>" controls></video>
-                     </div>
-                  <% }) %>
-                </div>
-              <% } %>
+                    <% if (videos.length > 0) { %>
+                        <div class="seccion-adjunto">
+                            <div class="titulo-adjunto">📎 Video adjunto:</div>
+                            <div class="grid-videos">
+                                <% videos.forEach(vid => { %>
+                                    <div class="item-video">
+                                        <video src="<%= vid.url %>" controls title="<%= vid.nombre %>"></video>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        </div>
+                    <% } %>
 
-            </div>
+                </div>
+            <% } %>
+
           </div>
         <% }) %>
       <% } else { %>
@@ -200,7 +235,6 @@
   </div>
 
   <script>
-    // Script unificado para manejar múltiples archivos
     function setupMultipleUpload(inputId, hiddenId, statusId) {
       const input = document.getElementById(inputId);
       if (!input) return;
@@ -214,21 +248,20 @@
         
         let uploadedList = [];
         
-        // Validar tamaños antes de empezar
+        // Validación de tamaño
         for (let f of files) {
            const isVideo = f.type.startsWith('video/');
            const limit = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
            if (f.size > limit) {
-             alert(`El archivo ${f.name} pesa demasiado.`);
+             alert(`El archivo ${f.name} supera el límite.`);
              this.value = ''; return;
            }
         }
 
         try {
-          // Obtener firma UNA vez (o por cada uno, cloudinary a veces prefiere por archivo si cambia timestamp, pero usualmente 1 sirve si es rápido)
-          // Para seguridad, pediremos firma dentro del loop o una general. Usaremos una general.
+          // Obtener firma
           const resSig = await fetch('/sistemas/tickets/signature');
-          if (!resSig.ok) throw new Error('Error firma');
+          if (!resSig.ok) throw new Error('Error obteniendo firma');
           const sig = await resSig.json();
 
           let count = 0;
@@ -242,15 +275,22 @@
              formData.append('signature', sig.signature);
              formData.append('folder', sig.folder);
 
-             let type = 'image'; // Cloudinary resource type
-             let dbType = 'image'; // Nuestro tipo DB
+             // === LÓGICA CORREGIDA DE CLASIFICACIÓN ===
+             let type = 'raw';   // Tipo para Cloudinary API
+             let dbType = 'doc'; // Tipo para nuestra BD
 
              if (file.type.startsWith('video/')) {
-                type = 'video'; dbType = 'video';
+                type = 'video'; 
+                dbType = 'video';
+             } else if (file.type.startsWith('image/')) {
+                type = 'image'; 
+                dbType = 'image'; // <--- ESTO FALTABA
              } else if (file.type === 'application/pdf') {
-                type = 'image'; dbType = 'pdf'; // Cloudinary acepta PDF como image para preview
+                type = 'image'; // Cloudinary trata PDF como imagen para thumbnails
+                dbType = 'pdf'; 
              } else {
-                type = 'raw'; dbType = 'doc'; // Word, Excel, etc
+                type = 'raw'; 
+                dbType = 'doc';
              }
 
              const uploadUrl = `https://api.cloudinary.com/v1_1/${sig.cloudName}/${type}/upload`;
@@ -269,14 +309,12 @@
              statusDiv.innerHTML = `<span style="color:#e67e22">⏳ Subiendo ${count} / ${files.length}...</span>`;
           }
 
-          // Guardar JSON en input oculto
           hiddenInput.value = JSON.stringify(uploadedList);
-          
-          statusDiv.innerHTML = `<span style="color:green">✅ Listos ${uploadedList.length} archivos para enviar.</span>`;
+          statusDiv.innerHTML = `<span style="color:green">✅ ${uploadedList.length} archivos listos.</span>`;
 
         } catch (err) {
           console.error(err);
-          statusDiv.innerHTML = `<span style="color:red">❌ Error subiendo archivos. Intenta de nuevo.</span>`;
+          statusDiv.innerHTML = `<span style="color:red">❌ Error. Intenta de nuevo.</span>`;
           this.value = '';
         }
       });
