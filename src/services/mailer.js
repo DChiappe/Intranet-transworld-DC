@@ -13,7 +13,8 @@ const sendMail = async ({ to, subject, text, html }) => {
 
   sendSmtpEmail.subject = subject;
   sendSmtpEmail.textContent = text;
-  // Agregamos soporte para HTML si se envía
+  
+  // Agregamos contenido HTML si existe
   if (html) {
     sendSmtpEmail.htmlContent = html;
   }

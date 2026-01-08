@@ -152,63 +152,77 @@
   </div>
 
   <script>
-    function setupDirectUpload(fileInputId, hiddenUrlId, hiddenNameId, hiddenTypeId, statusId) {
-      const fileInput = document.getElementById(fileInputId);
-      if (!fileInput) return;
+      function setupDirectUpload(fileInputId, hiddenUrlId, hiddenNameId, hiddenTypeId, statusId) {
+        const fileInput = document.getElementById(fileInputId);
+        if (!fileInput) return;
 
-      fileInput.addEventListener('change', async function() {
-        const file = this.files[0];
-        if (!file) return;
+        fileInput.addEventListener('change', async function() {
+          const file = this.files[0];
+          if (!file) return;
 
-        const statusSpan = document.getElementById(statusId);
-        const isVideo = file.type.startsWith('video/');
-        const limit = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
-        
-        if (file.size > limit) {
-          alert('El archivo es muy pesado.');
-          this.value = '';
-          return;
-        }
+          const statusSpan = document.getElementById(statusId);
+          const isVideo = file.type.startsWith('video/');
+          // Aumentamos límite para videos
+          const limit = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+          
+          if (file.size > limit) {
+            alert('El archivo supera el límite permitido.');
+            this.value = '';
+            return;
+          }
 
-        statusSpan.innerText = '⏳ Subiendo ' + file.name + '...';
-        statusSpan.style.color = '#e67e22';
+          statusSpan.innerText = '⏳ Subiendo ' + file.name + '...';
+          statusSpan.style.color = '#e67e22';
 
-        try {
-          const resSig = await fetch('/tickets/signature');
-          if (!resSig.ok) throw new Error('Error firma');
-          const sig = await resSig.json();
+          try {
+            const resSig = await fetch('/sistemas/tickets/signature'); // Ajusta la ruta si es necesario (ej: /tickets/signature o /sistemas/tickets/signature según tu router)
+            if (!resSig.ok) throw new Error('Error firma');
+            const sig = await resSig.json();
 
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('api_key', sig.apiKey);
-          formData.append('timestamp', sig.timestamp);
-          formData.append('signature', sig.signature);
-          formData.append('folder', sig.folder);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('api_key', sig.apiKey);
+            formData.append('timestamp', sig.timestamp);
+            formData.append('signature', sig.signature);
+            formData.append('folder', sig.folder);
 
-          let resourceType = isVideo ? 'video' : 'image';
-          const uploadUrl = `https://api.cloudinary.com/v1_1/${sig.cloudName}/${resourceType}/upload`;
+            // Cloudinary maneja PDFs como 'image' para generar thumbnails, eso está bien para la subida.
+            let uploadType = isVideo ? 'video' : 'image';
+            const uploadUrl = `https://api.cloudinary.com/v1_1/${sig.cloudName}/${uploadType}/upload`;
 
-          const resUpload = await fetch(uploadUrl, { method: 'POST', body: formData });
-          if (!resUpload.ok) throw new Error('Error nube');
-          const data = await resUpload.json();
+            const resUpload = await fetch(uploadUrl, { method: 'POST', body: formData });
+            if (!resUpload.ok) throw new Error('Error nube');
+            const data = await resUpload.json();
 
-          document.getElementById(hiddenUrlId).value = data.secure_url;
-          document.getElementById(hiddenNameId).value = file.name;
-          document.getElementById(hiddenTypeId).value = resourceType;
+            document.getElementById(hiddenUrlId).value = data.secure_url;
+            document.getElementById(hiddenNameId).value = file.name;
 
-          statusSpan.innerText = '✅ Listo para enviar';
-          statusSpan.style.color = 'green';
-        } catch (err) {
-          console.error(err);
-          statusSpan.innerText = '❌ Error al subir.';
-          statusSpan.style.color = 'red';
-          fileInput.value = '';
-        }
-      });
-    }
+            // --- CORRECCIÓN AQUÍ ---
+            // Determinamos el tipo REAL para la base de datos
+            let dbType = 'image'; // Por defecto
+            if (isVideo) {
+              dbType = 'video';
+            } else if (file.type === 'application/pdf') {
+              dbType = 'pdf'; // <--- Esto forzará que se muestre como link
+            }
+            
+            document.getElementById(hiddenTypeId).value = dbType;
+            // -----------------------
 
-    setupDirectUpload('fileAdmin', 'admin_url', 'admin_nombre', 'admin_tipo', 'statusAdmin');
-    setupDirectUpload('fileUser', 'user_url', 'user_nombre', 'user_tipo', 'statusUser');
+            statusSpan.innerText = '✅ Listo para enviar';
+            statusSpan.style.color = 'green';
+          } catch (err) {
+            console.error(err);
+            statusSpan.innerText = '❌ Error al subir.';
+            statusSpan.style.color = 'red';
+            fileInput.value = '';
+          }
+        });
+      }
+
+      // Inicializadores
+      setupDirectUpload('fileAdmin', 'admin_url', 'admin_nombre', 'admin_tipo', 'statusAdmin');
+      setupDirectUpload('fileUser', 'user_url', 'user_nombre', 'user_tipo', 'statusUser');
   </script>
 </body>
 </html>
