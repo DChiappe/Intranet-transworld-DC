@@ -4,6 +4,59 @@
   <meta charset="UTF-8" />
   <title><%= titulo %></title>
   <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    /* ESTILOS PARA ADJUNTOS */
+    .adjuntos-container { margin-top: 15px; }
+    
+    /* Grilla para Imágenes y Videos (Círculos para img, Cuadrados para video) */
+    .grid-media { 
+        display: flex; 
+        gap: 15px; 
+        flex-wrap: wrap; 
+        margin-bottom: 15px; 
+    }
+    
+    .media-item {
+        width: 120px;
+        height: 120px;
+        position: relative;
+        border-radius: 50%; /* Por defecto redondo para imágenes */
+        overflow: hidden;
+        border: 3px solid #eee;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+        background: #f0f0f0;
+    }
+    .media-item:hover { transform: scale(1.05); border-color: #003a70; }
+    
+    .media-item img { width: 100%; height: 100%; object-fit: cover; }
+    
+    /* Estilo específico para Videos (Cuadrados con bordes redondeados) */
+    .media-item.is-video {
+        width: 200px; /* Más ancho */
+        height: 120px;
+        border-radius: 8px; /* Cuadrado redondeado */
+        background: #000;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .media-item.is-video video { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Lista para Documentos (PDF, DOC) */
+    .list-docs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+    .doc-item {
+        background: #f8f9fa;
+        padding: 8px 12px;
+        border-radius: 4px;
+        border-left: 4px solid #003a70;
+        display: flex; align-items: center; gap: 8px;
+        font-size: 0.9rem;
+    }
+    .doc-item a { text-decoration: none; color: #003a70; font-weight: bold; }
+    .doc-item a:hover { text-decoration: underline; }
+
+    /* Estilos etiquetas */
+    .label-adjunto { font-size: 0.8rem; font-weight: bold; color: #666; margin-bottom: 5px; display: block; }
+  </style>
 </head>
 
 <body class="intranet-body">
@@ -16,28 +69,7 @@
       <dt>Título</dt> <dd><%= ticket.titulo %></dd>
       <dt>Descripción</dt> <dd><pre class="ticket-descripcion"><%= ticket.descripcion %></pre></dd>
       <dt>Solicitante</dt> <dd><%= ticket.solicitante_nombre || '-' %> &lt;<%= ticket.solicitante_email %>&gt;</dd>
-      <dt>Área</dt> <dd><%= ticket.categoria || '-' %></dd>
-      <dt>Importancia</dt>
-      <dd>
-        <% 
-          let clasePrioridad = 'badge-verde';
-          if (ticket.prioridad === 'Alta') clasePrioridad = 'badge-roja';
-          else if (ticket.prioridad === 'Media') clasePrioridad = 'badge-amarilla';
-        %>
-        <span class="badge <%= clasePrioridad %>"><%= ticket.prioridad || 'Media' %></span>
-      </dd>
-      <dt>Estado</dt>
-      <dd>
-        <% 
-          let claseEstado = 'badge-estado-abierto'; 
-          let textoEstado = ticket.estado || 'Abierto';
-          if (textoEstado === 'Cerrado') claseEstado = 'badge-estado-cerrado'; 
-          else if (textoEstado === 'Resuelto') claseEstado = 'badge-amarilla'; 
-        %>
-        <span class="badge <%= claseEstado %>"><%= textoEstado %></span>
-      </dd>
-      <dt>Creado</dt> 
-      <dd class="small-text"><%= ticket.fecha_creacion ? new Date(ticket.fecha_creacion).toLocaleString('es-CL') : '-' %></dd>
+      <dt>Estado</dt> <dd><span class="badge badge-amarilla"><%= ticket.estado %></span></dd>
     </dl>
 
     <% 
@@ -48,24 +80,23 @@
     <% if (canManage) { %>
       <div class="panel panel-actualizar-ticket">
         <h3 class="panel-title">Gestionar Ticket</h3>
-        <form id="formAdmin" action="/tickets/<%= ticket.id %>/gestionar" method="POST" class="form-actualizar-ticket">
-          <label for="estado">Estado</label>
-          <select id="estado" name="estado">
-            <option value="Abierto" <%= ticket.estado === 'Abierto' ? 'selected' : '' %>>🔴 Abierto</option>
-            <option value="Resuelto" <%= ticket.estado === 'Resuelto' ? 'selected' : '' %>>🟡 Resuelto (Esperando confirmación)</option>
-            <option value="Cerrado" <%= ticket.estado === 'Cerrado' ? 'selected' : '' %>>🟢 Cerrado</option>
+        <form id="formAdmin" action="/sistemas/tickets/<%= ticket.id %>/actualizar" method="POST" class="form-actualizar-ticket">
+          <label>Estado</label>
+          <select name="estado">
+             <option value="Abierto" <%= ticket.estado==='Abierto'?'selected':'' %>>Abierto</option>
+             <option value="Resuelto" <%= ticket.estado==='Resuelto'?'selected':'' %>>Resuelto</option>
+             <option value="Cerrado" <%= ticket.estado==='Cerrado'?'selected':'' %>>Cerrado</option>
           </select>
 
-          <label for="mensaje_admin" style="margin-top: 15px;">Mensaje / Respuesta (Opcional)</label>
-          <textarea id="mensaje_admin" name="mensaje_respuesta" rows="4" placeholder="Escribe aquí tu respuesta..." style="max-width: 1200px; max-height: 400px;"></textarea>
-          
-          <div class="adjuntos-wrapper" style="margin-top: 10px;">
-            <input type="hidden" name="archivo_url" id="admin_url">
-            <input type="hidden" name="archivo_nombre" id="admin_nombre">
-            <input type="hidden" name="archivo_tipo" id="admin_tipo">
-            <input type="file" id="fileAdmin" style="display: none;" accept="image/*,video/*,.pdf">
-            <button type="button" class="btn btn-primario" onclick="document.getElementById('fileAdmin').click()">📎 Adjuntar archivo</button>
-            <span id="statusAdmin" class="small-text" style="margin-left: 10px;"></span>
+          <label style="margin-top:15px;">Mensaje (Opcional)</label>
+          <textarea name="mensaje_respuesta" rows="4" style="resize:vertical; max-height:400px;"></textarea>
+
+          <input type="hidden" name="adjuntos_data" id="admin_adjuntos_data" value="[]">
+
+          <div style="margin-top: 10px;">
+             <input type="file" id="fileAdmin" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="display: none;">
+             <button type="button" class="btn btn-primario" onclick="document.getElementById('fileAdmin').click()">📎 Adjuntar archivos (Múltiple)</button>
+             <div id="statusAdmin" class="small-text" style="margin-top: 5px;"></div>
           </div>
 
           <button type="submit" class="btn btn-primario" style="margin-top: 15px; background-color: #002a52;">Actualizar ticket</button>
@@ -73,42 +104,23 @@
       </div>
     <% } %>
 
-    <% if (isOwner && ticket.estado === 'Resuelto') { %>
-      <div class="panel" style="background-color: #fff3cd; border: 1px solid #ffeeba;">
-        <h3 class="panel-title" style="color: #856404;">💡 Ticket Resuelto</h3>
-        <p style="margin-bottom: 15px;">Por favor, confirma si el problema se solucionó.</p>
-        <div style="display: flex; gap: 10px;">
-          <form action="/tickets/<%= ticket.id %>/confirmar" method="POST">
-            <button type="submit" class="btn btn-primario" style="background-color: #28a745; border: none;">✅ Sí, funciona</button>
-          </form>
-          <form action="/tickets/<%= ticket.id %>/rechazar" method="POST">
-            <button type="submit" class="btn btn-primario" style="background-color: #dc3545; border: none;">❌ No, aún falla</button>
-          </form>
-        </div>
-      </div>
-    <% } %>
-
-    <% if ( isOwner && !canManage && ticket.estado !== 'Cerrado' ) { %>
+    <% if ( (canManage || isOwner) && ticket.estado !== 'Cerrado' ) { %>
       <div class="panel panel-responder">
         <h3 class="panel-title">Agregar mensaje</h3>
-        <form id="formUser" action="/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
-          <label for="mensaje_user">Mensaje</label>
-          <textarea id="mensaje_user" name="mensaje_respuesta" rows="4" placeholder="Describe tu respuesta..." style="max-width: 1200px; max-height: 400px;"></textarea>
-          
-          <div class="adjuntos-wrapper" style="margin-top: 10px;">
-            <input type="hidden" name="archivo_url" id="user_url">
-            <input type="hidden" name="archivo_nombre" id="user_nombre">
-            <input type="hidden" name="archivo_tipo" id="user_tipo">
-            <input type="file" id="fileUser" style="display: none;" accept="image/*,video/*,.pdf">
-            <button type="button" class="btn btn-primario" onclick="document.getElementById('fileUser').click()">📎 Adjuntar archivo</button>
-            <span id="statusUser" class="small-text" style="margin-left: 10px;"></span>
+        <form id="formUser" action="/sistemas/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
+          <textarea name="mensaje_respuesta" rows="4" placeholder="Escribe tu respuesta..." style="resize:vertical; max-height:400px;"></textarea>
+
+          <input type="hidden" name="adjuntos_data" id="user_adjuntos_data" value="[]">
+
+          <div style="margin-top: 10px;">
+             <input type="file" id="fileUser" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="display: none;">
+             <button type="button" class="btn btn-primario" onclick="document.getElementById('fileUser').click()">📎 Adjuntar archivos (Múltiple)</button>
+             <div id="statusUser" class="small-text" style="margin-top: 5px;"></div>
           </div>
 
           <button type="submit" class="btn btn-primario" style="margin-top: 15px;">Enviar mensaje</button>
         </form>
       </div>
-    <% } else if (ticket.estado === 'Cerrado') { %>
-      <div class="mensaje-info">Este ticket está cerrado y no admite más respuestas.</div>
     <% } %>
 
     <div class="panel panel-historial">
@@ -122,27 +134,63 @@
             </div>
             <pre class="respuesta-mensaje"><%= r.mensaje %></pre>
             
-            <% if (r.archivo_url) { %>
-              <div style="margin-top: 10px; background: #f1f1f1; padding: 10px; border-radius: 6px; display: inline-block; max-width: 100%;">
-                
-                <% if (r.archivo_tipo === 'image') { %>
-                  <div style="font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;">📎 Imagen adjunta:</div>
-                  <a href="<%= r.archivo_url %>" target="_blank">
-                    <img src="<%= r.archivo_url %>" style="max-width: 100%; max-height: 300px; border-radius: 4px; border: 1px solid #ddd;">
-                  </a>
+            <% 
+               let archivos = [];
+               // 1. Intentamos leer la columna nueva JSON
+               if (r.adjuntos) {
+                 try { archivos = JSON.parse(r.adjuntos); } catch(e){}
+               } 
+               // 2. Si no hay JSON, miramos si hay archivo legacy (antiguo)
+               else if (r.archivo_url) {
+                 archivos.push({
+                   url: r.archivo_url,
+                   nombre: r.archivo_nombre || 'Adjunto',
+                   tipo: r.archivo_tipo || 'image'
+                 });
+               }
 
-                <% } else if (r.archivo_tipo === 'video') { %>
-                   <div style="font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;">📎 Video adjunto:</div>
-                   <video src="<%= r.archivo_url %>" controls style="max-width: 100%; max-height: 300px; border-radius: 4px;"></video>
+               // 3. Separar por tipos
+               let imagenes = archivos.filter(a => a.tipo === 'image');
+               let videos   = archivos.filter(a => a.tipo === 'video');
+               let docs     = archivos.filter(a => a.tipo !== 'image' && a.tipo !== 'video');
+            %>
 
-                <% } else { %>
-                   <span style="font-weight: bold; font-size: 0.85rem;">📎 Archivo adjunto:</span>
-                   <a href="<%= r.archivo_url %>" target="_blank" style="margin-left: 5px; color: #0056b3; text-decoration: underline;"><%= r.archivo_nombre || 'Ver archivo' %></a>
-                <% } %>
+            <div class="adjuntos-container">
+              
+              <% if (imagenes.length > 0) { %>
+                <span class="label-adjunto">📎 Imágenes adjuntas:</span>
+                <div class="grid-media">
+                  <% imagenes.forEach(img => { %>
+                    <a href="<%= img.url %>" target="_blank" class="media-item">
+                       <img src="<%= img.url %>" title="<%= img.nombre %>">
+                    </a>
+                  <% }) %>
+                </div>
+              <% } %>
 
-              </div>
-            <% } %>
+              <% if (docs.length > 0) { %>
+                <span class="label-adjunto">📎 Documentos:</span>
+                <div class="list-docs">
+                  <% docs.forEach(doc => { %>
+                    <div class="doc-item">
+                      📄 <a href="<%= doc.url %>" target="_blank"><%= doc.nombre %></a>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } %>
 
+              <% if (videos.length > 0) { %>
+                <span class="label-adjunto">📎 Videos adjuntos:</span>
+                <div class="grid-media">
+                  <% videos.forEach(vid => { %>
+                     <div class="media-item is-video">
+                        <video src="<%= vid.url %>" controls></video>
+                     </div>
+                  <% }) %>
+                </div>
+              <% } %>
+
+            </div>
           </div>
         <% }) %>
       <% } else { %>
@@ -152,77 +200,91 @@
   </div>
 
   <script>
-      function setupDirectUpload(fileInputId, hiddenUrlId, hiddenNameId, hiddenTypeId, statusId) {
-        const fileInput = document.getElementById(fileInputId);
-        if (!fileInput) return;
+    // Script unificado para manejar múltiples archivos
+    function setupMultipleUpload(inputId, hiddenId, statusId) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
 
-        fileInput.addEventListener('change', async function() {
-          const file = this.files[0];
-          if (!file) return;
+      input.addEventListener('change', async function() {
+        const files = Array.from(this.files);
+        if (files.length === 0) return;
 
-          const statusSpan = document.getElementById(statusId);
-          const isVideo = file.type.startsWith('video/');
-          // Aumentamos límite para videos
-          const limit = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+        const statusDiv = document.getElementById(statusId);
+        const hiddenInput = document.getElementById(hiddenId);
+        
+        let uploadedList = [];
+        
+        // Validar tamaños antes de empezar
+        for (let f of files) {
+           const isVideo = f.type.startsWith('video/');
+           const limit = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+           if (f.size > limit) {
+             alert(`El archivo ${f.name} pesa demasiado.`);
+             this.value = ''; return;
+           }
+        }
+
+        try {
+          // Obtener firma UNA vez (o por cada uno, cloudinary a veces prefiere por archivo si cambia timestamp, pero usualmente 1 sirve si es rápido)
+          // Para seguridad, pediremos firma dentro del loop o una general. Usaremos una general.
+          const resSig = await fetch('/sistemas/tickets/signature');
+          if (!resSig.ok) throw new Error('Error firma');
+          const sig = await resSig.json();
+
+          let count = 0;
+          statusDiv.innerHTML = `<span style="color:#e67e22">⏳ Subiendo 0 / ${files.length}...</span>`;
+
+          for (let file of files) {
+             const formData = new FormData();
+             formData.append('file', file);
+             formData.append('api_key', sig.apiKey);
+             formData.append('timestamp', sig.timestamp);
+             formData.append('signature', sig.signature);
+             formData.append('folder', sig.folder);
+
+             let type = 'image'; // Cloudinary resource type
+             let dbType = 'image'; // Nuestro tipo DB
+
+             if (file.type.startsWith('video/')) {
+                type = 'video'; dbType = 'video';
+             } else if (file.type === 'application/pdf') {
+                type = 'image'; dbType = 'pdf'; // Cloudinary acepta PDF como image para preview
+             } else {
+                type = 'raw'; dbType = 'doc'; // Word, Excel, etc
+             }
+
+             const uploadUrl = `https://api.cloudinary.com/v1_1/${sig.cloudName}/${type}/upload`;
+             
+             const resUp = await fetch(uploadUrl, { method: 'POST', body: formData });
+             if (!resUp.ok) throw new Error('Fallo subida ' + file.name);
+             const data = await resUp.json();
+
+             uploadedList.push({
+                url: data.secure_url,
+                nombre: file.name,
+                tipo: dbType
+             });
+
+             count++;
+             statusDiv.innerHTML = `<span style="color:#e67e22">⏳ Subiendo ${count} / ${files.length}...</span>`;
+          }
+
+          // Guardar JSON en input oculto
+          hiddenInput.value = JSON.stringify(uploadedList);
           
-          if (file.size > limit) {
-            alert('El archivo supera el límite permitido.');
-            this.value = '';
-            return;
-          }
+          statusDiv.innerHTML = `<span style="color:green">✅ Listos ${uploadedList.length} archivos para enviar.</span>`;
 
-          statusSpan.innerText = '⏳ Subiendo ' + file.name + '...';
-          statusSpan.style.color = '#e67e22';
+        } catch (err) {
+          console.error(err);
+          statusDiv.innerHTML = `<span style="color:red">❌ Error subiendo archivos. Intenta de nuevo.</span>`;
+          this.value = '';
+        }
+      });
+    }
 
-          try {
-            const resSig = await fetch('/sistemas/tickets/signature'); // Ajusta la ruta si es necesario (ej: /tickets/signature o /sistemas/tickets/signature según tu router)
-            if (!resSig.ok) throw new Error('Error firma');
-            const sig = await resSig.json();
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('api_key', sig.apiKey);
-            formData.append('timestamp', sig.timestamp);
-            formData.append('signature', sig.signature);
-            formData.append('folder', sig.folder);
-
-            // Cloudinary maneja PDFs como 'image' para generar thumbnails, eso está bien para la subida.
-            let uploadType = isVideo ? 'video' : 'image';
-            const uploadUrl = `https://api.cloudinary.com/v1_1/${sig.cloudName}/${uploadType}/upload`;
-
-            const resUpload = await fetch(uploadUrl, { method: 'POST', body: formData });
-            if (!resUpload.ok) throw new Error('Error nube');
-            const data = await resUpload.json();
-
-            document.getElementById(hiddenUrlId).value = data.secure_url;
-            document.getElementById(hiddenNameId).value = file.name;
-
-            // --- CORRECCIÓN AQUÍ ---
-            // Determinamos el tipo REAL para la base de datos
-            let dbType = 'image'; // Por defecto
-            if (isVideo) {
-              dbType = 'video';
-            } else if (file.type === 'application/pdf') {
-              dbType = 'pdf'; // <--- Esto forzará que se muestre como link
-            }
-            
-            document.getElementById(hiddenTypeId).value = dbType;
-            // -----------------------
-
-            statusSpan.innerText = '✅ Listo para enviar';
-            statusSpan.style.color = 'green';
-          } catch (err) {
-            console.error(err);
-            statusSpan.innerText = '❌ Error al subir.';
-            statusSpan.style.color = 'red';
-            fileInput.value = '';
-          }
-        });
-      }
-
-      // Inicializadores
-      setupDirectUpload('fileAdmin', 'admin_url', 'admin_nombre', 'admin_tipo', 'statusAdmin');
-      setupDirectUpload('fileUser', 'user_url', 'user_nombre', 'user_tipo', 'statusUser');
+    setupMultipleUpload('fileAdmin', 'admin_adjuntos_data', 'statusAdmin');
+    setupMultipleUpload('fileUser', 'user_adjuntos_data', 'statusUser');
   </script>
+
 </body>
 </html>
