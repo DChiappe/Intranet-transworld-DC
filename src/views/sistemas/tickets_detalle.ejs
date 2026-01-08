@@ -33,7 +33,6 @@
         <% 
           let claseEstado = 'badge-estado-abierto'; 
           let textoEstado = ticket.estado || 'Abierto';
-          
           if (textoEstado === 'Cerrado') claseEstado = 'badge-estado-cerrado'; 
           else if (textoEstado === 'Resuelto') claseEstado = 'badge-amarilla'; 
         %>
@@ -53,7 +52,7 @@
       <div class="panel panel-actualizar-ticket">
         <h3 class="panel-title">Gestionar Ticket</h3>
         
-        <form action="/sistemas/tickets/<%= ticket.id %>/gestionar" method="POST" class="form-actualizar-ticket">
+        <form id="formAdmin" action="/tickets/<%= ticket.id %>/gestionar" method="POST" class="form-actualizar-ticket">
           
           <label for="estado">Estado</label>
           <select id="estado" name="estado">
@@ -62,30 +61,36 @@
             <option value="Cerrado" <%= ticket.estado === 'Cerrado' ? 'selected' : '' %>>🟢 Cerrado</option>
           </select>
 
-          <label for="mensaje_respuesta" style="margin-top: 15px;">Mensaje / Respuesta (Opcional)</label>
-          <textarea id="mensaje_respuesta" name="mensaje_respuesta" rows="4" placeholder="Escribe aquí si deseas enviar una respuesta al usuario junto con el cambio de estado..."></textarea>
+          <label for="mensaje_admin" style="margin-top: 15px;">Mensaje / Respuesta (Opcional)</label>
+          <textarea id="mensaje_admin" name="mensaje_respuesta" rows="4" placeholder="Escribe aquí tu respuesta..."></textarea>
+          
+          <div class="adjuntos-wrapper" style="margin-top: 10px;">
+            <input type="hidden" name="archivo_url" id="admin_url">
+            <input type="hidden" name="archivo_nombre" id="admin_nombre">
+            <input type="hidden" name="archivo_tipo" id="admin_tipo">
+            
+            <input type="file" id="fileAdmin" style="display: none;" accept="image/*,video/*,.pdf">
+            <button type="button" class="btn btn-primario" onclick="document.getElementById('fileAdmin').click()">
+              📎 Adjuntar archivo
+            </button>
+            <span id="statusAdmin" class="small-text" style="margin-left: 10px;"></span>
+          </div>
 
-          <button type="submit" class="btn btn-primario" style="margin-top: 15px;">Actualizar ticket</button>
+          <button type="submit" class="btn btn-primario" style="margin-top: 15px; background-color: #002a52;">Actualizar ticket</button>
         </form>
       </div>
     <% } %>
 
     <% if (isOwner && ticket.estado === 'Resuelto') { %>
       <div class="panel" style="background-color: #fff3cd; border: 1px solid #ffeeba;">
-        <h3 class="panel-title" style="color: #856404;">💡 El soporte ha marcado este ticket como Resuelto</h3>
-        <p style="margin-bottom: 15px;">Por favor, confirma si el problema se solucionó o si persiste.</p>
-        
+        <h3 class="panel-title" style="color: #856404;">💡 Ticket Resuelto</h3>
+        <p style="margin-bottom: 15px;">Por favor, confirma si el problema se solucionó.</p>
         <div style="display: flex; gap: 10px;">
-          <form action="/sistemas/tickets/<%= ticket.id %>/confirmar" method="POST">
-            <button type="submit" class="btn btn-primario" style="background-color: #28a745; border: none;">
-              ✅ Sí, funciona (Cerrar Ticket)
-            </button>
+          <form action="/tickets/<%= ticket.id %>/confirmar" method="POST">
+            <button type="submit" class="btn btn-primario" style="background-color: #28a745; border: none;">✅ Sí, funciona</button>
           </form>
-
-          <form action="/sistemas/tickets/<%= ticket.id %>/rechazar" method="POST">
-            <button type="submit" class="btn btn-primario" style="background-color: #dc3545; border: none;">
-              ❌ No, aún falla (Reabrir Ticket)
-            </button>
+          <form action="/tickets/<%= ticket.id %>/rechazar" method="POST">
+            <button type="submit" class="btn btn-primario" style="background-color: #dc3545; border: none;">❌ No, aún falla</button>
           </form>
         </div>
       </div>
@@ -94,10 +99,23 @@
     <% if ( isOwner && !canManage && ticket.estado !== 'Cerrado' ) { %>
       <div class="panel panel-responder">
         <h3 class="panel-title">Agregar mensaje</h3>
-        <form action="/sistemas/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
-          <label for="mensaje_respuesta">Mensaje</label>
-          <textarea id="mensaje_respuesta" name="mensaje_respuesta" rows="4" required></textarea>
-          <button type="submit" class="btn btn-primario">Enviar mensaje</button>
+        <form id="formUser" action="/tickets/<%= ticket.id %>/responder" method="POST" class="form-responder-ticket">
+          <label for="mensaje_user">Mensaje</label>
+          <textarea id="mensaje_user" name="mensaje_respuesta" rows="4" placeholder="Describe tu respuesta..."></textarea>
+          
+          <div class="adjuntos-wrapper" style="margin-top: 10px;">
+            <input type="hidden" name="archivo_url" id="user_url">
+            <input type="hidden" name="archivo_nombre" id="user_nombre">
+            <input type="hidden" name="archivo_tipo" id="user_tipo">
+            
+            <input type="file" id="fileUser" style="display: none;" accept="image/*,video/*,.pdf">
+            <button type="button" class="btn btn-primario" onclick="document.getElementById('fileUser').click()">
+              📎 Adjuntar archivo
+            </button>
+            <span id="statusUser" class="small-text" style="margin-left: 10px;"></span>
+          </div>
+
+          <button type="submit" class="btn btn-primario" style="margin-top: 15px;">Enviar mensaje</button>
         </form>
       </div>
     <% } else if (ticket.estado === 'Cerrado') { %>
@@ -114,13 +132,108 @@
               <span class="small-text"><%= r.fecha ? new Date(r.fecha).toLocaleString('es-CL') : '' %></span>
             </div>
             <pre class="respuesta-mensaje"><%= r.mensaje %></pre>
+            
+            <% if (r.archivo_url) { %>
+              <div style="margin-top: 10px; background: #f1f1f1; padding: 10px; border-radius: 6px; display: inline-block;">
+                <span style="font-weight: bold; font-size: 0.85rem;">📎 Adjunto:</span>
+                <% if (r.archivo_tipo === 'image') { %>
+                  <br>
+                  <a href="<%= r.archivo_url %>" target="_blank">
+                    <img src="<%= r.archivo_url %>" style="max-width: 200px; max-height: 200px; border-radius: 4px; margin-top: 5px;">
+                  </a>
+                <% } else if (r.archivo_tipo === 'video') { %>
+                   <br>
+                   <video src="<%= r.archivo_url %>" controls style="max-width: 250px; margin-top: 5px;"></video>
+                <% } else { %>
+                   <a href="<%= r.archivo_url %>" target="_blank" style="margin-left: 5px;"><%= r.archivo_nombre || 'Ver archivo' %></a>
+                <% } %>
+              </div>
+            <% } %>
+
           </div>
         <% }) %>
       <% } else { %>
         <p class="small-text">No hay mensajes.</p>
       <% } %>
     </div>
-
   </div>
+
+  <script>
+    // Función reutilizable para manejar la subida en cualquier formulario
+    function setupDirectUpload(fileInputId, hiddenUrlId, hiddenNameId, hiddenTypeId, statusId) {
+      const fileInput = document.getElementById(fileInputId);
+      if (!fileInput) return; // Si no existe el formulario en esta vista (ej. usuario vs admin)
+
+      fileInput.addEventListener('change', async function() {
+        const file = this.files[0];
+        if (!file) return;
+
+        const statusSpan = document.getElementById(statusId);
+        
+        // Validar tamaño (10MB img/pdf, 50MB video)
+        const isVideo = file.type.startsWith('video/');
+        const limit = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+        
+        if (file.size > limit) {
+          alert('El archivo es muy pesado. Máx 10MB (Img/PDF) o 50MB (Video).');
+          this.value = ''; // Limpiar
+          return;
+        }
+
+        // UI: Subiendo...
+        statusSpan.innerText = '⏳ Subiendo ' + file.name + '...';
+        statusSpan.style.color = '#e67e22';
+
+        try {
+          // 1. Obtener firma
+          const resSig = await fetch('/tickets/signature');
+          if (!resSig.ok) throw new Error('Error obteniendo firma');
+          const sig = await resSig.json();
+
+          // 2. Preparar FormData
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('api_key', sig.apiKey);
+          formData.append('timestamp', sig.timestamp);
+          formData.append('signature', sig.signature);
+          formData.append('folder', sig.folder);
+
+          // Determinar endpoint (image, video, o raw para pdfs complejos)
+          // Cloudinary maneja PDFs como 'image' usualmente para tener preview, 
+          // pero si falla podemos usar 'auto'. Usaremos lógica simple:
+          let resourceType = 'image';
+          if (isVideo) resourceType = 'video';
+          
+          const uploadUrl = `https://api.cloudinary.com/v1_1/${sig.cloudName}/${resourceType}/upload`;
+
+          // 3. Subir
+          const resUpload = await fetch(uploadUrl, { method: 'POST', body: formData });
+          if (!resUpload.ok) throw new Error('Error subiendo a la nube');
+          const data = await resUpload.json();
+
+          // 4. Llenar inputs ocultos
+          document.getElementById(hiddenUrlId).value = data.secure_url;
+          document.getElementById(hiddenNameId).value = file.name;
+          document.getElementById(hiddenTypeId).value = resourceType;
+
+          statusSpan.innerText = '✅ Archivo listo para enviar';
+          statusSpan.style.color = 'green';
+
+        } catch (err) {
+          console.error(err);
+          statusSpan.innerText = '❌ Error al subir. Intenta de nuevo.';
+          statusSpan.style.color = 'red';
+          fileInput.value = ''; // Limpiar para reintentar
+        }
+      });
+    }
+
+    // Inicializar para el form de Admin (si existe)
+    setupDirectUpload('fileAdmin', 'admin_url', 'admin_nombre', 'admin_tipo', 'statusAdmin');
+    
+    // Inicializar para el form de Usuario (si existe)
+    setupDirectUpload('fileUser', 'user_url', 'user_nombre', 'user_tipo', 'statusUser');
+  </script>
+
 </body>
 </html>
