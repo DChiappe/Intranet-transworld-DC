@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const { sendMail } = require('../services/mailer');
 const requireRole = require('../middlewares/requireRole'); 
+const cloudinary = require('../services/cloudinary'); // <--- 1. IMPORTANTE: Faltaba esto
 
 // ======================================================================
 //  Página principal
@@ -71,11 +72,39 @@ router.post('/tickets/crear', async (req, res) => {
   }
 });
 
+// ==========================================
+// 2. NUEVA RUTA: FIRMA CLOUDINARY
+// (Debe ir ANTES de las rutas con :id)
+// ==========================================
+router.get('/tickets/signature', async (req, res) => {
+  if (!req.session.user) return res.status(403).json({ error: 'No autorizado' });
+
+  try {
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = 'tickets_adjuntos';
+    const paramsToSign = { timestamp, folder };
+
+    const signature = cloudinary.utils.api_sign_request(
+      paramsToSign,
+      process.env.CLOUDINARY_API_SECRET
+    );
+
+    return res.json({
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      timestamp,
+      signature,
+      folder
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error generando firma' });
+  }
+});
+
 // ======================================================================
-//  ADMIN: Actualizar Ticket (Gestión antigua por POST directo si existe)
+//  ADMIN: Actualizar Ticket
 // ======================================================================
-// Nota: La gestión principal ahora se hace via /tickets/:id/gestionar en tickets.js, 
-// pero mantenemos esta por compatibilidad si algún form viejo apunta aquí.
 router.post('/tickets/:id/actualizar', requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { categoria, prioridad, estado } = req.body;
@@ -164,7 +193,7 @@ router.get('/tickets/:id', async (req, res) => {
 
   const sqlTicket = `SELECT id, titulo, descripcion, categoria, prioridad, estado, solicitante_nombre, solicitante_email, fecha_creacion, fecha_actualizacion, fecha_resolucion FROM tickets WHERE id = ?`;
   
-  // AQUÍ ESTABA EL ERROR: Faltaban las columnas de archivo
+  // Aseguramos que se traigan las columnas de archivo
   const sqlRespuestas = `
     SELECT id, mensaje, remitente, fecha, archivo_url, archivo_nombre, archivo_tipo 
     FROM ticket_respuestas 
