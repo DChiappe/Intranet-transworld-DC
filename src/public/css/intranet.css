@@ -317,7 +317,7 @@ table.tabla-simple tr:nth-child(even) td {
 .login-links a { color: #003a70; text-decoration: none; font-weight: 600; }
 .login-links a:hover { text-decoration: underline; }
 .login-page { display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 100px); }
-.card-login { background: #ffffff; padding: 32px 36px; border-radius: 10px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15); max-width: 420px; width: 100%; }
+.card-login { background: #003a70; padding: 32px 36px; border-radius: 10px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15); max-width: 420px; width: 100%; }
 .card-login h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.6rem; text-align: center; color: #003a70; }
 .form-login label { display: block; margin-top: 12px; margin-bottom: 4px; font-weight: 600; font-size: 1rem; }
 .form-login input[type="text"], .form-login input[type="password"] { width: 100%; padding: 10px; font-size: 1rem; box-sizing: border-box; border-radius: 6px; border: 1px solid #c4ccdd; }
