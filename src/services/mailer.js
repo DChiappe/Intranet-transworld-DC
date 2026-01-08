@@ -8,11 +8,16 @@ apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.SM
 /**
  * Función para enviar correos usando la API (evita errores de conexión SMTP)
  */
-const sendMail = async ({ to, subject, text }) => {
+const sendMail = async ({ to, subject, text, html }) => {
   const sendSmtpEmail = new Brevo.SendSmtpEmail();
 
   sendSmtpEmail.subject = subject;
   sendSmtpEmail.textContent = text;
+  // Agregamos soporte para HTML si se envía
+  if (html) {
+    sendSmtpEmail.htmlContent = html;
+  }
+
   sendSmtpEmail.sender = { 
     name: "Intranet Transworld", 
     email: process.env.MAIL_FROM // dchiappe@transworld.cl 
