@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <style>
-    /* Grilla flexible */
+    /* Grilla flexible para multimedia */
     .grid-media { 
         display: flex; 
         gap: 15px; 
@@ -12,21 +12,21 @@
     
     /* ESTILO RECTANGULAR PARA IMÁGENES */
     .media-item {
-        display: block;                  /* Para que el <a> ocupe el espacio */
-        width: 150px;                    /* Un poco más ancho que alto */
+        display: block;
+        width: 150px;
         height: 120px;
         position: relative; 
-        border-radius: 8px;              /* Bordes redondeados, NO CÍRCULO */
+        border-radius: 8px;
         overflow: hidden; 
-        border: 1px solid #ddd;          /* Borde sutil */
+        border: 1px solid #ddd;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         transition: transform 0.2s, box-shadow 0.2s; 
         background: #f8f9fa;
-        cursor: pointer;                 /* Manito al pasar el mouse */
+        cursor: pointer;
     }
 
     .media-item:hover { 
-        transform: translateY(-3px);     /* Efecto de elevación */
+        transform: translateY(-3px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         border-color: #003a70;
     }
@@ -34,12 +34,12 @@
     .media-item img { 
         width: 100%; 
         height: 100%; 
-        object-fit: cover;               /* Llena el recuadro sin deformar */
+        object-fit: cover;
     }
     
     /* ESTILO PARA VIDEOS */
     .media-item.is-video {
-        width: 220px;                    /* Videos más anchos */
+        width: 220px;
         height: 130px;
         background: #000;
         display: flex; 
@@ -63,6 +63,20 @@
         padding-bottom: 5px; 
         display: inline-block;
     }
+
+    /* === NUEVO ESTILO PARA EL CONTENIDO DEL TEXTO === */
+    .contenido-noticia-wrapper {
+        background-color: #fcfcfc; /* Fondo muy suave para diferenciar */
+        border: 1px solid #eee;    /* Borde sutil englobando todo */
+        border-radius: 8px;        /* Bordes redondeados */
+        padding: 25px;             /* Espacio interno (Padding) */
+        margin-top: 20px;          /* Separación del título */
+        
+        /* Mágica para evitar desbordamiento */
+        word-wrap: break-word;     
+        overflow-wrap: break-word; 
+        max-width: 100%;           
+    }
   </style>
 </head>
 <body>
@@ -85,12 +99,14 @@
         <h3 style="color: #666; margin-top: 0; font-weight: normal; font-size: 1.2rem;"><%= noticia.subtitulo %></h3>
       <% } %>
       
-      <p style="font-size: 0.85rem; color: #999; margin-bottom: 20px;">
+      <p style="font-size: 0.85rem; color: #999; margin-bottom: 10px;">
         Publicado el <%= new Date(noticia.fecha_creacion).toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
       </p>
 
-      <div style="line-height: 1.8; white-space: pre-wrap; color: #333; font-size: 1.05rem;">
-        <%= noticia.contenido %>
+      <div class="contenido-noticia-wrapper">
+        <div style="line-height: 1.8; white-space: pre-wrap; color: #333; font-size: 1.05rem;">
+          <%= noticia.contenido %>
+        </div>
       </div>
 
       <% 
@@ -104,8 +120,6 @@
       %>
 
       <% if (imagenes.length > 0 || videos.length > 0) { %>
-        <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
-        
         <% if (imagenes.length > 0) { %>
           <div class="seccion-media">
             <div class="titulo-seccion">📸 Galería de Imágenes</div>
