@@ -2,29 +2,67 @@
 <html lang="es">
 <head>
   <style>
-    /* Estilos de Grilla iguales a los de Tickets */
-    .grid-media { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px; }
+    /* Grilla flexible */
+    .grid-media { 
+        display: flex; 
+        gap: 15px; 
+        flex-wrap: wrap; 
+        margin-top: 15px; 
+    }
     
+    /* ESTILO RECTANGULAR PARA IMÁGENES */
     .media-item {
-        width: 120px; height: 120px;
-        position: relative; border-radius: 50%;
-        overflow: hidden; border: 3px solid #eee;
+        display: block;                  /* Para que el <a> ocupe el espacio */
+        width: 150px;                    /* Un poco más ancho que alto */
+        height: 120px;
+        position: relative; 
+        border-radius: 8px;              /* Bordes redondeados, NO CÍRCULO */
+        overflow: hidden; 
+        border: 1px solid #ddd;          /* Borde sutil */
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        transition: transform 0.2s; background: #f0f0f0;
-        display: block;
+        transition: transform 0.2s, box-shadow 0.2s; 
+        background: #f8f9fa;
+        cursor: pointer;                 /* Manito al pasar el mouse */
     }
-    .media-item:hover { transform: scale(1.05); border-color: #003a70; }
-    .media-item img { width: 100%; height: 100%; object-fit: cover; }
+
+    .media-item:hover { 
+        transform: translateY(-3px);     /* Efecto de elevación */
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        border-color: #003a70;
+    }
     
+    .media-item img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover;               /* Llena el recuadro sin deformar */
+    }
+    
+    /* ESTILO PARA VIDEOS */
     .media-item.is-video {
-        width: 200px; height: 120px;
-        border-radius: 8px; background: #000;
-        display: flex; align-items: center; justify-content: center;
+        width: 220px;                    /* Videos más anchos */
+        height: 130px;
+        background: #000;
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        border: none;
     }
-    .media-item.is-video video { width: 100%; height: 100%; object-fit: cover; }
+    .media-item.is-video video { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+    }
     
-    .seccion-media { margin-top: 25px; }
-    .titulo-seccion { font-weight: bold; color: #555; font-size: 0.9rem; margin-bottom: 5px; }
+    .seccion-media { margin-top: 30px; }
+    .titulo-seccion { 
+        font-weight: bold; 
+        color: #555; 
+        font-size: 1rem; 
+        margin-bottom: 10px; 
+        border-bottom: 1px solid #eee; 
+        padding-bottom: 5px; 
+        display: inline-block;
+    }
   </style>
 </head>
 <body>
@@ -35,9 +73,9 @@
   <div class="panel" style="margin-top: 20px; padding: 0; overflow: hidden;">
     
     <% if (noticia.imagen) { %>
-      <div style="width: 100%; height: 350px; overflow: hidden; position: relative;">
-        <img src="<%= noticia.imagen %>" style="width: 100%; height: 100%; object-fit: cover;">
-      </div>
+      <a href="<%= noticia.imagen %>" target="_blank" style="display: block; width: 100%; height: 350px; overflow: hidden;">
+        <img src="<%= noticia.imagen %>" style="width: 100%; height: 100%; object-fit: cover;" title="Ver portada completa">
+      </a>
     <% } %>
     
     <div style="padding: 30px;">
@@ -66,14 +104,14 @@
       %>
 
       <% if (imagenes.length > 0 || videos.length > 0) { %>
-        <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
+        <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
         
         <% if (imagenes.length > 0) { %>
           <div class="seccion-media">
             <div class="titulo-seccion">📸 Galería de Imágenes</div>
             <div class="grid-media">
               <% imagenes.forEach(img => { %>
-                <a href="<%= img.url %>" target="_blank" class="media-item">
+                <a href="<%= img.url %>" target="_blank" class="media-item" title="Ver imagen completa">
                   <img src="<%= img.url %>" alt="<%= img.nombre %>">
                 </a>
               <% }) %>
