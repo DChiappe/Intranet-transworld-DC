@@ -1,86 +1,22 @@
-<h2>Personas y Cultura</h2>
-<p>Conoce la estructura organizacional, la cultura de la empresa y los cumpleaños del equipo.</p>
+<h2>Recursos Humanos</h2>
+<p>Selecciona una opción para continuar.</p>
 
-<div class="grid-opciones" style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-start;">
-  <a class="boton-opcion" href="/RRHH/organigrama">
-    Organigrama
-    <span>Visualiza la estructura interna del equipo.</span>
+<div class="grid-opciones" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 30px;">
+  
+  <a class="boton-opcion" href="/RRHH/organigrama" style="flex: 1; min-width: 250px; padding: 30px; text-align: center; text-decoration: none; color: inherit; border: 1px solid #ddd; border-radius: 8px; background: #fff; transition: transform 0.2s;">
+    <div style="font-size: 2rem; margin-bottom: 10px;">🏢</div>
+    <strong style="font-size: 1.2rem; display: block; margin-bottom: 5px;">Organigrama</strong>
+    <span style="display:block; font-weight:normal; font-size:0.9rem; color: #666;">
+      Ver la estructura de la empresa
+    </span>
   </a>
 
-  <% if (can.personas_write) { %>
-    <a class="boton-opcion" href="/RRHH/crear" style="border-left: 4px solid #28a745;">
-      Agregar Persona
-      <span>Registra un nuevo colaborador al equipo.</span>
-    </a>
-  <% } %>
+  <a class="boton-opcion" href="/RRHH/personal" style="flex: 1; min-width: 250px; padding: 30px; text-align: center; text-decoration: none; color: inherit; border: 1px solid #ddd; border-radius: 8px; background: #fff; transition: transform 0.2s;">
+    <div style="font-size: 2rem; margin-bottom: 10px;">👥</div>
+    <strong style="font-size: 1.2rem; display: block; margin-bottom: 5px;">Personal</strong>
+    <span style="display:block; font-weight:normal; font-size:0.9rem; color: #666;">
+      Ver listado de colaboradores y cumpleaños
+    </span>
+  </a>
+
 </div>
-
-<h3>Cumpleaños del equipo</h3>
-<% if (!personas || personas.length === 0) { %>
-  <p>No hay cumpleaños registrados.</p>
-<% } else { %>
-  <table class="tabla-simple">
-    <thead>
-      <tr>
-        <th>Foto</th>
-        <th>Nombre</th>
-        <th>Área</th>
-        <th>Cumpleaños</th>
-        <% if (can.personas_write) { %>
-          <th style="width: 120px; text-align: center;">Acciones</th>
-        <% } %>
-      </tr>
-    </thead>
-    <tbody>
-      <% personas.forEach(p => { %>
-        <tr>
-          <td>
-            <div>
-               <% if (p.foto) { %>
-                <img src="<%= p.foto %>" alt="Foto" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              <% } else { %>
-                <div style="width: 40px; height: 40px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #999;">
-                  <%= p.nombre.charAt(0) %>
-                </div>
-              <% } %>
-            </div>
-          </td>      
-          <td>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span><%= p.nombre %></span>
-            </div>
-          </td>
-
-          <td><%= p.area %></td>
-          <td>
-            <%= new Date(p.fecha_nacimiento).toLocaleDateString('es-CL', {
-              day: '2-digit',
-              month: '2-digit'
-            }) %>
-          </td>
-          
-          <% if (can.personas_write) { %>
-            <td style="text-align: center;">
-              <div style="display: flex; justify-content: center; gap: 8px;">
-                <a href="/RRHH/editar/<%= p.id %>" 
-                   class="btn-icon"
-                   style="background-color: #007bff; color: white; padding: 6px 10px; border-radius: 4px; text-decoration: none;"
-                   title="Editar">
-                  ✏️
-                </a>
-                
-                <form action="/RRHH/eliminar/<%= p.id %>" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar a <%= p.nombre %>?');" style="margin:0;">
-                  <button type="submit" 
-                          style="background-color: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer;"
-                          title="Eliminar">
-                    🗑️
-                  </button>
-                </form>
-              </div>
-            </td>
-          <% } %>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-<% } %>
