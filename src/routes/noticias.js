@@ -1,17 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const multer = require('multer');
-const cloudinary = require('../services/cloudinary');
+const cloudinary = require('../services/cloudinary'); // Importante para la firma
 const requireRole = require('../middlewares/requireRole');
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
-// Roles permitidos para crear/borrar noticias
+// Roles permitidos
 const WRITE_ROLES = ['admin', 'marketing', 'rrhh'];
 
-// 1. LISTADO DE NOTICIAS
+// 1. LISTADO
 router.get('/', async (req, res) => {
   try {
     const [noticias] = await db.query('SELECT * FROM noticias ORDER BY fecha_creacion DESC');
@@ -27,40 +23,46 @@ router.get('/crear', requireRole(...WRITE_ROLES), (req, res) => {
   res.render('noticias/crear', { titulo: 'Crear Noticia' });
 });
 
-// 3. PROCESAR CREACIÓN (Subida a Cloudinary + Insert BD)
-router.post('/crear', requireRole(...WRITE_ROLES), upload.single('imagen'), async (req, res) => {
-  const { titulo, subtitulo, contenido } = req.body;
+// 3. RUTA DE FIRMA CLOUDINARY (Necesaria para subida directa)
+router.get('/signature', requireRole(...WRITE_ROLES), async (req, res) => {
+  try {
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = 'noticias';
+    const paramsToSign = { timestamp, folder };
+    const signature = cloudinary.utils.api_sign_request(paramsToSign, process.env.CLOUDINARY_API_SECRET);
+    res.json({
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      timestamp,
+      signature,
+      folder
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error generando firma' });
+  }
+});
+
+// 4. PROCESAR CREACIÓN (Recibe URLs y JSON, no archivos físicos)
+router.post('/crear', requireRole(...WRITE_ROLES), async (req, res) => {
+  // imagen_portada: String URL (puede venir vacío)
+  // adjuntos_data: String JSON (Array de objetos)
+  const { titulo, subtitulo, contenido, imagen_portada, adjuntos_data } = req.body;
 
   try {
-    let imagenUrl = null;
-    let publicId = null;
-
-    // Subir imagen si existe
-    if (req.file) {
-      const result = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: 'noticias' },
-          (error, result) => { if (error) reject(error); else resolve(result); }
-        );
-        stream.end(req.file.buffer);
-      });
-      imagenUrl = result.secure_url;
-      publicId = result.public_id;
-    }
-
     await db.query(
-      'INSERT INTO noticias (titulo, subtitulo, contenido, imagen, public_id) VALUES (?, ?, ?, ?, ?)',
-      [titulo, subtitulo, contenido, imagenUrl, publicId]
+      'INSERT INTO noticias (titulo, subtitulo, contenido, imagen, adjuntos) VALUES (?, ?, ?, ?, ?)',
+      [titulo, subtitulo, contenido, imagen_portada || null, adjuntos_data || '[]']
     );
 
-    res.redirect('/'); // Volver al home o al listado de noticias
+    res.redirect('/noticias');
   } catch (err) {
     console.error(err);
     res.status(500).send('Error al crear la noticia');
   }
 });
 
-// 4. DETALLE DE LA NOTICIA
+// 5. DETALLE
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -74,19 +76,13 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// 5. ELIMINAR NOTICIA
+// 6. ELIMINAR (Simplificado, idealmente borrarías también de Cloudinary usando los IDs guardados)
 router.post('/eliminar/:id', requireRole(...WRITE_ROLES), async (req, res) => {
   const { id } = req.params;
   try {
-    // Obtener public_id para borrar de Cloudinary
-    const [rows] = await db.query('SELECT public_id FROM noticias WHERE id = ?', [id]);
-    if (rows.length > 0 && rows[0].public_id) {
-      await cloudinary.uploader.destroy(rows[0].public_id);
-    }
-    
     await db.query('DELETE FROM noticias WHERE id = ?', [id]);
     res.redirect('/noticias');
-  } catch (err) {
+  } catch (err) { 
     console.error(err);
     res.status(500).send('Error eliminando noticia');
   }

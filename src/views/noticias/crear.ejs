@@ -1,20 +1,122 @@
 <div class="contenedor">
+  <div style="margin-bottom: 20px;">
+    <a href="/noticias" class="link-volver">← Volver a Noticias</a>
+  </div>
+  
   <h2>Publicar Nueva Noticia</h2>
+  
   <div class="panel">
-    <form action="/noticias/crear" method="POST" enctype="multipart/form-data" class="form-ticket">
+    <form action="/noticias/crear" method="POST" class="form-ticket">
+      
       <label>Título</label>
-      <input type="text" name="titulo" required>
+      <input type="text" name="titulo" required placeholder="Titular principal">
 
       <label>Subtítulo (Opcional)</label>
-      <input type="text" name="subtitulo">
+      <input type="text" name="subtitulo" placeholder="Bajada o resumen corto">
 
-      <label>Imagen de Portada</label>
-      <input type="file" name="imagen" accept="image/*" required>
+      <label style="margin-top:15px;">Imagen de Portada (Opcional)</label>
+      <input type="hidden" name="imagen_portada" id="url_portada">
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button type="button" class="btn btn-secundario" onclick="document.getElementById('filePortada').click()">📷 Subir Portada</button>
+        <span id="statusPortada" class="small-text">Sin archivo seleccionado</span>
+      </div>
+      <input type="file" id="filePortada" accept="image/*" style="display: none;">
+      
+      <label style="margin-top:15px;">Galería Multimedia (Imágenes y Videos)</label>
+      <input type="hidden" name="adjuntos_data" id="adjuntos_data" value="[]">
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button type="button" class="btn btn-secundario" onclick="document.getElementById('fileGaleria').click()">📎 Adjuntar Archivos (Múltiple)</button>
+        <div id="statusGaleria" class="small-text"></div>
+      </div>
+      <input type="file" id="fileGaleria" multiple accept="image/*,video/*" style="display: none;">
 
-      <label>Contenido</label>
-      <textarea name="contenido" rows="10" required></textarea>
+      <label style="margin-top:15px;">Contenido</label>
+      <textarea name="contenido" rows="10" required placeholder="Escribe aquí el cuerpo de la noticia..."></textarea>
 
-      <button type="submit" class="btn btn-primario">Publicar</button>
+      <button type="submit" class="btn btn-primario" style="margin-top:20px;">Publicar Noticia</button>
     </form>
   </div>
 </div>
+
+<script>
+  // 1. SUBIDA ÚNICA (PORTADA)
+  const filePortada = document.getElementById('filePortada');
+  const urlPortada = document.getElementById('url_portada');
+  const statusPortada = document.getElementById('statusPortada');
+
+  filePortada.addEventListener('change', async function() {
+    const file = this.files[0];
+    if (!file) return;
+
+    statusPortada.innerText = '⏳ Subiendo portada...';
+    try {
+      const resSig = await fetch('/noticias/signature');
+      const sig = await resSig.json();
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', sig.apiKey);
+      formData.append('timestamp', sig.timestamp);
+      formData.append('signature', sig.signature);
+      formData.append('folder', sig.folder);
+
+      const resUp = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, { method: 'POST', body: formData });
+      const data = await resUp.json();
+
+      urlPortada.value = data.secure_url;
+      statusPortada.innerText = '✅ Portada cargada: ' + file.name;
+      statusPortada.style.color = 'green';
+    } catch (e) {
+      console.error(e);
+      statusPortada.innerText = '❌ Error al subir portada';
+      statusPortada.style.color = 'red';
+    }
+  });
+
+  // 2. SUBIDA MÚLTIPLE (GALERÍA)
+  const fileGaleria = document.getElementById('fileGaleria');
+  const inputAdjuntos = document.getElementById('adjuntos_data');
+  const statusGaleria = document.getElementById('statusGaleria');
+
+  fileGaleria.addEventListener('change', async function() {
+    const files = Array.from(this.files);
+    if (files.length === 0) return;
+
+    let uploadedList = [];
+    statusGaleria.innerText = `⏳ Subiendo 0 / ${files.length}...`;
+
+    try {
+      const resSig = await fetch('/noticias/signature');
+      const sig = await resSig.json();
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('api_key', sig.apiKey);
+        formData.append('timestamp', sig.timestamp);
+        formData.append('signature', sig.signature);
+        formData.append('folder', sig.folder);
+
+        let type = file.type.startsWith('video/') ? 'video' : 'image';
+        
+        const resUp = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/${type}/upload`, { method: 'POST', body: formData });
+        const data = await resUp.json();
+
+        uploadedList.push({
+          url: data.secure_url,
+          nombre: file.name,
+          tipo: type // 'image' o 'video'
+        });
+
+        statusGaleria.innerText = `⏳ Subiendo ${i + 1} / ${files.length}...`;
+      }
+
+      inputAdjuntos.value = JSON.stringify(uploadedList);
+      statusGaleria.innerHTML = `<span style="color:green">✅ ${files.length} archivos listos en galería.</span>`;
+    } catch (e) {
+      console.error(e);
+      statusGaleria.innerHTML = `<span style="color:red">❌ Error en la subida múltiple.</span>`;
+    }
+  });
+</script>

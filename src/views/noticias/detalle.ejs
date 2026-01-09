@@ -1,33 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <style>
+    /* Estilos de Grilla iguales a los de Tickets */
+    .grid-media { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px; }
+    
+    .media-item {
+        width: 120px; height: 120px;
+        position: relative; border-radius: 50%;
+        overflow: hidden; border: 3px solid #eee;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: transform 0.2s; background: #f0f0f0;
+        display: block;
+    }
+    .media-item:hover { transform: scale(1.05); border-color: #003a70; }
+    .media-item img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .media-item.is-video {
+        width: 200px; height: 120px;
+        border-radius: 8px; background: #000;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .media-item.is-video video { width: 100%; height: 100%; object-fit: cover; }
+    
+    .seccion-media { margin-top: 25px; }
+    .titulo-seccion { font-weight: bold; color: #555; font-size: 0.9rem; margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+
 <div class="contenedor">
-  <a href="/" class="link-volver">← Volver al inicio</a>
+  <a href="/noticias" class="link-volver">← Volver a Noticias</a>
 
   <div class="panel" style="margin-top: 20px; padding: 0; overflow: hidden;">
+    
     <% if (noticia.imagen) { %>
-      <div style="width: 100%; height: 300px; overflow: hidden;">
+      <div style="width: 100%; height: 350px; overflow: hidden; position: relative;">
         <img src="<%= noticia.imagen %>" style="width: 100%; height: 100%; object-fit: cover;">
       </div>
     <% } %>
     
     <div style="padding: 30px;">
-      <h1 style="color: #003a70; margin-bottom: 5px;"><%= noticia.titulo %></h1>
+      <h1 style="color: #003a70; margin-bottom: 5px; font-size: 2rem;"><%= noticia.titulo %></h1>
+      
       <% if (noticia.subtitulo) { %>
-        <h3 style="color: #666; margin-top: 0;"><%= noticia.subtitulo %></h3>
+        <h3 style="color: #666; margin-top: 0; font-weight: normal; font-size: 1.2rem;"><%= noticia.subtitulo %></h3>
       <% } %>
       
-      <p style="font-size: 0.85rem; color: #999;">
-        Publicado el <%= new Date(noticia.fecha_creacion).toLocaleDateString() %>
+      <p style="font-size: 0.85rem; color: #999; margin-bottom: 20px;">
+        Publicado el <%= new Date(noticia.fecha_creacion).toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
       </p>
 
-      <div style="margin-top: 20px; line-height: 1.6; white-space: pre-wrap;">
+      <div style="line-height: 1.8; white-space: pre-wrap; color: #333; font-size: 1.05rem;">
         <%= noticia.contenido %>
       </div>
 
-      <% if (can.noticias_write) { %>
+      <% 
+         let adjuntos = [];
+         try {
+           if (noticia.adjuntos) adjuntos = JSON.parse(noticia.adjuntos);
+         } catch(e) {}
+
+         const imagenes = adjuntos.filter(a => a.tipo === 'image');
+         const videos = adjuntos.filter(a => a.tipo === 'video');
+      %>
+
+      <% if (imagenes.length > 0 || videos.length > 0) { %>
         <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
-        <form action="/noticias/eliminar/<%= noticia.id %>" method="POST" onsubmit="return confirm('¿Borrar noticia?');">
-          <button type="submit" style="background: #d32f2f; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">Eliminar Noticia</button>
+        
+        <% if (imagenes.length > 0) { %>
+          <div class="seccion-media">
+            <div class="titulo-seccion">📸 Galería de Imágenes</div>
+            <div class="grid-media">
+              <% imagenes.forEach(img => { %>
+                <a href="<%= img.url %>" target="_blank" class="media-item">
+                  <img src="<%= img.url %>" alt="<%= img.nombre %>">
+                </a>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+
+        <% if (videos.length > 0) { %>
+          <div class="seccion-media">
+            <div class="titulo-seccion">🎥 Videos</div>
+            <div class="grid-media">
+              <% videos.forEach(vid => { %>
+                <div class="media-item is-video">
+                  <video src="<%= vid.url %>" controls title="<%= vid.nombre %>"></video>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+
+      <% } %>
+
+      <% if (typeof can !== 'undefined' && can.noticias_write) { %>
+        <hr style="margin: 40px 0 20px 0; border: 0; border-top: 1px solid #eee;">
+        <form action="/noticias/eliminar/<%= noticia.id %>" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar esta noticia?');">
+          <button type="submit" style="background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">
+            🗑️ Eliminar Noticia
+          </button>
         </form>
       <% } %>
+
     </div>
   </div>
 </div>
+
+</body>
+</html>
