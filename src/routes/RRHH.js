@@ -42,7 +42,7 @@ function formatNombre(nombreCompleto) {
 
 // 1. PÁGINA PRINCIPAL (MENÚ) - Ahora solo muestra botones
 router.get('/', (req, res) => {
-  res.render('RRHH/home', {
+  res.render('RRHH', {
     titulo: 'RRHH - Menú Principal',
     user: req.session.user
   });
