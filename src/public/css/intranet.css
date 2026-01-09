@@ -317,8 +317,6 @@ table.tabla-simple tr:nth-child(even) td {
 .login-links a { color: #003a70; text-decoration: none; font-weight: 600; }
 .login-links a:hover { text-decoration: underline; }
 .login-page { display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 100px); }
-.card-login { background: #ffffff; padding: 32px 36px; border-radius: 10px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15); max-width: 420px; width: 100%; }
-.card-login h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.6rem; text-align: center; color: #003a70; }
 .form-login label { display: block; margin-top: 12px; margin-bottom: 4px; font-weight: 600; font-size: 1rem; }
 .form-login input[type="text"], .form-login input[type="password"] { width: 100%; padding: 10px; font-size: 1rem; box-sizing: border-box; border-radius: 6px; border: 1px solid #c4ccdd; }
 .form-login input[type="text"]:focus, .form-login input[type="password"]:focus { outline: none; border-color: #003a70; box-shadow: 0 0 0 2px rgba(0, 58, 112, 0.15); }
@@ -801,3 +799,105 @@ body, main {
   object-fit: cover;
   display: block;
 }
+
+.card-login {
+        background-color: #002a52 !important; /* Azul oscuro corporativo */
+        color: white !important;              /* Texto blanco */
+        border-radius: 12px;
+        padding: 40px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5); /* Sombra más fuerte */
+        width: 100%;
+        max-width: 400px;
+        border: 1px solid rgba(255,255,255,0.1);
+}
+
+      /* Títulos y Etiquetas en blanco */
+      .card-login h2 {
+        color: white !important;
+        margin-bottom: 25px;
+        font-weight: 600;
+        text-align: center;
+      }
+      
+      .card-login label {
+        color: #e6f0ff !important; /* Blanco ligeramente azulado */
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+        text-align: left;
+      }
+
+      /* Inputs más limpios */
+      .card-login input[type="text"],
+      .card-login input[type="password"] {
+        background-color: #ffffff;
+        border: 2px solid #345d8a;
+        color: #333;
+        border-radius: 6px;
+        padding: 10px;
+        width: 100%;
+        box-sizing: border-box; /* Importante para que no se salga del contenedor */
+        margin-bottom: 20px;
+      }
+
+      .card-login input:focus {
+        outline: none;
+        border-color: #4da6ff;
+        box-shadow: 0 0 5px rgba(77, 166, 255, 0.5);
+      }
+
+      /* Botón invertido (Blanco con letras azules) para destacar */
+      .card-login button {
+        background-color: #ffffff !important;
+        color: #002a52 !important;
+        font-weight: bold;
+        border: none;
+        padding: 12px;
+        width: 100%;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.3s, transform 0.2s;
+        margin-top: 10px;
+      }
+
+      .card-login button:hover {
+        background-color: #f0f0f0 !important;
+        transform: translateY(-2px);
+      }
+
+      /* Enlaces legibles sobre fondo oscuro */
+      .login-links {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 0.9rem;
+      }
+      
+      .login-links a {
+        color: #b3d7ff !important; /* Celeste claro */
+        text-decoration: none;
+      }
+      
+      .login-links a:hover {
+        color: #ffffff !important;
+        text-decoration: underline;
+      }
+
+      /* Mensajes de error/info ajustados */
+      .mensaje-error {
+        background-color: rgba(220, 53, 69, 0.9);
+        color: white;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+      }
+      
+      .mensaje-info {
+        background-color: rgba(23, 162, 184, 0.9);
+        color: white;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+      }
