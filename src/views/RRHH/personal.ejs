@@ -1,0 +1,66 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <div>
+    <h2>Personal y Cumpleaños</h2>
+    <p>Listado de colaboradores del equipo.</p>
+  </div>
+  
+  <a href="/RRHH" class="btn btn-secundario" style="text-decoration: none;">← Volver al menú</a>
+</div>
+
+<div class="grid-opciones" style="margin-bottom: 30px;">
+  <% if (user.role === 'admin' || user.role === 'rrhh') { %>
+    <a class="boton-opcion" href="/RRHH/crear" style="border-left: 4px solid #28a745; max-width: 300px;">
+      Agregar Persona
+      <span>Registra un nuevo colaborador.</span>
+    </a>
+  <% } %>
+</div>
+
+<% if (!personas || personas.length === 0) { %>
+  <p>No hay colaboradores registrados.</p>
+<% } else { %>
+  <table class="tabla-simple">
+    <thead>
+      <tr>
+        <th>Foto</th>
+        <th>Nombre</th>
+        <th>Área</th>
+        <th>Cumpleaños</th>
+        <% if (user.role === 'admin' || user.role === 'rrhh') { %>
+          <th style="width: 120px; text-align: center;">Acciones</th>
+        <% } %>
+      </tr>
+    </thead>
+    <tbody>
+      <% personas.forEach(p => { %>
+        <tr>
+          <td>
+             <% if (p.foto) { %>
+               <img src="<%= p.foto %>" alt="Foto" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+             <% } else { %>
+               <div style="width: 40px; height: 40px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #999;">
+                 <%= p.nombre.charAt(0) %>
+               </div>
+             <% } %>
+          </td>      
+          <td><%= p.nombre %></td>
+          <td><%= p.area %></td>
+          <td>
+            <%= new Date(p.fecha_nacimiento).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' }) %>
+          </td>
+          
+          <% if (user.role === 'admin' || user.role === 'rrhh') { %>
+            <td style="text-align: center;">
+              <div style="display: flex; justify-content: center; gap: 8px;">
+                <a href="/RRHH/editar/<%= p.id %>" class="btn-icon" style="background-color: #007bff; color: white; padding: 6px 10px; border-radius: 4px; text-decoration: none;" title="Editar">✏️</a>
+                <form action="/RRHH/eliminar/<%= p.id %>" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar a <%= p.nombre %>?');" style="margin:0;">
+                  <button type="submit" style="background-color: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer;" title="Eliminar">🗑️</button>
+                </form>
+              </div>
+            </td>
+          <% } %>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+<% } %>

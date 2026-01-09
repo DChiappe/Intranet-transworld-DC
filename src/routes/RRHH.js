@@ -9,7 +9,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // --- Funciones Auxiliares ---
-
 async function getOrganigramaUrl() {
   try {
     const result = await cloudinary.api.resources({
@@ -37,15 +36,21 @@ function formatNombre(nombreCompleto) {
   return parts.map(capitalize).join(' ');
 }
 
-// --- Rutas Principales ---
+// ==========================================
+// RUTAS PRINCIPALES
+// ==========================================
 
-router.get('/', async (req, res, next) => {
-  // CAMBIO AQUÍ: Ordenamos por nombre alfabéticamente
-  const sql = `
-    SELECT id, nombre, area, fecha_nacimiento, foto
-    FROM cumpleanios
-    ORDER BY nombre ASC
-  `;
+// 1. PÁGINA PRINCIPAL (MENÚ) - Ahora solo muestra botones
+router.get('/', (req, res) => {
+  res.render('RRHH/home', {
+    titulo: 'RRHH - Menú Principal',
+    user: req.session.user
+  });
+});
+
+// 2. LISTADO DE PERSONAL (Antigua raíz) - Mueve aquí la lógica de la tabla
+router.get('/personal', async (req, res) => {
+  const sql = `SELECT id, nombre, area, fecha_nacimiento, foto FROM cumpleanios ORDER BY nombre ASC`;
 
   try {
     const [results] = await db.query(sql);
@@ -54,8 +59,8 @@ router.get('/', async (req, res, next) => {
       nombre: formatNombre(p.nombre)
     }));
 
-    res.render('RRHH/index', {
-      titulo: 'Personas',
+    res.render('RRHH/personal', { // Renderiza la nueva vista 'personal.ejs'
+      titulo: 'Personal',
       personas: personasFormateadas,
       user: req.session.user
     });
@@ -80,10 +85,7 @@ router.post('/crear', requireRole('admin', 'rrhh'), upload.single('foto'), async
     if (req.file) {
       const result = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
-          { 
-            folder: 'cumpleanios', 
-            transformation: [{ width: 150, height: 150, crop: "fill", gravity: "face" }] 
-          },
+          { folder: 'cumpleanios', transformation: [{ width: 150, height: 150, crop: "fill", gravity: "face" }] },
           (error, result) => { if (error) reject(error); else resolve(result); }
         );
         stream.end(req.file.buffer);
@@ -95,7 +97,8 @@ router.post('/crear', requireRole('admin', 'rrhh'), upload.single('foto'), async
     await db.query('INSERT INTO cumpleanios (nombre, area, fecha_nacimiento, foto, foto_public_id) VALUES (?, ?, ?, ?, ?)', 
       [nombre, area, fecha_nacimiento, fotoUrl, fotoPublicId]);
     
-    res.redirect('/RRHH');
+    // REDIRECCIÓN CAMBIADA: Ahora vuelve al listado de personal
+    res.redirect('/RRHH/personal');
   } catch (err) {
     console.error(err);
     res.status(500).send('Error al crear persona');
@@ -131,10 +134,7 @@ router.post('/editar/:id', requireRole('admin', 'rrhh'), upload.single('foto'), 
 
       const result = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
-          { 
-            folder: 'cumpleanios', 
-            transformation: [{ width: 150, height: 150, crop: "fill", gravity: "face" }] 
-          },
+          { folder: 'cumpleanios', transformation: [{ width: 150, height: 150, crop: "fill", gravity: "face" }] },
           (error, result) => { if (error) reject(error); else resolve(result); }
         );
         stream.end(req.file.buffer);
@@ -148,7 +148,8 @@ router.post('/editar/:id', requireRole('admin', 'rrhh'), upload.single('foto'), 
         [nombre, area, fecha_nacimiento, id]);
     }
 
-    res.redirect('/RRHH');
+    // REDIRECCIÓN CAMBIADA
+    res.redirect('/RRHH/personal');
   } catch (err) {
     console.error(err);
     res.status(500).send('Error actualizando persona');
@@ -164,7 +165,8 @@ router.post('/eliminar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
     }
 
     await db.query('DELETE FROM cumpleanios WHERE id = ?', [id]);
-    res.redirect('/RRHH');
+    // REDIRECCIÓN CAMBIADA
+    res.redirect('/RRHH/personal');
   } catch (err) {
     console.error(err);
     res.status(500).send('Error eliminando persona');
