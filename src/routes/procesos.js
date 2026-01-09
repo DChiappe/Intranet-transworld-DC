@@ -117,7 +117,7 @@ router.post('/:tipo/subir', requireRole('admin', 'control_y_seguridad'), upload.
       if (req.session.user?.id) {
         await db.query(
           'INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
-          [req.session.user.id, `subió un documento `, ${tipo}, `/procesos/${tipo}`]
+          [req.session.user.id, `subió un documento `, `${tipo}`, `/procesos/${tipo}`]
         );
       }
 
