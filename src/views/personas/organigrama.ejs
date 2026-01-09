@@ -11,7 +11,7 @@
     <a class="btn btn-primario" href="<%= url %>" target="_blank" rel="noopener">Descargar / Ver Original</a>
 
     <% if (canWrite) { %>
-      <form action="/personas/organigrama/eliminar" method="POST"
+      <form action="/RRHH/organigrama/eliminar" method="POST"
             onsubmit="return confirm('¿Eliminar el organigrama actual?');" style="margin:0;">
         <button type="submit" class="btn btn-peligro">Eliminar</button>
       </form>
@@ -29,7 +29,7 @@
   <div class="panel" style="margin-bottom: 16px;">
     <h3 class="panel-title">Subir / Reemplazar organigrama</h3>
 
-    <form action="/personas/organigrama/subir" method="POST" enctype="multipart/form-data">
+    <form action="/RRHH/organigrama/subir" method="POST" enctype="multipart/form-data">
       <input type="file" name="organigrama" accept="image/*,application/pdf" required>
       <button type="submit" class="btn btn-primario">Subir</button>
     </form>

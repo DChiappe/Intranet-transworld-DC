@@ -54,8 +54,8 @@ router.get('/', async (req, res, next) => {
       nombre: formatNombre(p.nombre)
     }));
 
-    res.render('personas/index', {
-      titulo: 'Personas y Cultura',
+    res.render('RRHH/index', {
+      titulo: 'Personas',
       personas: personasFormateadas,
       user: req.session.user
     });
@@ -68,7 +68,7 @@ router.get('/', async (req, res, next) => {
 // --- CRUD Personas ---
 
 router.get('/crear', requireRole('admin', 'rrhh'), (req, res) => {
-  res.render('personas/persona_crear', { titulo: 'Agregar Persona' });
+  res.render('RRHH/persona_crear', { titulo: 'Agregar Persona' });
 });
 
 router.post('/crear', requireRole('admin', 'rrhh'), upload.single('foto'), async (req, res) => {
@@ -95,7 +95,7 @@ router.post('/crear', requireRole('admin', 'rrhh'), upload.single('foto'), async
     await db.query('INSERT INTO cumpleanios (nombre, area, fecha_nacimiento, foto, foto_public_id) VALUES (?, ?, ?, ?, ?)', 
       [nombre, area, fecha_nacimiento, fotoUrl, fotoPublicId]);
     
-    res.redirect('/personas');
+    res.redirect('/RRHH');
   } catch (err) {
     console.error(err);
     res.status(500).send('Error al crear persona');
@@ -108,7 +108,7 @@ router.get('/editar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
     const [rows] = await db.query('SELECT * FROM cumpleanios WHERE id = ?', [id]);
     if (rows.length === 0) return res.status(404).send('Persona no encontrada');
     
-    res.render('personas/persona_editar', {
+    res.render('RRHH/persona_editar', {
       titulo: 'Editar Persona',
       persona: rows[0]
     });
@@ -148,7 +148,7 @@ router.post('/editar/:id', requireRole('admin', 'rrhh'), upload.single('foto'), 
         [nombre, area, fecha_nacimiento, id]);
     }
 
-    res.redirect('/personas');
+    res.redirect('/RRHH');
   } catch (err) {
     console.error(err);
     res.status(500).send('Error actualizando persona');
@@ -164,7 +164,7 @@ router.post('/eliminar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
     }
 
     await db.query('DELETE FROM cumpleanios WHERE id = ?', [id]);
-    res.redirect('/personas');
+    res.redirect('/RRHH');
   } catch (err) {
     console.error(err);
     res.status(500).send('Error eliminando persona');
@@ -175,7 +175,7 @@ router.post('/eliminar/:id', requireRole('admin', 'rrhh'), async (req, res) => {
 
 router.get('/organigrama', async (req, res) => {
   const organigramaUrl = await getOrganigramaUrl();
-  res.render('personas/organigrama', {
+  res.render('RRHH/organigrama', {
     titulo: 'Organigrama',
     organigramaUrl,
     user: req.session.user
@@ -196,11 +196,11 @@ router.post('/organigrama/subir', requireRole('admin', 'rrhh'), upload.single('o
     if (req.session.user && req.session.user.id) {
       await db.query(
         'INSERT INTO historial_cambios (usuario_id, accion, seccion, enlace) VALUES (?, ?, ?, ?)',
-        [req.session.user.id, 'actualizó', 'Organigrama', '/personas/organigrama']
+        [req.session.user.id, 'actualizó', 'Organigrama', '/RRHH/organigrama']
       );
     }
 
-    res.redirect('/personas/organigrama');
+    res.redirect('/RRHH/organigrama');
   } catch (err) {
     console.error(err);
     res.status(500).send('Error subiendo archivo.');
@@ -211,7 +211,7 @@ router.post('/organigrama/eliminar', requireRole('admin', 'rrhh'), async (req, r
   try {
     await cloudinary.api.delete_resources_by_prefix('organigrama/', { resource_type: 'image' });
     await cloudinary.api.delete_resources_by_prefix('organigrama/', { resource_type: 'raw' });
-    res.redirect('/personas/organigrama');
+    res.redirect('/RRHH/organigrama');
   } catch (e) {
     console.error(e);
     res.status(500).send('Error al eliminar.');

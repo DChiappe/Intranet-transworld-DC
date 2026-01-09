@@ -8,21 +8,21 @@ function cargarCumpleanios() {
 }
 
 exports.organigrama = (req, res) => {
-  res.render('personas/organigrama', {
+  res.render('RRHH/organigrama', {
     titulo: 'Organigrama'
   });
 };
 
 exports.beneficios = (req, res) => {
   // Más adelante puedes leer de beneficios.json
-  res.render('personas/beneficios', {
+  res.render('RRHH/beneficios', {
     titulo: 'Beneficios'
   });
 };
 
 exports.cumpleaniosLista = (req, res) => {
   const cumpleanios = cargarCumpleanios();
-  res.render('personas/cumpleanios', {
+  res.render('RRHH/cumpleanios', {
     titulo: 'Cumpleaños',
     cumpleanios
   });

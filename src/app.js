@@ -105,7 +105,7 @@ app.use('/', authRoutes);
 // 2. Rutas Protegidas
 app.use('/', requireAuth, indexRoutes);
 app.use('/procesos', requireAuth, procesosRoutes);
-app.use('/personas', requireAuth, personasRoutes);
+app.use('/RRHH', requireAuth, personasRoutes);
 app.use('/sistemas', requireAuth, sistemasRoutes); 
 app.use('/tickets', requireAuth, ticketsRoutes);   
 app.use('/marketing', requireAuth, marketingRoutes);

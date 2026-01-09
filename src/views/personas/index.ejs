@@ -2,13 +2,13 @@
 <p>Conoce la estructura organizacional, la cultura de la empresa y los cumpleaños del equipo.</p>
 
 <div class="grid-opciones" style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-start;">
-  <a class="boton-opcion" href="/personas/organigrama">
+  <a class="boton-opcion" href="/RRHH/organigrama">
     Organigrama
     <span>Visualiza la estructura interna del equipo.</span>
   </a>
 
   <% if (can.personas_write) { %>
-    <a class="boton-opcion" href="/personas/crear" style="border-left: 4px solid #28a745;">
+    <a class="boton-opcion" href="/RRHH/crear" style="border-left: 4px solid #28a745;">
       Agregar Persona
       <span>Registra un nuevo colaborador al equipo.</span>
     </a>
@@ -62,14 +62,14 @@
           <% if (can.personas_write) { %>
             <td style="text-align: center;">
               <div style="display: flex; justify-content: center; gap: 8px;">
-                <a href="/personas/editar/<%= p.id %>" 
+                <a href="/RRHH/editar/<%= p.id %>" 
                    class="btn-icon"
                    style="background-color: #007bff; color: white; padding: 6px 10px; border-radius: 4px; text-decoration: none;"
                    title="Editar">
                   ✏️
                 </a>
                 
-                <form action="/personas/eliminar/<%= p.id %>" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar a <%= p.nombre %>?');" style="margin:0;">
+                <form action="/RRHH/eliminar/<%= p.id %>" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar a <%= p.nombre %>?');" style="margin:0;">
                   <button type="submit" 
                           style="background-color: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer;"
                           title="Eliminar">
